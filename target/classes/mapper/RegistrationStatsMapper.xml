@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.RegistrationStatsMapper">
+
+    <!-- 按科室统计（按挂号数降序） -->
+    <select id="statsByDepartment" resultType="org.example.dto.RegistrationStatsDTO">
+        SELECT
+        dep.department_name AS groupName,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,
+            </when>
+            <otherwise>
+                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,
+            </otherwise>
+        </choose>
+        COUNT(*) AS totalRegistrations,
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,
+        SUM(doc.doc_fee) AS totalAmount,
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount
+        FROM registration_info ri
+        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id
+        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id
+        JOIN department_info dep ON doc.doc_dp_id = dep.department_id
+        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY dep.department_id,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d')
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time))
+            </when>
+            <otherwise>
+                DATE_FORMAT(ri.reg_time, '%Y-%m')
+            </otherwise>
+        </choose>
+        ORDER BY timePeriod, totalRegistrations DESC  <!-- 关键修改：添加DESC降序 -->
+    </select>
+
+    <!-- 按医生统计（按挂号数降序） -->
+    <select id="statsByDoctor" resultType="org.example.dto.RegistrationStatsDTO">
+        SELECT
+        CONCAT(doc.doc_name, '(', dep.department_name, ')') AS groupName,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,
+            </when>
+            <otherwise>
+                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,
+            </otherwise>
+        </choose>
+        COUNT(*) AS totalRegistrations,
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,
+        SUM(doc.doc_fee) AS totalAmount,
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount
+        FROM registration_info ri
+        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id
+        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id
+        JOIN department_info dep ON doc.doc_dp_id = dep.department_id
+        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY doc.doc_id, dep.department_id,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d')
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time))
+            </when>
+            <otherwise>
+                DATE_FORMAT(ri.reg_time, '%Y-%m')
+            </otherwise>
+        </choose>
+        ORDER BY timePeriod, totalRegistrations DESC  <!-- 关键修改：添加DESC降序 -->
+    </select>
+</mapper>

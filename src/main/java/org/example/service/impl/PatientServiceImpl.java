@@ -18,6 +18,12 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
 
     @Autowired
     private PatientInfoMapper patientInfoMapper;
+
+    public int getgendernum(PatientInfo.Gender gender){
+        int gendernum = patientInfoMapper.getgenderamount(gender);
+        return gendernum;
+    }
+
     @Override
     public List<PatientInfo> queryPatients(int healthcardId, String identificationId, String name) {
         QueryWrapper<PatientInfo> queryWrapper = new QueryWrapper<>();

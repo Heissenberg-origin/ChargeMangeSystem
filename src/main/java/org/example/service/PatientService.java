@@ -17,4 +17,5 @@ public interface PatientService extends IService<PatientInfo> {
      * @throws IllegalArgumentException 参数不合法时抛出
      */
     void recharge(int healthcardId, float amount);
+    int getgendernum(PatientInfo.Gender gender);
 }

@@ -32,9 +32,7 @@ public class ArrangeController {
     @PostMapping("/save")
     @Operation(summary = "创建排班信息", description = "添加新的排班信息")
     public void createArrangeInfo(@RequestBody ArrangeInfo arrangeInfo) {
-        boolean i=arrangeService.save(arrangeInfo);
-        if(i)System.out.println("成功插入一条数据");
-        else System.out.println("插入失败");
+        arrangeService.save(arrangeInfo);
     }
 
     @GetMapping("/querybyId/{id}")

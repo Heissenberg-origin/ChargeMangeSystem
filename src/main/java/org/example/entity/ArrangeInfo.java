@@ -61,6 +61,38 @@ public class ArrangeInfo {
     @TableField("arrange_id")
     private int arrangeid;
 
+    public int getArrangeid() {
+        return arrangeid;
+    }
+
+    public void setArrangeid(int arrangeid) {
+        this.arrangeid = arrangeid;
+    }
+
+    public Date getArrangedate() {
+        return arrangedate;
+    }
+
+    public void setArrangedate(Date arrangedate) {
+        this.arrangedate = arrangedate;
+    }
+
+    public int getArrangebalance() {
+        return arrangebalance;
+    }
+
+    public void setArrangebalance(int arrangebalance) {
+        this.arrangebalance = arrangebalance;
+    }
+
+    public int getArrangedocid() {
+        return arrangedocid;
+    }
+
+    public void setArrangedocid(int arrangedocid) {
+        this.arrangedocid = arrangedocid;
+    }
+
     @JsonFormat(pattern = "yyyy-MM-dd",timezone = "Asia/Shanghai")
     @Schema(description = "排班日期", example = "2023-10-01")
     @TableField("arrange_date")
@@ -71,7 +103,7 @@ public class ArrangeInfo {
                     "11:00-12:00",  "14:00-15:00",
                     "15:00-16:00", "16:00-17:00", "17:00-18:00"})
     @TableField(value = "arrange_timezone", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
-    private TimeSlot arrangetimezone;
+    public TimeSlot arrangetimezone;
 
     @Schema(description = "号余量", example = "10")
     @TableField("arrange_balance")

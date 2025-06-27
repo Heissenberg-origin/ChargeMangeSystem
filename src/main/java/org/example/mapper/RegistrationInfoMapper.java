@@ -192,7 +192,7 @@ public interface RegistrationInfoMapper extends BaseMapper<RegistrationInfo> {
     JOIN  arrange_info ai ON ai.arrange_id=ri.reg_arrange_id
     JOIN  doctor_info doci ON ai.arrange_doc_id=doci.doc_id
     JOIN  department_info depi ON doci.doc_dp_id=depi.department_id
-    WHERE doci.doc_name LIKE CONCAT('%', #{pname}, '%')
+    WHERE pi.name LIKE CONCAT('%', #{pname}, '%')
 """)
     @ResultMap("RegistrationResultsMap")
     List<RegistrationInfo> getbypname(String pname);
