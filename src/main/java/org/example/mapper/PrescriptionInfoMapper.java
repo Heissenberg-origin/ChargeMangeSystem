@@ -19,7 +19,7 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
             "pre_state, pre_time, pre_receipt_id, pre_dealer_id, pre_deal_type, pre_dealtime" +
             ") VALUES (" +
             "#{preId}, #{preRegId}, #{preContent}, #{preCiId}, #{preCiNum}, " +
-            "#{preState.displayValue}, #{preTime}, #{preReceiptId}, #{preDealerId}, #{preDealType.displayValue}, #{preDealTime}" +
+            "#{preState.displayValue}, NOW(), #{preReceiptId}, #{preDealerId}, #{preDealType.displayValue}, #{preDealTime}" +
             ")")
     @Options(useGeneratedKeys = true, keyProperty = "preSequence")
     int insert(PrescriptionInfo prescriptionInfo);

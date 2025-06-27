@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface PatientService extends IService<PatientInfo> {
 
-    List<PatientInfo> queryPatients(Integer healthcardId, String identificationId, String name);
-    boolean updateByHealthcardId(Integer healthcardId, PatientInfo patientInfo);
+    List<PatientInfo> queryPatients(int healthcardId, String identificationId, String name);
+    boolean updateByHealthcardId(int healthcardId, PatientInfo patientInfo);
     /**
      * 就诊卡充值
      * @param healthcardId 就诊卡号
@@ -16,5 +16,5 @@ public interface PatientService extends IService<PatientInfo> {
      * @return 充值后的余额（float类型）
      * @throws IllegalArgumentException 参数不合法时抛出
      */
-    float recharge(String healthcardId, float amount);
+    void recharge(int healthcardId, float amount);
 }

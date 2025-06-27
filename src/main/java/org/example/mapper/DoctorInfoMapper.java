@@ -49,6 +49,25 @@ public interface DoctorInfoMapper extends BaseMapper<DoctorInfo> {
         doctor_info di
     JOIN department_info dpi ON dpi.department_id=di.doc_dp_id
     WHERE 
+        di.doc_dp_id=#{id}
+    """)
+    @ResultMap("DoctorResultsMap")
+    List<DoctorInfo> getbydepId(int id);
+
+    @Select("""
+    SELECT 
+        di.doc_id,
+        di.doc_name,
+        di.doc_rank,
+        di.doc_phone,
+        di.doc_dp_id,
+        di.doc_fee,
+        dpi.department_name as dpname
+        
+    FROM
+        doctor_info di
+    JOIN department_info dpi ON dpi.department_id=di.doc_dp_id
+    WHERE 
         di.doc_id=#{id}
     """)
     @ResultMap("DoctorResultsMap")

@@ -19,10 +19,10 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
     @Autowired
     private PatientInfoMapper patientInfoMapper;
     @Override
-    public List<PatientInfo> queryPatients(Integer healthcardId, String identificationId, String name) {
+    public List<PatientInfo> queryPatients(int healthcardId, String identificationId, String name) {
         QueryWrapper<PatientInfo> queryWrapper = new QueryWrapper<>();
 
-        if (healthcardId != null) {
+        if (healthcardId != 0) {
             queryWrapper.eq("healthcard_id", healthcardId);
         }
 
@@ -37,9 +37,9 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
         return list(queryWrapper);
     }
     @Override
-    public boolean updateByHealthcardId(Integer healthcardId, PatientInfo patientInfo) {
+    public boolean updateByHealthcardId(int healthcardId, PatientInfo patientInfo) {
         // 确保输入不为空
-        if (healthcardId == null || patientInfo == null) {
+        if (healthcardId == 0 || patientInfo == null) {
             throw new IllegalArgumentException("healthcardId 和 patientInfo 不能为空");
         }
 
@@ -57,7 +57,7 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
 
     @Override
     @Transactional
-    public float recharge(String healthcardId, float amount) {
+    public void recharge(int healthcardId, float amount) {
         // 1. 参数校验
         if (amount <= 0) {
             throw new IllegalArgumentException("充值金额必须大于0");
@@ -95,7 +95,5 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
         if (!updateById(patient)) {
             throw new RuntimeException("充值失败，请重试");
         }
-
-        return updatedBalance;
     }
 }

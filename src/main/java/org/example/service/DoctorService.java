@@ -12,4 +12,5 @@ public interface DoctorService extends IService<DoctorInfo> {
     void updateDoctor(int docid,DoctorInfo doctorInfo);
     void deleteDoctor(int docId);
     List<DoctorInfo> getalldoc();
+    List<DoctorInfo>getDoctorBydepId(int depId);
 }

@@ -3,6 +3,7 @@ package org.example.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.common.Result;
 import org.example.entity.PatientInfo;
 import org.example.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,61 +29,51 @@ public class PatientController {
      * @return 保存成功返回true，失败返回false
      */
     @PostMapping("/register")
+    @Operation(summary = "创建病人信息", description = "注册新的病人")
     public void registerPatient(@RequestBody PatientInfo patientInfo) {
         patientService.save(patientInfo);
     }
     @DeleteMapping("/delete/{healthcardId}")
+    @Operation(summary = "注销病人信息", description = "注销患者信息")
     public void deletePatient(@PathVariable int healthcardId) {
         patientService.removeById(healthcardId);
     }
 
     @GetMapping("/query")
-    public List<PatientInfo> queryPatients(
-            @RequestParam(required = false) Integer healthcardId,
+    @Operation(summary = "查询病人信息", description = "查询病人")
+    public Result queryPatients(
+            @RequestParam(required = false) int healthcardId,
             @RequestParam(required = false) String identificationId,
             @RequestParam(required = false) String name) {
 
-        if (healthcardId == null && identificationId == null && name == null) {
+        if (healthcardId == 0 && identificationId == null && name == null) {
             throw new IllegalArgumentException("至少需要提供一个查询参数（就诊卡号、证件号或姓名）");
         }
 
-        return patientService.queryPatients(healthcardId, identificationId, name);
+        Result result =new Result("200","success",patientService.queryPatients(healthcardId, identificationId, name));
+        return result.success(result.getData());
     }
     @PutMapping("/updateByHealthcard/{healthcardId}")
-    public boolean updateByHealthcardId(
-            @PathVariable Integer healthcardId,
+    @Operation(summary = "更新病人信息", description = "更新信息")
+    public void updateByHealthcardId(
+            @PathVariable int healthcardId,
             @RequestBody PatientInfo patientInfo) {
-        return patientService.updateByHealthcardId(healthcardId, patientInfo);
+        patientService.updateByHealthcardId(healthcardId, patientInfo);
+    }
+    @PutMapping("/listall")
+    @Operation(summary = "展示所有病人信息", description = "展示信息")
+    public Result listallPatients() {
+        Result result =new Result("200","success",patientService.list());
+        return result.success(result.getData());
     }
     @PostMapping("/recharge")
     @Operation(summary = "就诊卡充值", description = "为指定就诊卡充值金额")
-    public ResponseEntity<Map<String, Object>> recharge(
+    public void recharge(
             @Parameter(description = "就诊卡号", required = true, example = "C123456789")
-            @RequestParam String healthcardId,
+            @RequestParam int healthcardId,
 
             @Parameter(description = "充值金额(元)", required = true, example = "100.50")
             @RequestParam float amount) {
-
-        try {
-            float newBalance = patientService.recharge(healthcardId, amount);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("newBalance", newBalance);
-            response.put("message", "充值成功");
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-
-        } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "系统错误: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
-        }
+            patientService.recharge(healthcardId, amount);
     }
 }

@@ -32,6 +32,15 @@ public class DoctorController {
         return result.success(result.getData());
     }
 
+    @GetMapping("/getBydepid")
+    @Operation(summary = "查询部门所有医生")
+    public Result getDoctorBydep(
+            @Parameter(description = "部门ID", required = true, example = "1001")
+            @RequestParam int depId) {
+        Result result= new Result("200","success",doctorService.getDoctorBydepId(depId));
+        return result.success(result.getData());
+    }
+
     @GetMapping("/findall")
     @Operation(summary = "查询所有医生")
     public Result getallDoctor() {

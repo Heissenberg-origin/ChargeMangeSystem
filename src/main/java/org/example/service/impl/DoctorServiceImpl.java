@@ -18,7 +18,9 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorInfoMapper,DoctorInfo> 
     public DoctorServiceImpl(DoctorInfoMapper doctorInfoMapper) {
         this.doctorInfoMapper = doctorInfoMapper;
     }
-
+    public List<DoctorInfo>getDoctorBydepId(int depId){
+        return doctorInfoMapper.getbydepId(depId);
+    }
     public DoctorInfo getDoctorById(int docId){
         DoctorInfo doctorInfo = doctorInfoMapper.getbyId(docId);
         return doctorInfo;
