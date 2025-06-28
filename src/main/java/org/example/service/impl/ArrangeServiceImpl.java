@@ -20,8 +20,10 @@ public class ArrangeServiceImpl extends ServiceImpl<ArrangeInfoMapper, ArrangeIn
     public ArrangeInfo getArrangeById(int id){
         return arrangeInfoMapper.selectArrangeById(id);
     }
+
     public void setArrangeByid(ArrangeInfo arrangeInfo,int id ){
-        arrangeInfoMapper.updateArrangeInfo(arrangeInfo,id);
+        String timezone=arrangeInfo.arrangetimezone.displayValue;
+        arrangeInfoMapper.updateArrangeInfo(arrangeInfo,timezone,id);
     }
     public List<ArrangeInfo> listall(){
         List<ArrangeInfo>list=arrangeInfoMapper.listallInfo();

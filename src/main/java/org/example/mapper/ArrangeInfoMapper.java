@@ -16,7 +16,7 @@ public interface ArrangeInfoMapper extends BaseMapper<ArrangeInfo> {
             a.arrange_date AS arrangeDate,
             a.arrange_timezone AS arrangeTimeZone,
             a.arrange_balance AS arrangeBalance,
-            a.arrange_doc_id
+            a.arrange_doc_id,
             d.doc_name AS doctorName,
             dp.department_name AS departmentName
         FROM 
@@ -61,11 +61,11 @@ public interface ArrangeInfoMapper extends BaseMapper<ArrangeInfo> {
 
     @Update("UPDATE arrange_info " +
             "SET arrange_date = #{arrangeInfo.arrangedate}, " +
-            "arrange_timezone = #{arrangeInfo.arrangetimezone.displayValue}, " +
+            "arrange_timezone = #{timezone}, " +
             "arrange_balance = #{arrangeInfo.arrangebalance}, " +
             "arrange_doc_id = #{arrangeInfo.arrangedocid} " +
             "WHERE arrange_id = #{id}")
-    public void updateArrangeInfo(@Param("arrangeInfo")ArrangeInfo arrangeInfo,int id);
+    public void updateArrangeInfo(@Param("arrangeInfo")ArrangeInfo arrangeInfo,String timezone,int id);
 
     @Delete("delete  from arrange_info where arrange_id=#{id}")
     public int deleteArrangeById(int id);
@@ -128,7 +128,7 @@ public interface ArrangeInfoMapper extends BaseMapper<ArrangeInfo> {
         JOIN 
             department_info dp ON d.doc_dp_id = dp.department_id
         WHERE 
-            arrange_date between #{startdate} and #{endDate}
+            arrange_date between #{startDate} and #{endDate}
     """)
     @ResultMap(value ="ArrangeResultMap")
     public List<ArrangeInfo> selectByDaterange(Date startDate, Date endDate);

@@ -48,7 +48,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id    
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     """)
     @Results(id = "prescriptionResultMap", value = {
@@ -99,7 +100,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id    
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_sequence = #{sequence}
@@ -136,7 +138,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id  
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_id = #{prescriptionId}
@@ -168,7 +171,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_reg_id = #{registrationId}
@@ -187,7 +191,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
             "JOIN registration_info ri ON pi.pre_reg_id = ri.reg_id " +
             "JOIN chargeitems_info ci ON pi.pre_ci_id = ci.chargeitem_id " +
             "JOIN patient_info pti ON ri.reg_hcard_id = pti.healthcard_id " +
-            "JOIN doctor_info doci ON ri.reg_doc_id = doci.doc_id " +
+            "JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id " +
+            "JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id " +
             "JOIN department_info depi ON doci.doc_dp_id = depi.department_id " +
             "WHERE pi.pre_reg_id IN " +
             "<foreach item='id' collection='grouprid' open='(' separator=',' close=')'>" +
@@ -202,11 +207,24 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     @Select("SELECT reg_id from registration_info Where reg_hcard_id in (select healthcard_id FROM patient_info WHERE identification_type=#{Idtype} AND identification_id=#{Id})")
     List<Integer> getregidbyidf(String Idtype, String Id);
 
-    @Select("SELECT reg_id FROM registration_info WHERE reg_doc_id in (SELECT doc_id FROM doctor_info WHERE doc_name LIKE #{docname})")
+    @Select("SELECT reg_id FROM registration_info " +
+            "WHERE reg_arrange_id IN (" +
+            "SELECT arrange_id FROM arrange_info " +
+            "WHERE arrange_doc_id IN (" +
+            "SELECT doc_id FROM doctor_info " +
+            "WHERE doc_name LIKE CONCAT('%', #{docname}, '%')))")
     List<Integer> getregidBydocname(String docname);
 
-    @Select("SELECT reg_id FROM registration_info WHERE reg_doc_id in (SELECT doc_id FROM doctor_info WHERE doc_dp_id in(SELECT department_id FROM department_info WHERE department_name LIKE #{depname}))")
-    List<Integer>getregidBydepname(String depname);
+    @Select("SELECT reg_id FROM registration_info " +
+            "WHERE reg_arrange_id IN (" +
+            "SELECT arrange_id FROM arrange_info " +
+            "WHERE arrange_doc_id IN (" +
+            "SELECT doc_id FROM doctor_info " +
+            "WHERE doc_dp_id IN (" +
+            "SELECT department_id FROM department_info " + // 确保使用正确的主键
+            "WHERE department_name LIKE CONCAT('%', #{depname}, '%'))))")
+    List<Integer> getregidBydepname(String depname);
+
     @Select("""
     SELECT 
         pi.pre_sequence,
@@ -231,7 +249,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_state = #{state}
@@ -263,7 +282,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_dealer_id = #{dealerId}
@@ -295,7 +315,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id    
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_time BETWEEN #{startDate} AND #{endDate}
@@ -328,7 +349,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_dealtime BETWEEN #{startDate} AND #{endDate}
@@ -361,7 +383,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id    
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_deal_type = #{paymentType}
@@ -393,7 +416,8 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
     JOIN registration_info ri ON pre_reg_id=ri.reg_id
     JOIN chargeitems_info ci ON pre_ci_id=ci.chargeitem_id
     JOIN patient_info pti ON ri.reg_hcard_id=pti.healthcard_id
-    JOIN doctor_info doci ON ri.reg_doc_id=doci.doc_id
+    JOIN arrange_info ai ON ri.reg_arrange_id=ai.arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id    
     JOIN department_info depi ON  doci.doc_dp_id=depi.department_id
     WHERE 
         pre_ci_id = #{chargeItemId}

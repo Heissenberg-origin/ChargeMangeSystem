@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.PrescriptionStatsMapper">
+
+    <select id="statsByDepartment" resultType="org.example.dto.PrescriptionStatsDTO">
+        SELECT
+        d.department_name AS groupName,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,
+            </when>
+            <when test="timeType == 'month'">
+                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
+            </when>
+        </choose>
+        COUNT(DISTINCT p.pre_receipt_id) AS paymentCount,
+        SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paymentAmount,
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
+        FROM
+        prescription_info p
+        JOIN registration_info r ON p.pre_reg_id=r.reg_id
+        JOIN arrange_info a ON r.reg_arrange_id=a.arrange_id
+        JOIN doctor_info doc ON doc.doc_id=a.arrange_doc_id
+        JOIN department_info d ON doc.doc_dp_id = d.department_id
+        JOIN chargeitems_info ci ON p.pre_ci_id=ci.chargeitem_id
+        WHERE
+        p.pre_time BETWEEN #{startTime} AND #{endTime}
+        AND p.pre_state IN ('待缴费','待执行','已完成','已失效','已退费')
+        GROUP BY
+        d.department_name,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d')
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time))
+            </when>
+            <when test="timeType == 'month'">
+                DATE_FORMAT(p.pre_time, '%Y-%m')
+            </when>
+        </choose>
+        ORDER BY
+        (SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) -
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END)) DESC
+    </select>
+
+    <select id="statsByDoctor" resultType="org.example.dto.PrescriptionStatsDTO">
+        SELECT
+        doc.doc_name AS groupName,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,
+            </when>
+            <when test="timeType == 'month'">
+                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
+            </when>
+        </choose>
+        COUNT(DISTINCT p.pre_receipt_id) AS paymentCount,
+        SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paymentAmount,
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
+        FROM
+        prescription_info p
+        JOIN registration_info r ON p.pre_reg_id=r.reg_id
+        JOIN arrange_info a ON r.reg_arrange_id=a.arrange_id
+        JOIN doctor_info doc ON doc.doc_id=a.arrange_doc_id
+        JOIN department_info d ON doc.doc_dp_id = d.department_id
+        JOIN chargeitems_info ci ON p.pre_ci_id=ci.chargeitem_id
+        WHERE
+        p.pre_time BETWEEN #{startTime} AND #{endTime}
+        AND p.pre_state IN ('待缴费','待执行','已完成','已失效','已退费')
+        GROUP BY
+        doc.doc_name,
+        <choose>
+            <when test="timeType == 'day'">
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d')
+            </when>
+            <when test="timeType == 'week'">
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time))
+            </when>
+            <when test="timeType == 'month'">
+                DATE_FORMAT(p.pre_time, '%Y-%m')
+            </when>
+        </choose>
+        ORDER BY
+        (SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) -
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END)) DESC
+    </select>
+
+</mapper>

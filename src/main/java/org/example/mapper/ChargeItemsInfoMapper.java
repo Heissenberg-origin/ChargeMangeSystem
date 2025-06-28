@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.*;
 import org.example.entity.ChargeItemsInfo;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
@@ -311,7 +312,7 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
         JOIN
             department_info di ON ci.chargeitem_ex_dep_id = di.department_id
         WHERE
-            chargeitem_creator = #{creator}
+            chargeitem_creator  LIKE CONCAT('%',  #{creator}, '%')
         """)
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByCreator(String creator);
@@ -337,7 +338,7 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
         JOIN
             department_info di ON ci.chargeitem_ex_dep_id = di.department_id
         WHERE
-            chargeitem_lattest_fixer = #{modifier}
+            chargeitem_lattest_fixer LIKE CONCAT('%', #{modifier}, '%')
         """)
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByModifier(String modifier);

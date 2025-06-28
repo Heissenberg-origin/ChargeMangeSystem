@@ -191,7 +191,7 @@ public class PrescriptionController {
             @Parameter(description = "收费员ID", required = true)
             @RequestParam int dealerId,
             @Parameter(description = "处方状态", required = true)
-            @RequestBody PrescriptionInfo.PrescriptionState state) {
+            @RequestParam PrescriptionInfo.PrescriptionState state) {
             prescriptionService.updatePrescriptionState(sequence, dealerId,state);
             System.out.println("已将"+sequence+"的状态改为"+state);
     }

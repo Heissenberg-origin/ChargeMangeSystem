@@ -139,7 +139,7 @@ public class ChargeItemController {
             @Parameter(description = "收费项目ID", required = true)
             @PathVariable int id,
             @Parameter(description = "状态对象(包含status字段)", required = true)
-            @RequestBody ChargeItemsInfo.ItemState status) {
+            @RequestParam ChargeItemsInfo.ItemState status) {
         chargeItemService.updateChargeItemStatus(id, status);
         System.out.println("已完成更新：");
     }
@@ -149,8 +149,8 @@ public class ChargeItemController {
     public void updateChargeItemBalance(
             @Parameter(description = "收费项目ID", required = true)
             @PathVariable int id,
-            @Parameter(description = "余量变更对象(包含change字段)", required = true)
-            @RequestBody int change) {
+            @Parameter(description = "新的余量)", required = true)
+            @RequestParam int change) {
         chargeItemService.updateChargeItemBalance(id, change);
         System.out.println("已完成更新：");
     }

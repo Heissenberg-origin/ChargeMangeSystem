@@ -2,6 +2,7 @@ package org.example.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.example.entity.PatientInfo;
 
 /**
@@ -15,4 +16,7 @@ import org.example.entity.PatientInfo;
 @Mapper
 public interface PatientInfoMapper extends BaseMapper<PatientInfo> {
     // void save(User user);
+
+    @Select("select count(*) from patient_info pi where pi.gender=#{gender.displayValue}")
+    int getgenderamount(PatientInfo.Gender gender);
 }
