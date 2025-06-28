@@ -23,12 +23,6 @@ public class LoginInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) throws Exception {
-
-        // 排除不需要拦截的路径
-        if (isExcludedPath(request)) {
-            return true;
-        }
-
         HttpSession session = request.getSession();
         LoginInfo user = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
 
@@ -39,28 +33,17 @@ public class LoginInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private boolean isExcludedPath(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/api/auth") ||
-                path.startsWith("/swagger-ui") ||
-                path.startsWith("/v3/api-docs") ||
-                path.equals("/error");
-    }
-
     private void handleUnauthorizedRequest(HttpServletRequest request,
                                            HttpServletResponse response) throws IOException {
-
         String requestedWith = request.getHeader("X-Requested-With");
         boolean isAjax = "XMLHttpRequest".equals(requestedWith) ||
                 "application/json".equals(request.getContentType());
 
         if (isAjax) {
-            // AJAX请求返回JSON
             response.setContentType("application/json");
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.getWriter().write("{\"code\":401,\"message\":\"请先登录\"}");
         } else {
-            // 普通请求重定向到登录页面
             String redirectUrl = request.getRequestURL().toString();
             response.sendRedirect("/api/auth/login?redirect=" +
                     URLEncoder.encode(redirectUrl, "UTF-8"));

@@ -16,8 +16,13 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
             </when>
         </choose>
-        COUNT(DISTINCT p.pre_receipt_id) AS paymentCount,
-        SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paymentAmount,
+        COUNT(*) AS totalPrescriptions,
+        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,
+        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,
+        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,
+        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,
         SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
         FROM
         prescription_info p
@@ -42,9 +47,7 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m')
             </when>
         </choose>
-        ORDER BY
-        (SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) -
-        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END)) DESC
+        ORDER BY totalAmount DESC
     </select>
 
     <select id="statsByDoctor" resultType="org.example.dto.PrescriptionStatsDTO">
@@ -61,8 +64,13 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
             </when>
         </choose>
-        COUNT(DISTINCT p.pre_receipt_id) AS paymentCount,
-        SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paymentAmount,
+        COUNT(*) AS totalPrescriptions,
+        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,
+        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,
+        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,
+        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,
         SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
         FROM
         prescription_info p
@@ -87,9 +95,6 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m')
             </when>
         </choose>
-        ORDER BY
-        (SUM(CASE WHEN p.pre_state != '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) -
-        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END)) DESC
+        ORDER BY totalAmount DESC
     </select>
-
 </mapper>
