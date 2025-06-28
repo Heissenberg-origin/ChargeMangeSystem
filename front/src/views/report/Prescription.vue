@@ -141,10 +141,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Refresh, Download, Printer, PieChart } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
+import { getPrescriptionStats } from '@/api/prescription'
 
 // 查询参数
 const queryParams = reactive({
@@ -164,14 +165,7 @@ const loading = ref(false)
 
 // 科室选择
 const selectedDepartment = ref('')
-const departmentOptions = ref([
-  { value: '', label: '全部科室' },
-  { value: '儿科', label: '儿科' },
-  { value: '门诊外科', label: '门诊外科' },
-  { value: '门诊内科', label: '门诊内科' },
-  { value: '骨科', label: '骨科' },
-  { value: '耳鼻喉科', label: '耳鼻喉科' }
-])
+const departmentOptions = ref([]) // 初始为空，将从API获取数据后填充
 
 // 原始表格数据
 const tableData = ref([])
@@ -211,75 +205,96 @@ const formatCurrency = (value) => {
   })
 }
 
-// 获取表格数据
+// 获取数据并处理
 const fetchTableData = async () => {
   try {
     loading.value = true
-    // 模拟API请求
-    await new Promise(resolve => setTimeout(resolve, 800))
     
-    // 模拟数据 - 实际项目中替换为API调用
-    const mockData = [
-      {
-        statisticsType: '门诊外科',
-        prescriptionCount: 130,
-        prescriptionAmount: '3000.00',
-        paidPrescriptionCount: 120,
-        paidPrescriptionAmount: '2900.00',
-        unpaidPrescriptionCount: 10,
-        unpaidPrescriptionAmount: '100.00',
-        unpaidRatio: '8.33'
-      },
-      {
-        statisticsType: '门诊内科',
-        prescriptionCount: 235,
-        prescriptionAmount: '5000.00',
-        paidPrescriptionCount: 230,
-        paidPrescriptionAmount: '4500.00',
-        unpaidPrescriptionCount: 5,
-        unpaidPrescriptionAmount: '500.00',
-        unpaidRatio: '2.13'
-      },
-      {
-        statisticsType: '骨科',
-        prescriptionCount: 125,
-        prescriptionAmount: '2000.00',
-        paidPrescriptionCount: 125,
-        paidPrescriptionAmount: '2000.00',
-        unpaidPrescriptionCount: 0,
-        unpaidPrescriptionAmount: '0.00',
-        unpaidRatio: '0'
-      },
-      {
-        statisticsType: '耳鼻喉科',
-        prescriptionCount: 150,
-        prescriptionAmount: '3000.00',
-        paidPrescriptionCount: 150,
-        paidPrescriptionAmount: '3000.00',
-        unpaidPrescriptionCount: 0,
-        unpaidPrescriptionAmount: '0.00',
-        unpaidRatio: '0'
-      },
-      // 更多模拟数据...
-      ...Array.from({length: 20}, (_, i) => ({
-        statisticsType: `测试科室${i+1}`,
-        prescriptionCount: Math.floor(Math.random() * 100) + 50,
-        prescriptionAmount: (Math.random() * 5000 + 1000).toFixed(2),
-        paidPrescriptionCount: Math.floor(Math.random() * 100) + 50,
-        paidPrescriptionAmount: (Math.random() * 5000 + 1000).toFixed(2),
-        unpaidPrescriptionCount: Math.floor(Math.random() * 10),
-        unpaidPrescriptionAmount: (Math.random() * 500).toFixed(2),
-        unpaidRatio: (Math.random() * 10).toFixed(2)
-      }))
-    ]
+    const params = {
+      startTime: `${queryParams.dateRange[0]} 00:00:00`,
+      endTime: `${queryParams.dateRange[1]} 23:59:59`,
+      timeType: queryParams.timeType,
+      groupBy: queryParams.statisticsType === 'department' ? 'department' : 'doctor'
+    }
     
-    tableData.value = mockData
-    totalItems.value = mockData.length
+    const response = await getPrescriptionStats(params)
+    const responseData = response.data
+    
+    if (!responseData) {
+      throw new Error('响应数据为空')
+    }
+    
+    // 处理表格数据
+    tableData.value = processTableData(responseData)
+    
+    // 更新科室选项（只在按科室统计时更新）
+    if (queryParams.statisticsType === 'department') {
+      updateDepartmentOptions(responseData)
+    }
+    
+    totalItems.value = tableData.value.length
     ElMessage.success('数据加载成功')
   } catch (error) {
-    ElMessage.error('数据加载失败: ' + error.message)
+    console.error('数据加载失败:', error)
+    ElMessage.error(`数据加载失败: ${error.message}`)
   } finally {
     loading.value = false
+  }
+}
+
+// 处理表格数据
+const processTableData = (apiData) => {
+  try {
+    const groupData = queryParams.statisticsType === 'department' 
+      ? apiData.byDepartment 
+      : apiData.byDoctor
+    
+    if (!groupData) {
+      console.error('缺少分组数据:', apiData)
+      return []
+    }
+    
+    return groupData.map(item => ({
+      statisticsType: item.groupName,
+      prescriptionCount: item.totalPrescriptions,
+      prescriptionAmount: item.totalAmount,
+      paidPrescriptionCount: item.paidPrescriptions,
+      paidPrescriptionAmount: item.paidAmount,
+      unpaidPrescriptionCount: item.unpaidPrescriptions,
+      unpaidPrescriptionAmount: item.unpaidAmount,
+      unpaidRatio: parseFloat(item.unpaidRatio).toFixed(2),
+      timePeriod: item.timePeriod
+    }))
+  } catch (error) {
+    console.error('表格数据处理失败:', error)
+    return []
+  }
+}
+
+// 更新科室选项
+const updateDepartmentOptions = (apiData) => {
+  try {
+    if (!apiData.byDepartment) {
+      console.warn('API响应中缺少科室数据')
+      departmentOptions.value = [{ value: '', label: '全部科室' }]
+      return
+    }
+    
+    // 使用Set去重并排序
+    const uniqueDepartments = [...new Set(
+      apiData.byDepartment.map(item => item.groupName)
+    )].sort()
+    
+    departmentOptions.value = [
+      { value: '', label: '全部科室' },
+      ...uniqueDepartments.map(dept => ({
+        value: dept,
+        label: dept
+      }))
+    ]
+  } catch (error) {
+    console.error('更新科室选项失败:', error)
+    departmentOptions.value = [{ value: '', label: '全部科室' }]
   }
 }
 
@@ -328,7 +343,6 @@ const getSummaries = (param) => {
 // 科室变更处理
 const handleDepartmentChange = () => {
   currentPage.value = 1 // 重置页码
-  console.log('科室变更为:', selectedDepartment.value)
 }
 
 // 汇总功能（相当于查询功能）
@@ -343,12 +357,10 @@ const handleReset = () => {
   queryParams.dateRange = [getFirstDayOfMonth(), getLastDayOfMonth()]
   selectedDepartment.value = ''
   currentPage.value = 1
-  console.log('重置筛选条件')
 }
 
 // 打印功能
 const handlePrint = () => {
-  console.log('打印表格')
   window.print()
 }
 
@@ -364,73 +376,80 @@ const handlePageChange = (val) => {
 
 // 导出功能
 const handleExportData = () => {
-  // 1. 创建工作簿
-  const wb = XLSX.utils.book_new()
-  
-  // 2. 准备数据（处理表头和表格数据）
-  const headers = [
-    '统计方式', '已开处方数', '已开处方金额(元)',
-    '已收费处方数', '已收费处方金额(元)', 
-    '未收费处方数', '未收费处方金额(元)', '未收费比例(%)'
-  ]
-  
-  const data = [
-    headers,
-    ...tableData.value.map(item => [
-      item.statisticsType,
-      item.prescriptionCount,
-      item.prescriptionAmount,
-      item.paidPrescriptionCount,
-      item.paidPrescriptionAmount,
-      item.unpaidPrescriptionCount,
-      item.unpaidPrescriptionAmount,
-      item.unpaidRatio + '%'
-    ])
-  ]
-  
-  // 添加合计行
-  const totals = getSummaries({
-    columns: [
-      { property: 'statisticsType' },
-      { property: 'prescriptionCount' },
-      { property: 'prescriptionAmount' },
-      { property: 'paidPrescriptionCount' },
-      { property: 'paidPrescriptionAmount' },
-      { property: 'unpaidPrescriptionCount' },
-      { property: 'unpaidPrescriptionAmount' },
-      { property: 'unpaidRatio' }
-    ],
-    data: tableData.value
-  })
-  data.push(['合计', ...totals.slice(1)])
-  
-  // 3. 创建工作表
-  const ws = XLSX.utils.aoa_to_sheet(data)
-  
-  // 4. 设置列宽
-  ws['!cols'] = [
-    { wch: 15 }, // 统计方式
-    { wch: 12 }, // 已开处方数
-    { wch: 18 }, // 已开处方金额
-    { wch: 12 }, // 已收费处方数
-    { wch: 18 }, // 已收费处方金额
-    { wch: 12 }, // 未收费处方数
-    { wch: 18 }, // 未收费处方金额
-    { wch: 15 }  // 未收费比例
-  ]
-  
-  // 5. 将工作表添加到工作簿
-  XLSX.utils.book_append_sheet(wb, ws, '门诊处方汇总')
-  
-  // 6. 生成Excel文件并下载
-  const fileName = `门诊处方汇总_${queryParams.dateRange[0]}_至_${queryParams.dateRange[1]}.xlsx`
-  XLSX.writeFile(wb, fileName)
-  
-  ElMessage.success('导出成功')
+  try {
+    // 1. 创建工作簿
+    const wb = XLSX.utils.book_new()
+    
+    // 2. 准备数据（处理表头和表格数据）
+    const headers = [
+      '统计方式', '已开处方数', '已开处方金额(元)',
+      '已收费处方数', '已收费处方金额(元)', 
+      '未收费处方数', '未收费处方金额(元)', '未收费比例(%)'
+    ]
+    
+    const data = [
+      headers,
+      ...tableData.value.map(item => [
+        item.statisticsType,
+        item.prescriptionCount,
+        item.prescriptionAmount,
+        item.paidPrescriptionCount,
+        item.paidPrescriptionAmount,
+        item.unpaidPrescriptionCount,
+        item.unpaidPrescriptionAmount,
+        item.unpaidRatio + '%'
+      ])
+    ]
+    
+    // 添加合计行
+    const totals = getSummaries({
+      columns: [
+        { property: 'statisticsType' },
+        { property: 'prescriptionCount' },
+        { property: 'prescriptionAmount' },
+        { property: 'paidPrescriptionCount' },
+        { property: 'paidPrescriptionAmount' },
+        { property: 'unpaidPrescriptionCount' },
+        { property: 'unpaidPrescriptionAmount' },
+        { property: 'unpaidRatio' }
+      ],
+      data: tableData.value
+    })
+    data.push(['合计', ...totals.slice(1)])
+    
+    // 3. 创建工作表
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    
+    // 4. 设置列宽
+    ws['!cols'] = [
+      { wch: 15 }, // 统计方式
+      { wch: 12 }, // 已开处方数
+      { wch: 18 }, // 已开处方金额
+      { wch: 12 }, // 已收费处方数
+      { wch: 18 }, // 已收费处方金额
+      { wch: 12 }, // 未收费处方数
+      { wch: 18 }, // 未收费处方金额
+      { wch: 15 }  // 未收费比例
+    ]
+    
+    // 5. 将工作表添加到工作簿
+    XLSX.utils.book_append_sheet(wb, ws, '门诊处方汇总')
+    
+    // 6. 生成Excel文件并下载
+    const fileName = `门诊处方汇总_${queryParams.dateRange[0]}_至_${queryParams.dateRange[1]}.xlsx`
+    XLSX.writeFile(wb, fileName)
+    
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败: ' + (error.message || '请检查数据'))
+  }
 }
 
 // 初始化加载数据
-fetchTableData()
+onMounted(() => {
+  fetchTableData()
+})
 </script>
 
 <style scoped>
