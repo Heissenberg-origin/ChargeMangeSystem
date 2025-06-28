@@ -25,24 +25,6 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
     }
 
     @Override
-    public List<PatientInfo> queryPatients(int healthcardId, String identificationId, String name) {
-        QueryWrapper<PatientInfo> queryWrapper = new QueryWrapper<>();
-
-        if (healthcardId != 0) {
-            queryWrapper.eq("healthcard_id", healthcardId);
-        }
-
-        if (identificationId != null) {
-            queryWrapper.eq("identification_id", identificationId);
-        }
-
-        if (name != null) {
-            queryWrapper.like("name", name); // 使用like实现模糊查询
-        }
-
-        return list(queryWrapper);
-    }
-    @Override
     public boolean updateByHealthcardId(int healthcardId, PatientInfo patientInfo) {
         // 确保输入不为空
         if (healthcardId == 0 || patientInfo == null) {

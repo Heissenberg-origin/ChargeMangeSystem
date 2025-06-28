@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface PatientService extends IService<PatientInfo> {
 
-    List<PatientInfo> queryPatients(int healthcardId, String identificationId, String name);
     boolean updateByHealthcardId(int healthcardId, PatientInfo patientInfo);
     /**
      * 就诊卡充值

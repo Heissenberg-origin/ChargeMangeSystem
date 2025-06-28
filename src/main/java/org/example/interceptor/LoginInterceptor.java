@@ -23,13 +23,13 @@ public class LoginInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) throws Exception {
-        HttpSession session = request.getSession();
-        LoginInfo user = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
-
-        if (user == null) {
-            handleUnauthorizedRequest(request, response);
-            return false;
-        }
+//        HttpSession session = request.getSession();
+//        LoginInfo user = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
+//
+//        if (user == null) {
+//            handleUnauthorizedRequest(request, response);
+//            return false;
+//        }
         return true;
     }
 

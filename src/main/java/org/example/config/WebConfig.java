@@ -16,7 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // 注册拦截器
         registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/**") // 拦截所有路径
+                .addPathPatterns() // 拦截所有路径"/**"
                 .excludePathPatterns(
                         "/api/auth/login",  // 登录接口
                         "/error",           // 错误页面
