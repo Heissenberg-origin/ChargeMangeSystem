@@ -68,7 +68,7 @@ public class PatientController {
             @RequestBody PatientInfo patientInfo) {
         patientService.updateByHealthcardId(healthcardId, patientInfo);
     }
-    @PutMapping("/listall")
+    @GetMapping("/listall")
     @Operation(summary = "展示所有病人信息", description = "展示信息")
     public Result listallPatients() {
         Result result =new Result("200","success",patientService.list());
