@@ -1,14 +1,16 @@
+// PrescriptionStatsService.java
 package org.example.service;
 
 import org.example.dto.PrescriptionStatsRequest;
-import org.example.dto.PrescriptionStatsDTO;
 import org.example.dto.PrescriptionStatsSummary;
+import org.example.dto.PrescriptionStatsDTO;
 import org.example.mapper.PrescriptionStatsMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PrescriptionStatsService {
@@ -20,46 +22,57 @@ public class PrescriptionStatsService {
     }
 
     public PrescriptionStatsSummary getPrescriptionStats(PrescriptionStatsRequest request) {
-        List<PrescriptionStatsDTO> statsList;
+        Date startTime = request.getStartTime();
+        Date endTime = request.getEndTime();
+        String timeType = request.getTimeType();
 
-        if ("doctor".equals(request.getGroupBy())) {
-            statsList = statsMapper.statsByDoctor(
-                    request.getStartTime(),
-                    request.getEndTime(),
-                    request.getTimeType()
-            );
-        } else {
-            statsList = statsMapper.statsByDepartment(
-                    request.getStartTime(),
-                    request.getEndTime(),
-                    request.getTimeType()
-            );
+        // 获取总统计数据
+        PrescriptionStatsDTO totalStats = statsMapper.getTotalStats(startTime, endTime);
+
+        // 计算未收费比例
+        BigDecimal unpaidRatio = BigDecimal.ZERO;
+        if (totalStats.getTotalPrescriptions() > 0) {
+            unpaidRatio = new BigDecimal(totalStats.getUnpaidPrescriptions())
+                    .divide(new BigDecimal(totalStats.getTotalPrescriptions()), 4, RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal(100));
         }
+        totalStats.setUnpaidRatio(unpaidRatio);
 
-        // 按实际金额从高到低排序
-        statsList = statsList.stream()
-                .sorted((a, b) -> b.getActualAmount().compareTo(a.getActualAmount()))
-                .collect(Collectors.toList());
+        // 获取分组统计数据
+        List<PrescriptionStatsDTO> byDepartment = statsMapper.statsByDepartment(startTime, endTime, timeType);
+        List<PrescriptionStatsDTO> byDoctor = statsMapper.statsByDoctor(startTime, endTime, timeType);
 
-        // 计算合计
+        // 计算分组数据的未收费比例
+        calculateUnpaidRatio(byDepartment);
+        calculateUnpaidRatio(byDoctor);
+
+        // 构建返回结果
         PrescriptionStatsSummary summary = new PrescriptionStatsSummary();
-        summary.setStatsList(statsList);
-
-        int totalPaymentCount = 0;
-        BigDecimal totalPaymentAmount = BigDecimal.ZERO;
-        BigDecimal totalRefundAmount = BigDecimal.ZERO;
-
-        for (PrescriptionStatsDTO stat : statsList) {
-            totalPaymentCount += stat.getPaymentCount();
-            totalPaymentAmount = totalPaymentAmount.add(stat.getPaymentAmount());
-            totalRefundAmount = totalRefundAmount.add(stat.getRefundAmount() != null ?
-                    stat.getRefundAmount() : BigDecimal.ZERO);
-        }
-
-        summary.setTotalPaymentCount(totalPaymentCount);
-        summary.setTotalPaymentAmount(totalPaymentAmount);
-        summary.setTotalRefundAmount(totalRefundAmount);
+        summary.setTotalPrescriptions(totalStats.getTotalPrescriptions());
+        summary.setPaidPrescriptions(totalStats.getPaidPrescriptions());
+        summary.setUnpaidPrescriptions(totalStats.getUnpaidPrescriptions());
+        summary.setRefundPrescriptions(totalStats.getRefundPrescriptions());
+        summary.setTotalAmount(totalStats.getTotalAmount());
+        summary.setPaidAmount(totalStats.getPaidAmount());
+        summary.setUnpaidAmount(totalStats.getUnpaidAmount());
+        summary.setRefundAmount(totalStats.getRefundAmount());
+        summary.setUnpaidRatio(totalStats.getUnpaidRatio());
+        summary.setByDepartment(byDepartment);
+        summary.setByDoctor(byDoctor);
 
         return summary;
+    }
+
+    private void calculateUnpaidRatio(List<PrescriptionStatsDTO> statsList) {
+        for (PrescriptionStatsDTO stats : statsList) {
+            if (stats.getTotalPrescriptions() > 0) {
+                BigDecimal ratio = new BigDecimal(stats.getUnpaidPrescriptions())
+                        .divide(new BigDecimal(stats.getTotalPrescriptions()), 4, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal(100));
+                stats.setUnpaidRatio(ratio);
+            } else {
+                stats.setUnpaidRatio(BigDecimal.ZERO);
+            }
+        }
     }
 }

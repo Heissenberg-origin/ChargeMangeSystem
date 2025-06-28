@@ -1,3 +1,4 @@
+// PrescriptionStatsController.java
 package org.example.controller;
 
 import org.example.dto.PrescriptionStatsRequest;
@@ -19,7 +20,7 @@ public class PrescriptionStatsController {
     }
 
     @PostMapping
-    @Operation(summary = "获取处方统计数据")
+    @Operation(summary = "获取处方统计数据", description = "统计已开方数、已开方金额、未收费处方数、未收费金额、未收费比例等指标")
     public PrescriptionStatsSummary getPrescriptionStats(
             @RequestBody PrescriptionStatsRequest request) {
         return statsService.getPrescriptionStats(request);
