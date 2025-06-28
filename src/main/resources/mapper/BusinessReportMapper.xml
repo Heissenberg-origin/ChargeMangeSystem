@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.BusinessReportMapper">
+
+    <select id="getBusinessReportSummary" resultType="org.example.dto.BusinessReportSummary">
+        SELECT
+                (SELECT COUNT(*) FROM patient_info) AS totalPatientCount,
+                COALESCE(SUM(reg.registration_count), 0) AS totalRegistrationCount,
+                COALESCE(SUM(reg.registration_fee), 0) AS totalRegistrationFee,
+                COALESCE(SUM(pre.prescription_count), 0) AS totalPrescriptionCount,
+                COALESCE(SUM(pre.prescription_fee), 0) AS totalPrescriptionFee,
+                CASE
+                    WHEN COALESCE(SUM(pre.prescription_fee), 0) = 0 THEN 0
+                    ELSE COALESCE(SUM(pre.medicine_fee), 0) * 100 / COALESCE(SUM(pre.prescription_fee), 1)
+                    END AS avgMedicineRatio
+        FROM
+                (SELECT DATE(#{startDate}) + INTERVAL seq DAY AS date
+        FROM (
+            SELECT 0 AS seq UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+            UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+            UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14
+            UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18 UNION SELECT 19
+            UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23 UNION SELECT 24
+            UNION SELECT 25 UNION SELECT 26 UNION SELECT 27 UNION SELECT 28 UNION SELECT 29
+            UNION SELECT 30
+            ) AS seq
+        WHERE DATE(#{startDate}) + INTERVAL seq DAY BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+            ) AS daily
+            LEFT JOIN (
+        SELECT
+            DATE(reg_time) AS reg_date,
+            COUNT(*) AS registration_count,
+            SUM(doc.doc_fee) AS registration_fee
+        FROM
+            registration_info r
+            JOIN arrange_info a ON r.reg_arrange_id = a.arrange_id
+            JOIN doctor_info doc ON a.arrange_doc_id = doc.doc_id
+        WHERE
+            reg_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY
+            DATE(reg_time)
+            ) AS reg ON daily.date = reg.reg_date
+            LEFT JOIN (
+            SELECT
+            DATE(pre_dealtime) AS pre_date,
+            COUNT(*) AS prescription_count,
+            SUM(ci.chargeitem_price * p.pre_ci_num) AS prescription_fee,
+            SUM(CASE WHEN ci.chargeitem_type IN ('西药','中成药','中草药')
+            THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS medicine_fee
+            FROM
+            prescription_info p
+            JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id
+            WHERE
+            pre_dealtime BETWEEN #{startDate} AND #{endDate}
+            AND p.pre_state NOT IN ('待缴费', '已退费')
+            GROUP BY
+            DATE(pre_dealtime)
+            ) AS pre ON daily.date = pre.pre_date
+    </select>
+</mapper>

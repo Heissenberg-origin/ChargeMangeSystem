@@ -47,18 +47,11 @@ public class PatientController {
         return result;
     }
 
-    @GetMapping("/query")
-    @Operation(summary = "查询病人信息", description = "查询病人")
+    @GetMapping("/querybyId")
+    @Operation(summary = "就诊卡查询病人信息", description = "查询病人")
     public Result queryPatients(
-            @RequestParam(required = false) int healthcardId,
-            @RequestParam(required = false) String identificationId,
-            @RequestParam(required = false) String name) {
-
-        if (healthcardId == 0 && identificationId == null && name == null) {
-            throw new IllegalArgumentException("至少需要提供一个查询参数（就诊卡号、证件号或姓名）");
-        }
-
-        Result result =new Result("200","success",patientService.queryPatients(healthcardId, identificationId, name));
+            @RequestParam  int healthcardId) {
+        Result result =new Result("200","success",patientService.getById(healthcardId));
         return result.success(result.getData());
     }
     @PutMapping("/updateByHealthcard/{healthcardId}")
