@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Refresh, Download, Printer, PieChart } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
@@ -260,7 +260,12 @@ const fetchTableData = async () => {
   try {
     loading.value = true
     
-    // 构造请求参数
+    // 确保dateRange有值
+    if (!queryParams.dateRange || queryParams.dateRange.length !== 2) {
+      queryParams.dateRange = [getFirstDayOfMonth(), getLastDayOfMonth()]
+    }
+    
+    // 构造请求参数，添加时间范围过滤
     const params = {
       startTime: `${queryParams.dateRange[0]} 00:00:00`,
       endTime: `${queryParams.dateRange[1]} 23:59:59`,
@@ -301,15 +306,21 @@ const processRegistrationData = (apiData) => {
     // 默认处理原始数组数据
     if (Array.isArray(apiData.data)) {
       console.log('处理原始数组数据:', apiData.data)
-      return apiData.data.map(item => ({
-        ...item,
-        statisticsType: getStatisticsTypeLabel(item),
-        totalCount: 1,
-        cancelCount: item.regState === 'CANCELED' ? 1 : 0,
-        receivableAmount: item.regfee || 0,
-        receivedAmount: item.regState !== 'CANCELED' ? (item.regfee || 0) : 0,
-        cancelAmount: item.regState === 'CANCELED' ? (item.regfee || 0) : 0
-      }))
+      // 添加时间范围过滤
+      return apiData.data
+        .filter(item => {
+          const regDate = new Date(item.regTime).toISOString().split('T')[0]
+          return regDate >= queryParams.dateRange[0] && regDate <= queryParams.dateRange[1]
+        })
+        .map(item => ({
+          ...item,
+          statisticsType: getStatisticsTypeLabel(item),
+          totalCount: 1,
+          cancelCount: item.regState === 'CANCELED' ? 1 : 0,
+          receivableAmount: item.regfee || 0,
+          receivedAmount: item.regState !== 'CANCELED' ? (item.regfee || 0) : 0,
+          cancelAmount: item.regState === 'CANCELED' ? (item.regfee || 0) : 0
+        }))
     }
     
     // 处理分组数据
@@ -317,28 +328,34 @@ const processRegistrationData = (apiData) => {
       ? apiData.data.byDepartment 
       : apiData.data.byDoctor || []
 
-      console.log('处理后的分组数据:', groupData)
+    console.log('处理后的分组数据:', groupData)
     
-    return groupData.map(item => {
-      const total = item.totalRegistrations || 0
-      const canceled = item.canceledRegistrations || 0
-      
-      return {
-        ...item,
-        statisticsType: item.groupName || item.departmentName || item.doctorName,
-        regdepName: item.departmentName,
-        regdocName: item.doctorName,
-        regfee: item.fee,
-        regState: item.status,
-        regTime: item.registerTime,
-        totalCount: total,
-        cancelCount: canceled,
-        receivableAmount: item.totalFee || 0,
-        receivedAmount: item.paidFee || 0,
-        cancelAmount: item.canceledFee || 0,
-        cancelRatio: total > 0 ? ((canceled / total) * 100).toFixed(2) + '%' : '0%'
-      }
-    })
+    return groupData
+      .filter(item => {
+        // 添加时间范围过滤
+        const regDate = new Date(item.registerTime || item.regTime).toISOString().split('T')[0]
+        return regDate >= queryParams.dateRange[0] && regDate <= queryParams.dateRange[1]
+      })
+      .map(item => {
+        const total = item.totalRegistrations || 0
+        const canceled = item.canceledRegistrations || 0
+        
+        return {
+          ...item,
+          statisticsType: item.groupName || item.departmentName || item.doctorName,
+          regdepName: item.departmentName,
+          regdocName: item.doctorName,
+          regfee: item.fee,
+          regState: item.status,
+          regTime: item.registerTime,
+          totalCount: total,
+          cancelCount: canceled,
+          receivableAmount: item.totalFee || 0,
+          receivedAmount: item.paidFee || 0,
+          cancelAmount: item.canceledFee || 0,
+          cancelRatio: total > 0 ? ((canceled / total) * 100).toFixed(2) + '%' : '0%'
+        }
+      })
   } catch (error) {
     console.error('数据处理失败:', error)
     return []
@@ -557,6 +574,13 @@ const handlePrint = () => {
 
 // 初始化加载数据
 fetchTableData()
+
+// 监听日期范围变化
+watch(() => queryParams.dateRange, (newVal) => {
+  if (newVal && newVal.length === 2) {
+    fetchTableData()
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
