@@ -42,3 +42,12 @@ export function getDailyInformation(data) {
   });
 }
 
+export function getBusinessInformation(data) {
+  return http.post('/api/report/business', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+
