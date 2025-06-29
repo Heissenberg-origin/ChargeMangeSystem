@@ -34,3 +34,11 @@ export function getRegistrationList(params) {
   return http.get('/registration/findall', { params })
 }
 
+export function getDailyInformation(data) {
+  return http.post('/api/report/daily', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
