@@ -47,11 +47,11 @@ public class PatientController {
         return result;
     }
 
-    @GetMapping("/querybyId")
+    @GetMapping("/querybyId/{healthcardId}")
     @Operation(summary = "就诊卡查询病人信息", description = "查询病人")
     public Result queryPatients(
-            @RequestParam  int healthcardId) {
-        Result result =new Result("200","success",patientService.getById(healthcardId));
+            @PathVariable int healthcardId) {  //  正确，使用 @PathVariable
+        Result result = new Result("200", "success", patientService.getById(healthcardId));
         return result.success(result.getData());
     }
     @PutMapping("/updateByHealthcard/{healthcardId}")
