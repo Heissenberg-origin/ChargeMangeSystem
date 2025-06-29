@@ -28,3 +28,9 @@ export function getPrescriptionStats(params) {
     }
   })
 }
+
+//获取挂号信息汇总
+export function getRegistrationList(params) {
+  return http.get('/registration/findall', { params })
+}
+

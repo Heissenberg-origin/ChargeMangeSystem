@@ -19,7 +19,6 @@
                   <el-radio-button label="department">按科室</el-radio-button>
                   <el-radio-button label="doctor">按医生</el-radio-button>
                   <el-radio-button label="payment">按支付方式</el-radio-button>
-                  <el-radio-button label="cashier">按收费员</el-radio-button>
                 </el-radio-group>
               </el-form-item>
             </el-col>

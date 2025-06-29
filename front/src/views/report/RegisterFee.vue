@@ -19,7 +19,6 @@
                   <el-radio-button label="department">按科室</el-radio-button>
                   <el-radio-button label="doctor">按医生</el-radio-button>
                   <el-radio-button label="payment">按支付方式</el-radio-button>
-                  <el-radio-button label="cashier">按收费员</el-radio-button>
                 </el-radio-group>
               </el-form-item>
             </el-col>
@@ -154,7 +153,6 @@
           v-loading="detailLoading"
           stripe
         >
-          <el-table-column prop="name" label="姓名" align="center" />
           <el-table-column prop="registrationNo" label="就诊号" align="center" />
           <el-table-column prop="cardNo" label="就诊卡号" align="center" />
           <el-table-column prop="patientName" label="患者姓名" align="center" />
@@ -192,10 +190,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { Refresh, Download, Printer, PieChart } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
+import { getRegistrationList } from '@/api/prescription'
 
 // 查询参数
 const queryParams = reactive({
@@ -204,36 +203,30 @@ const queryParams = reactive({
   dateRange: [getFirstDayOfMonth(), getLastDayOfMonth()]
 })
 
+// 表格数据
+const tableData = ref([])
+const loading = ref(false)
+
+// 科室筛选
+const selectedDepartment = ref('')
+const departmentOptions = ref([])
+
 // 分页参数
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalItems = ref(0)
-const showPagination = ref(true)
+const showPagination = computed(() => tableData.value.length > pageSize.value)
 
-// 加载状态
-const loading = ref(false)
-
-// 科室选择
-const selectedDepartment = ref('')
-const departmentOptions = ref([
-  { value: '门诊外科', label: '门诊外科' },
-  { value: '门诊内科', label: '门诊内科' },
-  { value: '骨科', label: '骨科' },
-  { value: '耳鼻喉科', label: '耳鼻喉科' }
-])
-
-// 原始表格数据
-const tableData = ref([])
-
-// 明细对话框相关
+// 明细对话框
 const detailDialogVisible = ref(false)
-const currentDetail = ref({})
-const registrationDetails = ref([])
 const detailLoading = ref(false)
+const registrationDetails = ref([])
+const currentDetail = ref({})
 const detailCurrentPage = ref(1)
 const detailPageSize = ref(10)
 const detailTotal = ref(0)
 
+/* 工具函数 */
 // 获取当月第一天
 function getFirstDayOfMonth() {
   const date = new Date()
@@ -246,249 +239,202 @@ function getLastDayOfMonth() {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0]
 }
 
-// 根据选择的科室过滤数据
-const filteredTableData = computed(() => {
-  let data = tableData.value
-  if (selectedDepartment.value) {
-    data = data.filter(item => item.statisticsType.includes(selectedDepartment.value))
-  }
-  
-  // 分页处理
-  if (showPagination.value) {
-    const start = (currentPage.value - 1) * pageSize.value
-    return data.slice(start, start + pageSize.value)
-  }
-  return data
-})
-
-// 格式化货币显示
+// 格式化金额
 const formatCurrency = (value) => {
-  return parseFloat(value).toLocaleString('zh-CN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
+  return '¥' + parseFloat(value || 0).toFixed(2)
 }
 
 // 获取状态标签类型
 const getStatusTagType = (status) => {
   switch(status) {
-    case '待就诊': return 'primary'
-    case '已就诊': return 'success'
-    case '已退号': return 'warning'
-    case '已失效': return 'danger'
+    case 'COMPLETED': return 'success'
+    case 'PENDING': return 'warning'
+    case 'CANCELED': return 'danger'
     default: return 'info'
   }
 }
 
+/* 数据获取与处理 */
 // 获取表格数据
 const fetchTableData = async () => {
   try {
     loading.value = true
-    // 模拟API请求
-    await new Promise(resolve => setTimeout(resolve, 800))
     
-    // 模拟数据 - 实际项目中替换为API调用
-    const mockData = [
-      {
-        statisticsType: '门诊外科',
-        totalCount: 200,
-        cancelCount: 5,
-        receivableAmount: '6000.00',
-        receivedAmount: '6000.00',
-        cancelAmount: '300.00'
-      },
-      {
-        statisticsType: '门诊内科',
-        totalCount: 300,
-        cancelCount: 10,
-        receivableAmount: '8000.00',
-        receivedAmount: '8000.00',
-        cancelAmount: '200.00'
-      },
-      {
-        statisticsType: '骨科',
-        totalCount: 125,
-        cancelCount: 6,
-        receivableAmount: '5600.00',
-        receivedAmount: '5600.00',
-        cancelAmount: '500.00'
-      },
-      {
-        statisticsType: '耳鼻喉科',
-        totalCount: 150,
-        cancelCount: 3,
-        receivableAmount: '6800.00',
-        receivedAmount: '6800.00',
-        cancelAmount: '350.00'
-      },
-      // 更多模拟数据...
-      ...Array.from({length: 10}, (_, i) => ({
-        statisticsType: `测试科室${i+1}`,
-        totalCount: Math.floor(Math.random() * 200) + 50,
-        cancelCount: Math.floor(Math.random() * 10),
-        receivableAmount: (Math.random() * 10000 + 2000).toFixed(2),
-        receivedAmount: (Math.random() * 10000 + 2000).toFixed(2),
-        cancelAmount: (Math.random() * 1000).toFixed(2)
-      }))
-    ]
+    // 确保dateRange有值
+    if (!queryParams.dateRange || queryParams.dateRange.length !== 2) {
+      queryParams.dateRange = [getFirstDayOfMonth(), getLastDayOfMonth()]
+    }
     
-    tableData.value = mockData
-    totalItems.value = mockData.length
-    ElMessage.success('数据加载成功')
+    // 构造请求参数，添加时间范围过滤
+    const params = {
+      startTime: `${queryParams.dateRange[0]} 00:00:00`,
+      endTime: `${queryParams.dateRange[1]} 23:59:59`,
+      timeType: queryParams.timeType,
+      groupBy: queryParams.statisticsType === 'department' ? 'department' : 'doctor'
+    }
+    
+    // 调用接口
+    const response = await getRegistrationList(params)
+    const responseData = response.data
+    
+    console.log('接口返回数据:', responseData)
+    
+    if (!responseData) {
+      throw new Error('响应数据为空')
+    }
+    
+    // 处理数据
+    tableData.value = processRegistrationData(responseData)
+    
+    // 更新科室选项
+    updateDepartmentOptions(responseData)
+    
+    totalItems.value = tableData.value.length
+    ElMessage.success(`成功加载 ${tableData.value.length} 条数据`)
   } catch (error) {
-    ElMessage.error('数据加载失败: ' + error.message)
+    console.error('数据加载失败:', error)
+    ElMessage.error(`数据加载失败: ${error.message}`)
   } finally {
     loading.value = false
   }
 }
 
-// 获取挂号明细数据
-const fetchRegistrationDetails = async (item) => {
+// 处理挂号数据
+const processRegistrationData = (apiData) => {
+  console.log('处理挂号数据:', apiData)
   try {
-    detailLoading.value = true
-    // 模拟API请求
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // 默认处理原始数组数据
+    if (Array.isArray(apiData.data)) {
+      console.log('处理原始数组数据:', apiData.data)
+      // 添加时间范围过滤
+      return apiData.data
+        .filter(item => {
+          const regDate = new Date(item.regTime).toISOString().split('T')[0]
+          return regDate >= queryParams.dateRange[0] && regDate <= queryParams.dateRange[1]
+        })
+        .map(item => ({
+          ...item,
+          statisticsType: getStatisticsTypeLabel(item),
+          totalCount: 1,
+          cancelCount: item.regState === 'CANCELED' ? 1 : 0,
+          receivableAmount: item.regfee || 0,
+          receivedAmount: item.regState !== 'CANCELED' ? (item.regfee || 0) : 0,
+          cancelAmount: item.regState === 'CANCELED' ? (item.regfee || 0) : 0
+        }))
+    }
     
-    // 模拟数据 - 实际项目中替换为API调用
-    const mockDetails = [
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050869',
-        cardNo: '20050869',
-        patientName: '张晓晓',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '30.00',
-        status: '待就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050868',
-        cardNo: '20050868',
-        patientName: '王一',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '30.00',
-        status: '待就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050867',
-        cardNo: '20050867',
-        patientName: '李梅',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '30.00',
-        status: '待就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050866',
-        cardNo: '20050866',
-        patientName: '张晓珂',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '30.00',
-        status: '已就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050865',
-        cardNo: '20050865',
-        patientName: '刘克',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '20.00',
-        status: '已就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050864',
-        cardNo: '20050864',
-        patientName: '小明',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '20.00',
-        status: '已就诊',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050863',
-        cardNo: '20050863',
-        patientName: '张三',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '20.00',
-        status: '已退号',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050862',
-        cardNo: '20050862',
-        patientName: '张三',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '66.00',
-        status: '已退号',
-        date: '2024-01-06 08:00'
-      },
-      {
-        name: item.statisticsType,
-        registrationNo: '6520050861',
-        cardNo: '20050861',
-        patientName: '张三',
-        department: item.statisticsType,
-        doctor: '李医生',
-        amount: '20.00',
-        status: '已失效',
-        date: '2024-01-06 08:00'
-      }
-    ]
+    // 处理分组数据
+    const groupData = queryParams.statisticsType === 'department' 
+      ? apiData.data.byDepartment 
+      : apiData.data.byDoctor || []
+
+    console.log('处理后的分组数据:', groupData)
     
-    registrationDetails.value = mockDetails
-    detailTotal.value = mockDetails.length
+    return groupData
+      .filter(item => {
+        // 添加时间范围过滤
+        const regDate = new Date(item.registerTime || item.regTime).toISOString().split('T')[0]
+        return regDate >= queryParams.dateRange[0] && regDate <= queryParams.dateRange[1]
+      })
+      .map(item => {
+        const total = item.totalRegistrations || 0
+        const canceled = item.canceledRegistrations || 0
+        
+        return {
+          ...item,
+          statisticsType: item.groupName || item.departmentName || item.doctorName,
+          regdepName: item.departmentName,
+          regdocName: item.doctorName,
+          regfee: item.fee,
+          regState: item.status,
+          regTime: item.registerTime,
+          totalCount: total,
+          cancelCount: canceled,
+          receivableAmount: item.totalFee || 0,
+          receivedAmount: item.paidFee || 0,
+          cancelAmount: item.canceledFee || 0,
+          cancelRatio: total > 0 ? ((canceled / total) * 100).toFixed(2) + '%' : '0%'
+        }
+      })
   } catch (error) {
-    ElMessage.error('获取明细数据失败: ' + error.message)
-  } finally {
-    detailLoading.value = false
+    console.error('数据处理失败:', error)
+    return []
   }
 }
 
-// 合计行计算方法
+// 获取统计类型标签
+const getStatisticsTypeLabel = (item) => {
+  switch(queryParams.statisticsType) {
+    case 'department': return item.regdepName
+    case 'doctor': return item.regdocName
+    case 'payment': return item.regDealType
+    default: return item.regdepName
+  }
+}
+
+// 更新科室选项
+const updateDepartmentOptions = (apiData) => {
+  try {
+    let departments = []
+    
+    if (apiData?.byDepartment) {
+      departments = apiData.byDepartment.map(d => d.departmentName || d.groupName)
+    } else {
+      departments = [...new Set(tableData.value.map(item => item.regdepName))]
+    }
+    
+    departmentOptions.value = departments
+      .filter(name => name)
+      .map(name => ({ value: name, label: name }))
+  } catch (error) {
+    console.error('更新科室选项失败:', error)
+  }
+}
+
+/* 表格相关 */
+// 过滤后的数据
+const filteredTableData = computed(() => {
+  let data = tableData.value
+  
+  // 科室筛选
+  if (selectedDepartment.value) {
+    data = data.filter(item => item.regdepName === selectedDepartment.value)
+  }
+  
+  // 分页
+  totalItems.value = data.length
+  const start = (currentPage.value - 1) * pageSize.value
+  return data.slice(start, start + pageSize.value)
+})
+
+// 合计行计算
 const getSummaries = (param) => {
   const { columns, data } = param
   const sums = []
+  const numberFields = ['totalCount', 'cancelCount', 'receivableAmount', 'receivedAmount', 'cancelAmount']
+  
   columns.forEach((column, index) => {
     if (index === 0) {
       sums[index] = '合计'
       return
     }
     
-    const values = data.map(item => {
-      const val = item[column.property]
-      return !isNaN(parseFloat(val)) ? parseFloat(val) : 0
-    })
-    
-    if (!values.every(value => isNaN(value))) {
-      sums[index] = values.reduce((prev, curr) => {
-        const value = Number(curr)
-        if (!isNaN(value)) {
-          return prev + curr
-        } else {
-          return prev
-        }
-      }, 0)
+    if (numberFields.includes(column.property)) {
+      const values = data.map(item => {
+        const val = item[column.property]
+        return isNaN(val) ? 0 : Number(val)
+      })
       
-      // 格式化金额
-      if (column.property.includes('Amount')) {
-        sums[index] = formatCurrency(sums[index])
+      if (values.length > 0) {
+        const sum = values.reduce((acc, val) => acc + val, 0)
+        
+        if (column.property.includes('Amount')) {
+          sums[index] = formatCurrency(sum)
+        } else {
+          sums[index] = sum
+        }
+      } else {
+        sums[index] = 'N/A'
       }
     } else {
       sums[index] = 'N/A'
@@ -498,117 +444,143 @@ const getSummaries = (param) => {
   return sums
 }
 
-// 显示明细对话框
-const showDetail = (item) => {
-  currentDetail.value = item
-  detailDialogVisible.value = true
-  detailCurrentPage.value = 1
-  fetchRegistrationDetails(item)
-}
-
-// 汇总功能（相当于查询功能）
+/* 操作函数 */
+// 汇总/查询
 const handleSummary = async () => {
   await fetchTableData()
 }
 
-// 重置功能
+// 重置
 const handleReset = () => {
   queryParams.timeType = 'month'
   queryParams.statisticsType = 'department'
   queryParams.dateRange = [getFirstDayOfMonth(), getLastDayOfMonth()]
   selectedDepartment.value = ''
   currentPage.value = 1
-  console.log('重置筛选条件')
 }
 
-// 打印功能
-const handlePrint = () => {
-  console.log('打印表格')
-  window.print()
+// 显示明细
+const showDetail = (row) => {
+  currentDetail.value = row
+  detailDialogVisible.value = true
+  detailCurrentPage.value = 1
+  fetchRegistrationDetails(row)
 }
 
-// 分页大小变化
+// 获取明细数据
+const fetchRegistrationDetails = async (row) => {
+  try {
+    detailLoading.value = true
+    
+    // 模拟筛选当前统计类型的明细数据
+    registrationDetails.value = tableData.value
+      .filter(item => {
+        if (queryParams.statisticsType === 'department') {
+          return item.regdepName === row.regdepName
+        } else if (queryParams.statisticsType === 'doctor') {
+          return item.regdocName === row.regdocName
+        } else {
+          return item.regDealType === row.regDealType
+        }
+      })
+      .map(item => ({
+        registrationNo: item.regId,
+        cardNo: item.regHcardId,
+        patientName: item.regPname,
+        department: item.regdepName,
+        doctor: item.regdocName,
+        amount: item.regfee,
+        status: item.regState,
+        date: item.regTime
+      }))
+    
+    detailTotal.value = registrationDetails.value.length
+  } catch (error) {
+    ElMessage.error('获取明细失败: ' + error.message)
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+/* 分页处理 */
 const handleSizeChange = (val) => {
   pageSize.value = val
 }
 
-// 页码变化
 const handlePageChange = (val) => {
   currentPage.value = val
 }
 
-// 明细分页大小变化
 const handleDetailSizeChange = (val) => {
   detailPageSize.value = val
 }
 
-// 明细页码变化
 const handleDetailPageChange = (val) => {
   detailCurrentPage.value = val
 }
 
-// 导出功能
+/* 导出与打印 */
+// 导出Excel
 const handleExportData = () => {
-  // 1. 创建工作簿
-  const wb = XLSX.utils.book_new()
-  
-  // 2. 准备数据（处理表头和表格数据）
-  const headers = [
-    '统计方式', '挂号总数', '退号数', 
-    '应收金额(元)', '实收金额(元)', '退号金额(元)'
-  ]
-  
-  const data = [
-    headers,
-    ...tableData.value.map(item => [
-      item.statisticsType,
-      item.totalCount,
-      item.cancelCount,
-      item.receivableAmount,
-      item.receivedAmount,
-      item.cancelAmount
-    ])
-  ]
-  
-  // 添加合计行
-  const totals = getSummaries({
-    columns: [
-      { property: 'statisticsType' },
-      { property: 'totalCount' },
-      { property: 'cancelCount' },
-      { property: 'receivableAmount' },
-      { property: 'receivedAmount' },
-      { property: 'cancelAmount' }
-    ],
-    data: tableData.value
-  })
-  data.push(['合计', ...totals.slice(1)])
-  
-  // 3. 创建工作表
-  const ws = XLSX.utils.aoa_to_sheet(data)
-  
-  // 4. 设置列宽
-  ws['!cols'] = [
-    { wch: 15 }, // 统计方式
-    { wch: 12 }, // 挂号总数
-    { wch: 12 }, // 退号数
-    { wch: 15 }, // 应收金额
-    { wch: 15 }, // 实收金额
-    { wch: 15 }  // 退号金额
-  ]
-  
-  // 5. 将工作表添加到工作簿
-  XLSX.utils.book_append_sheet(wb, ws, '挂号费用汇总')
-  
-  // 6. 生成Excel文件并下载
-  const fileName = `挂号费用汇总_${queryParams.dateRange[0]}_至_${queryParams.dateRange[1]}.xlsx`
-  XLSX.writeFile(wb, fileName)
-  
-  ElMessage.success('导出成功')
+  try {
+    // 准备数据
+    const headers = [
+      '统计类型', '挂号总数', '退号数', 
+      '应收金额(元)', '实收金额(元)', '退号金额(元)'
+    ]
+    
+    const data = [
+      headers,
+      ...filteredTableData.value.map(item => [
+        item.statisticsType,
+        item.totalCount,
+        item.cancelCount,
+        item.receivableAmount,
+        item.receivedAmount,
+        item.cancelAmount
+      ])
+    ]
+    
+    // 添加合计行
+    const totals = getSummaries({
+      columns: headers.map((h, i) => ({ property: i === 0 ? 'statisticsType' : h })),
+      data: filteredTableData.value
+    })
+    data.push(['合计', ...totals.slice(1)])
+    
+    // 创建工作簿
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    
+    // 设置列宽
+    ws['!cols'] = headers.map(() => ({ wch: 15 }))
+    
+    // 导出文件
+    XLSX.utils.book_append_sheet(wb, ws, '挂号统计')
+    const fileName = `挂号统计_${new Date().toLocaleDateString()}.xlsx`
+    XLSX.writeFile(wb, fileName)
+    
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败: ' + error.message)
+  }
+}
+
+// 打印
+const handlePrint = () => {
+  window.print()
 }
 
 // 初始化加载数据
 fetchTableData()
+
+// 监听日期范围变化
+watch(() => queryParams.dateRange, (newVal) => {
+  if (newVal && newVal.length === 2) {
+    fetchTableData()
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
