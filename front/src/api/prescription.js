@@ -34,3 +34,47 @@ export function getRegistrationList(params) {
   return http.get('/registration/findall', { params })
 }
 
+export function getDailyInformation(data) {
+  return http.post('/api/report/daily', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+export function getBusinessInformation(data) {
+  return http.post('/api/report/business', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+//获取总收费项目列表
+export function getChargeitemList(params) {
+  return http.get('/chargeitem/findall', { params })
+}
+
+/**
+ * 根据ID删除收费项目
+ * @param {number} id 收费项目ID
+ * @returns {Promise} 
+ */
+export function deleteChargeItem(id) {
+  return http.delete(`/chargeitem/deleteById/${id}`)
+}
+
+/**
+ * 根据ID更新收费项目
+ * @param {number} id 收费项目ID
+ * @param {object} data 更新数据
+ * @returns {Promise} 
+ */
+export function updateChargeItem(id, data) {
+  return http.put(`/chargeitem/updateById/${id}`, data,{
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+

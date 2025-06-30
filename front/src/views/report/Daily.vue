@@ -41,92 +41,111 @@
         :data="tableData" 
         border 
         style="width: 100%"
-        :header-cell-style="{ 'text-align': 'center', 'font-weight': 'bold' }"
+        :header-cell-style="{
+          'text-align': 'center',
+          'font-weight': 'bold',
+          'background-color': '#f5f7fa',
+          'color': '#606266'
+        }"
         :cell-style="{ 'text-align': 'center' }"
       >
-        <el-table-column prop="date" label="日期" width="120" />
-        <el-table-column prop="receivable" label="应收金额(元)" width="150">
+        <el-table-column 
+          prop="date" 
+          label="日期" 
+          header-align="center"
+        />
+        <el-table-column 
+          prop="receivable" 
+          label="应收金额(元)" 
+          header-align="center"
+        >
           <template #default="{ row }">
-            {{ formatCurrency(row.receivable) }}
+            <span class="amount">{{ formatCurrency(row.receivable) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="received" label="实收金额(元)" width="150">
+        <el-table-column 
+          prop="received" 
+          label="实收金额(元)" 
+          header-align="center"
+        >
           <template #default="{ row }">
-            {{ formatCurrency(row.received) }}
+            <span class="amount">{{ formatCurrency(row.received) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="diff" label="差额(元)" width="120">
+        <el-table-column 
+          prop="diff" 
+          label="差额(元)" 
+          header-align="center"
+        >
           <template #default="{ row }">
-            <span :class="row.diff.startsWith('+') ? 'positive' : row.diff.startsWith('-') ? 'negative' : ''">
+            <span :class="[
+              'amount',
+              row.diff.startsWith('+') ? 'positive' : 
+              row.diff.startsWith('-') ? 'negative' : ''
+            ]">
               {{ row.diff }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="refund" label="退费金额(元)" width="150">
+        <el-table-column 
+          prop="refund" 
+          label="退费金额(元)" 
+          header-align="center"
+        >
           <template #default="{ row }">
-            {{ formatCurrency(row.refund) }}
+            <span class="amount">{{ formatCurrency(row.refund) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="settle" label="结算金额(元)" width="150">
+        <el-table-column 
+          prop="settle" 
+          label="结算金额(元)" 
+          header-align="center"
+        >
           <template #default="{ row }">
-            {{ formatCurrency(row.settle) }}
+            <span class="amount">{{ formatCurrency(row.settle) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="operator" label="日结操作员" width="150" />
       </el-table>
 
       <!-- 合计行 -->
       <div class="summary">
         <strong>合计：</strong>
-        应收金额：{{ formatCurrency(summary.receivable) }}，
-        实收金额：{{ formatCurrency(summary.received) }}，
-        差额：<span :class="summary.diff.startsWith('+') ? 'positive' : summary.diff.startsWith('-') ? 'negative' : ''">{{ summary.diff }}</span>，
-        退费金额：{{ formatCurrency(summary.refund) }}，
-        结算金额：{{ formatCurrency(summary.settle) }}
+        应收金额：<span class="amount">{{ formatCurrency(summary.receivable) }}</span>，
+        实收金额：<span class="amount">{{ formatCurrency(summary.received) }}</span>，
+        差额：<span :class="[
+          'amount',
+          summary.diff.startsWith('+') ? 'positive' : 
+          summary.diff.startsWith('-') ? 'negative' : ''
+        ]">{{ summary.diff }}</span>，
+        退费金额：<span class="amount">{{ formatCurrency(summary.refund) }}</span>，
+        结算金额：<span class="amount">{{ formatCurrency(summary.settle) }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Search, Refresh, Download, Printer } from '@element-plus/icons-vue';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
+import { getDailyInformation } from '@/api/prescription';
+import { ElMessage } from 'element-plus';
 
-const dateRange = ref([
-  '2024-07-01 00:00:00',
-  '2024-07-08 23:59:59',
-]);
+// 日期范围（初始为空，由用户选择）
+const dateRange = ref([]);
 
-// 模拟数据
-const tableData = ref([
-  { date: '2024-07-01', receivable: 564900.0, received: 565000.0, diff: '+100', refund: 900.0, settle: 564100.0, operator: '收费员001' },
-  { date: '2024-07-02', receivable: 650000.0, received: 650000.0, diff: '0', refund: 1000.0, settle: 649000.0, operator: '收费员001' },
-  { date: '2024-07-03', receivable: 550000.0, received: 550000.0, diff: '0', refund: 2000.0, settle: 548000.0, operator: '收费员001' },
-  { date: '2024-07-04', receivable: 725000.0, received: 725000.0, diff: '0', refund: 30000.0, settle: 695000.0, operator: '收费员001' },
-  { date: '2024-07-05', receivable: 395000.0, received: 395000.0, diff: '0', refund: 50000.0, settle: 345000.0, operator: '收费员001' },
-  { date: '2024-07-06', receivable: 954000.0, received: 954000.0, diff: '0', refund: 900.0, settle: 953100.0, operator: '收费员001' },
-  { date: '2024-07-07', receivable: 900000.0, received: 900000.0, diff: '0', refund: 900.0, settle: 899100.0, operator: 'GLY' },
-  { date: '2024-07-08', receivable: 850000.0, received: 850000.0, diff: '0', refund: 900.0, settle: 849100.0, operator: 'GLY' },
-]);
+// 表格数据
+const tableData = ref([]);
 
 // 汇总数据
-const summary = computed(() => {
-  const sum = {
-    receivable: 0,
-    received: 0,
-    diff: '+100',
-    refund: 0,
-    settle: 0,
-  };
-  for (const row of tableData.value) {
-    sum.receivable += row.receivable;
-    sum.received += row.received;
-    sum.refund += row.refund;
-    sum.settle += row.settle;
-  }
-  return sum;
+const summary = ref({
+  receivable: 0,
+  received: 0,
+  diff: '0',
+  refund: 0,
+  settle: 0,
+  operator: ''
 });
 
 // 格式化货币显示
@@ -138,27 +157,88 @@ const formatCurrency = (value) => {
 };
 
 // 获取数据
-const fetchData = () => {
-  // 实际项目中通过 axios 获取数据
-  console.log('查询数据:', dateRange.value);
-  // 这里可以添加加载状态
+const fetchData = async () => {
+  try {
+    if (!dateRange.value || dateRange.value.length !== 2) {
+      ElMessage.warning('请先选择时间范围');
+      return;
+    }
+
+    const params = {
+      startDate: dateRange.value[0],
+      endDate: dateRange.value[1]
+    };
+
+    const response = await getDailyInformation(params);
+    console.log('获取到的完整响应:', response);
+    
+    // 从 response.data 中解构数据
+    const { 
+      reportList, 
+      totalReceivableSum, 
+      actualReceivedSum, 
+      differenceSum, 
+      refundAmountSum, 
+      settlementAmountSum 
+    } = response.data;
+
+    // 处理表格数据
+    tableData.value = reportList.map(item => ({
+      date: item.reportDate,
+      receivable: item.totalReceivable,
+      received: item.actualReceived,
+      diff: item.difference > 0 ? `+${item.difference}` : item.difference.toString(),
+      refund: item.refundAmount,
+      settle: item.settlementAmount,
+      operator: item.operator || '收费员001' // 如果接口返回操作员信息则使用，否则使用默认值
+    }));
+
+    // 处理汇总数据
+    summary.value = {
+      receivable: totalReceivableSum,
+      received: actualReceivedSum,
+      diff: differenceSum > 0 ? `+${differenceSum}` : differenceSum.toString(),
+      refund: refundAmountSum,
+      settle: settlementAmountSum,
+      operator: ''
+    };
+
+    ElMessage.success(`成功获取 ${displayDateRange.value} 的数据`);
+  } catch (error) {
+    console.error('获取数据失败:', error);
+    ElMessage.error('获取数据失败，请检查网络或参数');
+  }
 };
 
 // 重置查询
 const reset = () => {
-  dateRange.value = ['2024-07-01 00:00:00', '2024-07-08 23:59:59'];
-  // tableData.value = []; // 实际项目中可能需要清空数据
+  dateRange.value = [];
+  tableData.value = [];
+  summary.value = {
+    receivable: 0,
+    received: 0,
+    diff: '0',
+    refund: 0,
+    settle: 0,
+    operator: ''
+  };
 };
 
-// 显示日期范围
+// 显示日期范围（格式化显示）
 const displayDateRange = computed(() => {
   if (!dateRange.value || dateRange.value.length !== 2) return '未选择时间范围';
-  const [start, end] = dateRange.value;
-  return `${start.slice(0, 10)} 至 ${end.slice(0, 10)}`;
+  const start = dateRange.value[0].substring(0, 10);
+  const end = dateRange.value[1].substring(0, 10);
+  return `${start} 至 ${end}`;
 });
 
 // 导出Excel
 const exportToExcel = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('没有数据可导出');
+    return;
+  }
+
   // 准备数据
   const exportData = [
     ['日期', '应收金额(元)', '实收金额(元)', '差额(元)', '退费金额(元)', '结算金额(元)', '日结操作员'],
@@ -194,12 +274,17 @@ const exportToExcel = () => {
   XLSX.utils.book_append_sheet(wb, ws, '门诊日结报表');
 
   // 生成Excel文件并下载
-  const fileName = `门诊日结报表_${displayDateRange.value.replace(/至/g, '至')}.xlsx`;
+  const fileName = `门诊日结报表_${displayDateRange.value.replace(/\s+/g, '')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 };
 
 // 打印报表
 const printReport = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning('没有数据可打印');
+    return;
+  }
+
   const printContent = document.getElementById('report-content').innerHTML;
   const originalContent = document.body.innerHTML;
   
@@ -216,47 +301,12 @@ const printReport = () => {
   window.location.reload();
 };
 
-// 或者使用html2canvas打印（更美观）
-const printWithCanvas = async () => {
-  try {
-    const element = document.getElementById('report-content');
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true
-    });
-    
-    const dataUrl = canvas.toDataURL('image/png');
-    const windowContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>打印报表</title>
-          <style>
-            body { margin: 0; padding: 0; }
-            img { max-width: 100%; }
-          </style>
-        </head>
-        <body>
-          <img src="${dataUrl}" />
-        </body>
-      </html>
-    `;
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.write(windowContent);
-    printWindow.document.close();
-    
-    printWindow.onload = function() {
-      printWindow.focus();
-      printWindow.print();
-    };
-  } catch (error) {
-    console.error('打印失败:', error);
-    ElMessage.error('打印失败，请重试');
-  }
-};
+// 可选：监听日期范围变化自动查询（根据需要开启）
+// watch(dateRange, (newVal) => {
+//   if (newVal && newVal.length === 2) {
+//     fetchData();
+//   }
+// });
 </script>
 
 <style scoped>
@@ -336,5 +386,14 @@ const printWithCanvas = async () => {
   .el-table {
     font-size: 12px;
   }
+}
+
+/* 确保表格填满容器 */
+.el-table {
+  width: 100% !important;
+}
+
+.el-table-column {
+  flex: 1;
 }
 </style>
