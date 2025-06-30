@@ -31,12 +31,12 @@ public class PrescriptionController {
 
     // ==================== 基础CRUD接口 ====================
 
-    @Operation(summary = "创建处方", description = "添加新的处方信息")
+    @Operation(summary = "批量创建处方", description = "批量添加新的处方信息")
     @PostMapping("/create")
     public void createPrescription(
             @Parameter(description = "处方信息", required = true)
-            @RequestBody PrescriptionInfo prescriptionInfo) {
-        prescriptionService.createPrescription(prescriptionInfo);
+            @RequestBody List<PrescriptionInfo> prescriptionInfos) {
+        prescriptionService.createPrescription(prescriptionInfos);
         System.out.println("处方创建成功");
     }
 

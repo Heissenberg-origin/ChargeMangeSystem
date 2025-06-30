@@ -19,12 +19,12 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             "chargeitem_method, chargeitem_unit, chargeitem_balance, chargeitem_price, " +
             "chargeitem_state, chargeitem_creator, chargeitem_time, chargeitem_lattest_fixer" +
             ") VALUES (" +
-            "#{chargeItemType.displayValue}, #{chargeItemName}, #{chargeItemCode}, #{chargeItemExDepId}, " +
-            "#{chargeItemMethod}, #{chargeItemUnit}, #{chargeItemBalance}, #{chargeItemPrice}, " +
-            "#{chargeItemState.displayValue}, #{chargeItemCreator}, NOW(), #{chargeItemLatestFixer}" +
+            "#{chargeItemsInfo.chargeItemType.displayValue}, #{chargeItemsInfo.chargeItemName}, #{chargeItemsInfo.chargeItemCode}, #{chargeItemsInfo.chargeItemExDepId}, " +
+            "#{chargeItemsInfo.chargeItemMethod}, #{chargeItemsInfo.chargeItemUnit}, #{chargeItemsInfo.chargeItemBalance}, #{chargeItemsInfo.chargeItemPrice}, " +
+            "#{chargeItemsInfo.chargeItemState.displayValue},#{creator}, NOW(), #{creator}" +
             ")")
-    @Options(useGeneratedKeys = true, keyProperty = "chargeItemId")
-    void insertInfo(ChargeItemsInfo chargeItemsInfo);
+    @Options(useGeneratedKeys = true, keyProperty = "chargeItemsInfo.chargeItemId")
+    void insertInfo(ChargeItemsInfo chargeItemsInfo,String creator);
 
     @Select("""
         SELECT
@@ -103,9 +103,9 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             "chargeitem_balance = #{chargeItemsInfo.chargeItemBalance}, " +
             "chargeitem_price = #{chargeItemsInfo.chargeItemPrice}, " +
             "chargeitem_state = #{chargeItemsInfo.chargeItemState.displayValue}, " +
-            "chargeitem_lattest_fixer = #{chargeItemsInfo.chargeItemLatestFixer} " +
+            "chargeitem_lattest_fixer = #{fixer} " +
             "WHERE chargeitem_id = #{id}")
-    void updateInfo(int id, ChargeItemsInfo chargeItemsInfo);
+    void updateInfo(int id, ChargeItemsInfo chargeItemsInfo,String fixer);
 
     @Delete("DELETE FROM chargeitems_info WHERE chargeitem_id = #{id}")
     void delete(int id);

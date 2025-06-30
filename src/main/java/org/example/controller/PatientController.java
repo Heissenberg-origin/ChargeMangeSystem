@@ -67,14 +67,16 @@ public class PatientController {
         Result result =new Result("200","success",patientService.list());
         return result.success(result.getData());
     }
-    @PostMapping("/recharge")
+    @PostMapping("/recharge/{healthcardId}/{amount}")
     @Operation(summary = "就诊卡充值", description = "为指定就诊卡充值金额")
     public void recharge(
+
             @Parameter(description = "就诊卡号", required = true, example = "C123456789")
-            @RequestParam int healthcardId,
+            @PathVariable int healthcardId,
 
             @Parameter(description = "充值金额(元)", required = true, example = "100.50")
-            @RequestParam float amount) {
-            patientService.recharge(healthcardId, amount);
+            @PathVariable float amount) {
+        patientService.recharge(healthcardId, amount);
+
     }
 }

@@ -17,7 +17,7 @@ public class ChargeItemServiceImpl extends ServiceImpl<ChargeItemsInfoMapper, Ch
     private ChargeItemsInfoMapper chargeItemsInfoMapper;
 
     public void createChargeItem(ChargeItemsInfo chargeItemsInfo){
-        chargeItemsInfoMapper.insertInfo(chargeItemsInfo);
+        chargeItemsInfoMapper.insertInfo(chargeItemsInfo,"系统管理员");
     }
     public List<ChargeItemsInfo> getAllChargeItems(){
         List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectAll();
@@ -28,7 +28,7 @@ public class ChargeItemServiceImpl extends ServiceImpl<ChargeItemsInfoMapper, Ch
         return info;
     }
     public void updateChargeItem(int id, ChargeItemsInfo chargeItemsInfo){
-        chargeItemsInfoMapper.updateInfo(id,chargeItemsInfo);
+        chargeItemsInfoMapper.updateInfo(id,chargeItemsInfo,"系统管理员");
     }
     public void deleteChargeItem(int id){
         chargeItemsInfoMapper.delete(id);
