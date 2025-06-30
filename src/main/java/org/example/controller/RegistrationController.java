@@ -157,10 +157,11 @@ public class RegistrationController {
         return result.success(result.getData());
     }
 
-    @PutMapping("/handlecancel")
+    @PutMapping("/handlecancel/{regId}")
     @Operation(summary = "取消挂号")
     public void cancelRegistration(
-            @RequestParam@Parameter(description = "门诊号") int regId) {
+            @Parameter(description = "门诊号")
+            @PathVariable int regId) {
         registrationService.cancelRegistration(regId);
     }
 

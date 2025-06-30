@@ -32,12 +32,12 @@ public class DoctorController {
         return result.success(result.getData());
     }
 
-    @GetMapping("/getBydepid")
+    @GetMapping("/getBydepid/{depId}")
     @Operation(summary = "查询部门所有医生")
     public Result getDoctorBydep(
-            @Parameter(description = "部门ID", required = true, example = "1001")
-            @RequestParam int depId) {
-        Result result= new Result("200","success",doctorService.getDoctorBydepId(depId));
+            @PathVariable @Parameter(description = "部门ID", required = true, example = "1001")
+            int depId) {
+        Result result = new Result("200", "success", doctorService.getDoctorBydepId(depId));
         return result.success(result.getData());
     }
 

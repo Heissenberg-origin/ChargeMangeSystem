@@ -16,8 +16,9 @@ public class PrescriptionServiceImpl extends ServiceImpl<PrescriptionInfoMapper,
     @Autowired
     private PrescriptionInfoMapper prescriptionInfoMapper;
 
-    public void createPrescription(PrescriptionInfo prescriptionInfo){
-        prescriptionInfoMapper.insert(prescriptionInfo);
+    public void createPrescription(List<PrescriptionInfo> prescriptionInfos){
+        int insertedCount = prescriptionInfoMapper.batchInsertWithAutoPreId(prescriptionInfos);
+        System.out.println("成功插入 " + insertedCount + " 条处方记录");
     }
     public List<PrescriptionInfo> getAllPrescriptions(){
         List<PrescriptionInfo>list=prescriptionInfoMapper.selectAll();

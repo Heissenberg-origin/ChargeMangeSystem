@@ -14,15 +14,54 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
 
     // ==================== 基础CRUD操作 ====================
 
-    @Insert("INSERT INTO prescription_info (" +
-            "pre_id, pre_reg_id, pre_content, pre_ci_id, pre_ci_num, " +
-            "pre_state, pre_time, pre_receipt_id, pre_dealer_id, pre_deal_type, pre_dealtime" +
-            ") VALUES (" +
-            "#{preId}, #{preRegId}, #{preContent}, #{preCiId}, #{preCiNum}, " +
-            "#{preState.displayValue}, NOW(), #{preReceiptId}, #{preDealerId}, #{preDealType.displayValue}, #{preDealTime}" +
-            ")")
-    @Options(useGeneratedKeys = true, keyProperty = "preSequence")
-    int insert(PrescriptionInfo prescriptionInfo);
+    @Select("SELECT IFNULL(MAX(pre_id), 0) FROM prescription_info")
+    int selectMaxPreId();
+
+    /**
+     * 批量插入处方记录
+     * @param preId 处方批次ID
+     * @param list 处方记录列表
+     * @return 插入记录数
+     */
+    @Insert({
+            "<script>",
+            "INSERT INTO prescription_info (",
+            "pre_id, pre_reg_id, pre_content, pre_ci_id, pre_ci_num,",
+            "pre_state, pre_time, pre_receipt_id, pre_dealer_id, pre_deal_type, pre_dealtime",
+            ") VALUES ",
+            "<foreach collection='list' item='item' separator=','>",
+            "(",
+            "#{preId}, #{item.preRegId}, #{item.preContent}, #{item.preCiId}, #{item.preCiNum},",
+            "#{item.preState}, #{item.preTime}, #{item.preReceiptId}, #{item.preDealerId},",
+            "#{item.preDealType}, #{item.preDealTime}",
+            ")",
+            "</foreach>",
+            "</script>"
+    })
+    int batchInsert(@Param("preId") int preId, @Param("list") List<PrescriptionInfo> list);
+
+    /**
+     * 组合操作：自动生成preId并批量插入
+     * @param list 处方记录列表
+     * @return 插入记录数
+     */
+    default int batchInsertWithAutoPreId(List<PrescriptionInfo> list) {
+        // 获取当前最大pre_id并加1
+        int newPreId = selectMaxPreId() + 1;
+        // 设置统一的preId和创建时间
+        Date now = new Date();
+        for (PrescriptionInfo item : list) {
+            item.setPreId(newPreId);
+            if (item.getPreTime() == null) {
+                item.setPreTime(now);
+            }
+            if (item.getPreState() == null) {
+                item.setPreState(String.valueOf(PrescriptionInfo.PrescriptionState.待缴费));
+            }
+        }
+        // 执行批量插入
+        return batchInsert(newPreId, list);
+    }
 
     @Select("""
     SELECT 

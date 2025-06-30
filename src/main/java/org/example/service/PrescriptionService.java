@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface PrescriptionService {
 
-    void createPrescription(PrescriptionInfo prescriptionInfo);
+    void createPrescription(List<PrescriptionInfo> prescriptionInfo);
     List<PrescriptionInfo> getAllPrescriptions();
     PrescriptionInfo getPrescriptionBySequence(int sequence);
     void deletePrescription(int sequence);

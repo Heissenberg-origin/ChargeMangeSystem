@@ -233,10 +233,6 @@ public class RegistrationInfo {
     @Schema(description = "患者姓名", example = "唐人")
     private String regPname;
 
-    @TableField("reg_doc_id")
-    @Schema(description = "医生ID", example = "5001")
-    private int regDocId;
-
     @TableField(exist = false)
     @Schema(description = "医生姓名", example = "洛风")
     private String regdocName;

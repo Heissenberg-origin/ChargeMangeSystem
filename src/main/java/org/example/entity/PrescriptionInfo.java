@@ -218,9 +218,9 @@ public class PrescriptionInfo {
         }
     }
 
-    public void setPreId(String preId) {
+    public void setPreId(int preId) {
         try {
-            this.preId = Integer.parseInt(preId);
+            this.preId = preId;
         } catch (NumberFormatException e) {
             this.preId = 0;
         }
