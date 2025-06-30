@@ -50,4 +50,31 @@ export function getBusinessInformation(data) {
   });
 }
 
+//获取总收费项目列表
+export function getChargeitemList(params) {
+  return http.get('/chargeitem/findall', { params })
+}
+
+/**
+ * 根据ID删除收费项目
+ * @param {number} id 收费项目ID
+ * @returns {Promise} 
+ */
+export function deleteChargeItem(id) {
+  return http.delete(`/chargeitem/deleteById/${id}`)
+}
+
+/**
+ * 根据ID更新收费项目
+ * @param {number} id 收费项目ID
+ * @param {object} data 更新数据
+ * @returns {Promise} 
+ */
+export function updateChargeItem(id, data) {
+  return http.put(`/chargeitem/updateById/${id}`, data,{
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
 

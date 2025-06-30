@@ -90,8 +90,6 @@
             </el-table-column>
             <el-table-column prop="creator" label="创建人" align="center" width="100" />
             <el-table-column prop="createTime" label="创建时间" align="center" width="160" />
-            <el-table-column prop="modifier" label="修改人" align="center" width="100" />
-            <el-table-column prop="modifyTime" label="最后修改时间" align="center" width="160" />
             <el-table-column label="操作" align="center" width="150" fixed="right">
               <template #default="{row}">
                 <el-button type="primary" size="small" @click="handleEdit(row)">
@@ -186,6 +184,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getChargeitemList, deleteChargeItem, updateChargeItem } from '@/api/prescription'
 
 // 查询参数
 const queryParams = reactive({
@@ -200,8 +199,10 @@ const pageSize = ref(10)
 const totalItems = ref(0)
 const loading = ref(false)
 
-// 表格数据
+// 表格数据（显示用）
 const tableData = ref([])
+// 原始数据（从接口获取的全部数据）
+const rawTableData = ref([])
 
 // 单位选项
 const unitOptions = [
@@ -236,23 +237,26 @@ const projectForm = reactive({
 // 表单验证规则
 const rules = {
   projectCode: [
-    { required: true, message: '请输入项目编码', trigger: 'blur' }
+    { required: true, message: '请输入项目编码', trigger: 'blur' },
+    { max: 20, message: '长度不能超过20个字符', trigger: 'blur' }
   ],
   projectName: [
-    { required: true, message: '请输入项目名称', trigger: 'blur' }
+    { required: true, message: '请输入项目名称', trigger: 'blur' },
+    { max: 50, message: '长度不能超过50个字符', trigger: 'blur' }
   ],
   unit: [
     { required: true, message: '请选择单位', trigger: 'change' }
   ],
   price: [
-    { required: true, message: '请输入单价', trigger: 'blur' }
+    { required: true, message: '请输入单价', trigger: 'blur' },
+    { type: 'number', min: 0, message: '单价不能小于0', trigger: 'blur' }
   ],
   feeType: [
     { required: true, message: '请选择费用类型', trigger: 'change' }
   ]
 }
 
-// 格式化货币
+// 格式化金额显示
 const formatCurrency = (value) => {
   return parseFloat(value).toLocaleString('zh-CN', {
     minimumFractionDigits: 2,
@@ -260,126 +264,114 @@ const formatCurrency = (value) => {
   })
 }
 
-// 获取表格数据
+// 获取表格数据（一次性获取全部数据）
 const fetchTableData = async () => {
   try {
     loading.value = true
-    // 模拟API请求
-    await new Promise(resolve => setTimeout(resolve, 500))
     
-    // 模拟数据 - 实际项目中替换为API调用
-    const mockData = [
-      {
-        id: 1,
-        projectCode: 'P001',
-        projectName: '血常规检查',
-        pinyinCode: 'XCJJC',
-        unit: '次',
-        price: 50.00,
-        status: '1',
-        feeType: '1',
-        creator: '张三',
-        createTime: '2023-05-10 09:30:25',
-        modifier: '李四',
-        modifyTime: '2023-06-15 14:20:10'
-      },
-      {
-        id: 2,
-        projectCode: 'P002',
-        projectName: '心电图检查',
-        pinyinCode: 'XDTJC',
-        unit: '次',
-        price: 80.00,
-        status: '1',
-        feeType: '1',
-        creator: '王五',
-        createTime: '2023-05-12 10:15:30',
-        modifier: '王五',
-        modifyTime: '2023-05-12 10:15:30'
-      },
-      {
-        id: 3,
-        projectCode: 'P003',
-        projectName: '拔牙手术',
-        pinyinCode: 'BYSS',
-        unit: '次',
-        price: 200.00,
-        status: '0',
-        feeType: '3',
-        creator: '赵六',
-        createTime: '2023-05-15 13:45:00',
-        modifier: '赵六',
-        modifyTime: '2023-06-01 16:30:45'
-      },
-      // 更多模拟数据...
-      ...Array.from({length: 17}, (_, i) => ({
-        id: i + 4,
-        projectCode: `P${(i + 4).toString().padStart(3, '0')}`,
-        projectName: `医疗项目${i + 4}`,
-        pinyinCode: `YLXM${i + 4}`,
-        unit: unitOptions[Math.floor(Math.random() * unitOptions.length)].value,
-        price: (Math.random() * 500 + 50).toFixed(2),
-        status: Math.random() > 0.3 ? '1' : '0',
-        feeType: (Math.floor(Math.random() * 4) + 1).toString(),
-        creator: ['张三', '李四', '王五', '赵六'][Math.floor(Math.random() * 4)],
-        createTime: '2023-06-' + (Math.floor(Math.random() * 30) + 1).toString().padStart(2, '0') + ' ' + 
-                   Math.floor(Math.random() * 24).toString().padStart(2, '0') + ':' + 
-                   Math.floor(Math.random() * 60).toString().padStart(2, '0') + ':' + 
-                   Math.floor(Math.random() * 60).toString().padStart(2, '0'),
-        modifier: ['张三', '李四', '王五', '赵六'][Math.floor(Math.random() * 4)],
-        modifyTime: '2023-06-' + (Math.floor(Math.random() * 30) + 1).toString().padStart(2, '0') + ' ' + 
-                   Math.floor(Math.random() * 24).toString().padStart(2, '0') + ':' + 
-                   Math.floor(Math.random() * 60).toString().padStart(2, '0') + ':' + 
-                   Math.floor(Math.random() * 60).toString().padStart(2, '0')
+    const response = await getChargeitemList({
+      pageNum: 1,
+      pageSize: 10000 // 获取足够大的数量
+    })
+
+    if (response.data?.code === '200') {
+      rawTableData.value = response.data.data.map(item => ({
+        id: item.chargeItemId,
+        projectCode: item.chargeItemId,
+        projectName: item.chargeItemName,
+        pinyinCode: item.chargeItemCode,
+        unit: item.chargeItemUnit,
+        price: item.chargeItemPrice,
+        status: item.chargeItemState === '启用' ? '1' : '0',
+        feeType: getFeeTypeValue(item.chargeItemType),
+        creator: item.chargeItemCreator,
+        createTime: item.chargeItemTime
       }))
-    ]
-    
-    // 模拟筛选
-    let filteredData = mockData
-    if (queryParams.projectCode) {
-      filteredData = filteredData.filter(item => item.projectCode.includes(queryParams.projectCode))
+      
+      filterTableData() // 初始显示所有数据
+    } else {
+      ElMessage.error(response.data?.message || '获取数据失败')
     }
-    if (queryParams.projectName) {
-      filteredData = filteredData.filter(item => item.projectName.includes(queryParams.projectName))
-    }
-    if (queryParams.status) {
-      filteredData = filteredData.filter(item => item.status === queryParams.status)
-    }
-    
-    tableData.value = filteredData
-    totalItems.value = filteredData.length
   } catch (error) {
-    ElMessage.error('数据加载失败: ' + error.message)
+    console.error('获取收费项目列表失败:', error)
+    ElMessage.error('获取数据失败: ' + (error.message || '网络错误'))
   } finally {
     loading.value = false
   }
 }
 
-// 搜索
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchTableData()
+// 前端过滤数据（实现模糊查询）
+const filterTableData = () => {
+  let filteredData = [...rawTableData.value]
+  
+  // 项目编码模糊查询
+  if (queryParams.projectCode) {
+    const searchCode = queryParams.projectCode.toLowerCase()
+    filteredData = filteredData.filter(item => 
+      item.projectCode.toLowerCase().includes(searchCode)
+    )
+  }
+  
+  // 项目名称模糊查询
+  if (queryParams.projectName) {
+    const searchName = queryParams.projectName.toLowerCase()
+    filteredData = filteredData.filter(item => 
+      item.projectName.toLowerCase().includes(searchName)
+    )
+  }
+  
+  // 状态筛选
+  if (queryParams.status) {
+    filteredData = filteredData.filter(item => item.status === queryParams.status)
+  }
+  
+  // 更新分页总数
+  totalItems.value = filteredData.length
+  
+  // 计算当前页显示的数据
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  tableData.value = filteredData.slice(start, end) // 正确赋值给tableData
 }
 
-// 重置
+// 将费用类型文本转换为对应的值
+const getFeeTypeValue = (type) => {
+  switch(type) {
+    case '检查': return '1'
+    case '检验': return '1'
+    case '治疗': return '2'
+    case '手术': return '3'
+    case '材料': return '4'
+    default: return '1'
+  }
+}
+
+// 搜索（前端模糊查询）
+const handleSearch = () => {
+  currentPage.value = 1
+  filterTableData()
+}
+
+// 重置查询条件
 const handleReset = () => {
   queryParams.projectCode = ''
   queryParams.projectName = ''
   queryParams.status = ''
   currentPage.value = 1
-  fetchTableData()
+  filterTableData()
 }
 
 // 分页大小变化
 const handleSizeChange = (val) => {
   pageSize.value = val
-  fetchTableData()
+  currentPage.value = 1
+  filterTableData()
 }
 
 // 页码变化
 const handlePageChange = (val) => {
   currentPage.value = val
-  fetchTableData()
+  filterTableData()
 }
 
 // 显示新建对话框
@@ -400,43 +392,107 @@ const showCreateDialog = () => {
 const handleEdit = (row) => {
   isEdit.value = true
   Object.assign(projectForm, {
-    ...row,
-    // 转换类型等操作可以在这里进行
+    id: row.id,
+    projectCode: row.projectCode,
+    projectName: row.projectName,
+    unit: row.unit,
+    price: row.price,
+    feeType: row.feeType,
+    status: row.status
   })
   projectDialogVisible.value = true
 }
 
 // 删除项目
-const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定要删除项目 "${row.projectName}" 吗?`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 实际项目中调用删除API
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除项目 "${row.projectName}" 吗?`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    // 调用删除接口
+    await deleteChargeItem(row.id)
+    
     ElMessage.success('删除成功')
+    
+    // 重新获取数据（两种方案任选其一）
+    
+    // 方案1：直接在前端删除（适用于小数据量）
+    // const index = tableData.value.findIndex(item => item.id === row.id)
+    // if (index !== -1) {
+    //   tableData.value.splice(index, 1)
+    //   totalItems.value -= 1
+    // }
+    
+    // 方案2：重新获取数据（推荐，保证数据一致性）
     fetchTableData()
-  }).catch(() => {
-    ElMessage.info('已取消删除')
+    
+  } catch (error) {
+    // 区分是取消删除还是删除失败
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('删除失败: ' + (error.message || '未知错误'))
+    } else {
+      ElMessage.info('已取消删除')
+    }
+  }
+}
+
+// 提交项目表单（更新逻辑）
+const submitProjectForm = () => {
+  projectFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    try {
+      loading.value = true
+      
+      // 构造后端需要的参数结构
+      const updateData = {
+        chargeItemCode: projectForm.projectCode,
+        chargeItemName: projectForm.projectName,
+        chargeItemUnit: projectForm.unit,
+        chargeItemPrice: projectForm.price,
+        chargeItemType: getFeeTypeLabel(projectForm.feeType), // 转换为中文
+        chargeItemState: projectForm.status === '1' ? '启用' : '停用'
+      }
+
+      // 调用更新接口
+      const response = await updateChargeItem(projectForm.id, updateData)
+      
+      if (response.data?.code === '200') {
+        ElMessage.success('更新成功')
+        projectDialogVisible.value = false
+        fetchTableData() // 刷新表格数据
+      } else {
+        ElMessage.error(response.data?.message || '更新失败')
+      }
+    } catch (error) {
+      console.error('更新项目失败:', error)
+      ElMessage.error('更新失败: ' + (error.message || '未知错误'))
+    } finally {
+      loading.value = false
+    }
   })
 }
 
-// 提交项目表单
-const submitProjectForm = () => {
-  projectFormRef.value.validate((valid) => {
-    if (valid) {
-      // 模拟保存操作
-      ElMessage.success(isEdit.value ? '修改成功' : '新增成功')
-      projectDialogVisible.value = false
-      fetchTableData()
-    }
-  })
+// 将费用类型值转换为中文标签
+const getFeeTypeLabel = (value) => {
+  const type = feeTypeOptions.find(item => item.value === value)
+  return type ? type.label : '未知类型'
 }
 
 // 初始化加载数据
 onMounted(() => {
   fetchTableData()
 })
+
+// 添加输入框回车搜索功能
+const handleKeyUp = (e) => {
+  if (e.key === 'Enter') {
+    handleSearch()
+  }
+}
 </script>
 
 <style scoped>

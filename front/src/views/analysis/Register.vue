@@ -555,9 +555,6 @@ window.addEventListener('resize', () => {
   width: 100%;
 }
 
-
-
-
 .stat-card {
   height: 100%;
   position: relative;
