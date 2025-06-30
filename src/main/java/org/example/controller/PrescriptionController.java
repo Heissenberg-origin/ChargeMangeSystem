@@ -39,11 +39,11 @@ public class PrescriptionController {
         prescriptionService.createPrescription(prescriptionInfos);
         System.out.println("处方创建成功");
     }
-
+    
     @Operation(summary = "获取所有处方", description = "获取系统中所有处方列表")
     @GetMapping("/findall")
     public Result getAllPrescriptions() {
-        Result result=new Result("200","sucess",prescriptionService.getAllPrescriptions()) ;
+        Result result=new Result("200","success",prescriptionService.getAllPrescriptions()) ;
         return result.success(result.getData());
     }
 
@@ -52,7 +52,7 @@ public class PrescriptionController {
     public Result getPrescriptionBySequence(
             @Parameter(description = "处方序号", required = true)
             @PathVariable int sequence) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionBySequence(sequence)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionBySequence(sequence)) ;
         return result.success(result.getData());
     }
 
@@ -72,7 +72,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByPrescriptionId(
             @Parameter(description = "处方号", required = true)
             @PathVariable int prescriptionId) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByPrescriptionId(prescriptionId)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPrescriptionId(prescriptionId)) ;
         return result.success(result.getData());
     }
 
@@ -81,7 +81,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByRegistrationId(
             @Parameter(description = "门诊号", required = true)
             @PathVariable int registrationId) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByRegistrationId(registrationId)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByRegistrationId(registrationId)) ;
         return result.success(result.getData());
     }
 
@@ -90,7 +90,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByhcardId(
             @Parameter(description = "就诊卡号", required = true)
             @PathVariable int hcardId) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByhcardId(hcardId)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByhcardId(hcardId)) ;
         return result.success(result.getData());
     }
 
@@ -101,7 +101,7 @@ public class PrescriptionController {
             @RequestParam String type,
             @Parameter(description = "证件号", required = true)
             @PathVariable String Id) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByID(type,Id)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByID(type,Id)) ;
         return result.success(result.getData());
     }
 
@@ -110,7 +110,7 @@ public class PrescriptionController {
     public Result getPrescriptionsBydoc(
             @Parameter(description = "医生姓名", required = true)
             @RequestParam String docname) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsBydocname(docname)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsBydocname(docname)) ;
         return result.success(result.getData());
     }
 
@@ -119,7 +119,7 @@ public class PrescriptionController {
     public Result getPrescriptionsBydep(
             @Parameter(description = "部门名", required = true)
             @RequestParam String depname) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsBydepname(depname)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsBydepname(depname)) ;
         return result.success(result.getData());
     }
 
@@ -128,7 +128,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByState(
             @Parameter(description = "处方状态", required = true)
             @PathVariable PrescriptionInfo.PrescriptionState status) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByState(status)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByState(status)) ;
         return result.success(result.getData());
     }
 
@@ -137,7 +137,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByDealerId(
             @Parameter(description = "收费员ID", required = true)
             @PathVariable int dealerId) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByDealerId(dealerId)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByDealerId(dealerId)) ;
         return result.success(result.getData());
     }
 
@@ -148,7 +148,7 @@ public class PrescriptionController {
             @RequestParam Timestamp startDate,
             @Parameter(description = "结束时间(yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam Timestamp endDate) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByCreateTimeRange(startDate, endDate)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByCreateTimeRange(startDate, endDate)) ;
         return result.success(result.getData());
     }
 
@@ -159,7 +159,7 @@ public class PrescriptionController {
             @RequestParam Timestamp startDate,
             @Parameter(description = "结束时间(yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam Timestamp endDate) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByPaidTimeRange(startDate, endDate)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPaidTimeRange(startDate, endDate)) ;
         return result.success(result.getData());
     }
 
@@ -168,7 +168,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByPaymentType(
             @Parameter(description = "支付类型", required = true)
             @PathVariable PrescriptionInfo.PaymentType paymentType) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByPaymentType(paymentType)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPaymentType(paymentType)) ;
         return result.success(result.getData());
     }
 
@@ -177,7 +177,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByChargeItemId(
             @Parameter(description = "收费项目ID", required = true)
             @PathVariable int chargeItemId) {
-        Result result=new Result("200","sucess",prescriptionService.getPrescriptionsByChargeItemId(chargeItemId)) ;
+        Result result=new Result("200","success",prescriptionService.getPrescriptionsByChargeItemId(chargeItemId)) ;
         return result.success(result.getData());
     }
 
@@ -235,10 +235,12 @@ public class PrescriptionController {
         return result.success(result.getData());
     }
 
-    @Operation(summary = "按支付类型统计", description = "按支付类型分组统计处方数量和金额")
+    @Operation(summary = "按支付类型统计", description = "按支付类型分组统计当日处方数量和金额")
     @GetMapping("/getStatisticsByPaymentType")
-    public Result getStatisticsByPaymentType() {
-        Result result=new Result("200", "success",prescriptionService.getStatisticsByPaymentType()) ;
+    public Result getStatisticsByPaymentType(
+            @Parameter(description = "日期(yyyy-MM-dd)", required = true, example = "2025-06-30")
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+        Result result = new Result("200", "success", prescriptionService.getStatisticsByPaymentType(date));
         return result.success(result.getData());
     }
 

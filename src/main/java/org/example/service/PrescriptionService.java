@@ -32,6 +32,6 @@ public interface PrescriptionService {
     void refundPrescription(int sequence, int dealerId);
     Map<String, Object> getPrescriptionStatistics();
     List<Map<String, Integer>> getStatisticsByState();
-    List<Map<String, Object>> getStatisticsByPaymentType();
+    List<Map<String, Object>> getStatisticsByPaymentType(Date date);
     Map<String, Object> getStatisticsByTimeRange(Timestamp startDate, Timestamp endDate);
 }

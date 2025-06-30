@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -108,9 +109,17 @@ public class PrescriptionServiceImpl extends ServiceImpl<PrescriptionInfoMapper,
         List<Map<String, Integer>>map=prescriptionInfoMapper.selectStatisticsByState();
         return map;
     }
-    public List<Map<String, Object>> getStatisticsByPaymentType(){
-        List<Map<String, Object>>map=prescriptionInfoMapper.selectStatisticsByPaymentType();
-        return map;
+    public List<Map<String, Object>> getStatisticsByPaymentType(Date date) {
+        // 确保传入的是日期部分（去掉时间部分）
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Date dateOnly = calendar.getTime();
+
+        return prescriptionInfoMapper.selectStatisticsByPaymentType(dateOnly);
     }
     public Map<String, Object> getStatisticsByTimeRange(Timestamp startDate, Timestamp endDate){
         Map<String, Object>map=prescriptionInfoMapper.selectStatisticsByTimeRange(startDate,endDate);

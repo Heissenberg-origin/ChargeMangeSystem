@@ -520,8 +520,9 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
             "SUM(pre_ci_num * (SELECT chargeitem_price FROM chargeitems_info WHERE chargeitem_id = pre_ci_id)) AS amount " +
             "FROM prescription_info " +
             "WHERE pre_deal_type IS NOT NULL " +
+            "AND DATE(pre_time) = DATE(#{date}) " +
             "GROUP BY pre_deal_type")
-    List<Map<String, Object>> selectStatisticsByPaymentType();
+    List<Map<String, Object>> selectStatisticsByPaymentType(Date date);
 
     @Select("SELECT " +
             "COUNT(*) AS count, " +

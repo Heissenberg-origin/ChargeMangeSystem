@@ -20,7 +20,9 @@ public class PrescriptionStatsController {
     }
 
     @PostMapping
-    @Operation(summary = "获取处方统计数据", description = "统计已开方数、已开方金额、未收费处方数、未收费金额、未收费比例等指标")
+    @Operation(summary = "获取处方统计数据",
+            description = "统计已开方数、已开方金额、未收费处方数、未收费金额、未收费比例等指标。"
+                    + "groupBy参数决定分组方式(department/doctor)。")
     public PrescriptionStatsSummary getPrescriptionStats(
             @RequestBody PrescriptionStatsRequest request) {
         return statsService.getPrescriptionStats(request);

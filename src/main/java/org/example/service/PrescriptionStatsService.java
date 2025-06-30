@@ -25,6 +25,7 @@ public class PrescriptionStatsService {
         Date startTime = request.getStartTime();
         Date endTime = request.getEndTime();
         String timeType = request.getTimeType();
+        String groupBy = request.getGroupBy();
 
         // 获取总统计数据
         PrescriptionStatsDTO totalStats = statsMapper.getTotalStats(startTime, endTime);
@@ -38,14 +39,6 @@ public class PrescriptionStatsService {
         }
         totalStats.setUnpaidRatio(unpaidRatio);
 
-        // 获取分组统计数据
-        List<PrescriptionStatsDTO> byDepartment = statsMapper.statsByDepartment(startTime, endTime, timeType);
-        List<PrescriptionStatsDTO> byDoctor = statsMapper.statsByDoctor(startTime, endTime, timeType);
-
-        // 计算分组数据的未收费比例
-        calculateUnpaidRatio(byDepartment);
-        calculateUnpaidRatio(byDoctor);
-
         // 构建返回结果
         PrescriptionStatsSummary summary = new PrescriptionStatsSummary();
         summary.setTotalPrescriptions(totalStats.getTotalPrescriptions());
@@ -57,8 +50,17 @@ public class PrescriptionStatsService {
         summary.setUnpaidAmount(totalStats.getUnpaidAmount());
         summary.setRefundAmount(totalStats.getRefundAmount());
         summary.setUnpaidRatio(totalStats.getUnpaidRatio());
-        summary.setByDepartment(byDepartment);
-        summary.setByDoctor(byDoctor);
+
+        // 根据groupBy参数获取对应的分组统计数据
+        if ("department".equalsIgnoreCase(groupBy)) {
+            List<PrescriptionStatsDTO> byDepartment = statsMapper.statsByDepartment(startTime, endTime, timeType);
+            calculateUnpaidRatio(byDepartment);
+            summary.setGroupedStats(byDepartment);
+        } else if ("doctor".equalsIgnoreCase(groupBy)) {
+            List<PrescriptionStatsDTO> byDoctor = statsMapper.statsByDoctor(startTime, endTime, timeType);
+            calculateUnpaidRatio(byDoctor);
+            summary.setGroupedStats(byDoctor);
+        }
 
         return summary;
     }
