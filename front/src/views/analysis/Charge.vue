@@ -123,10 +123,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch,nextTick, toRaw } from 'vue'
 import { User, Money, RefreshLeft, Document, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getPrescriptionStats } from '@/api/prescription'
+import { getPrescriptionStats, getStatisticsByPaymentType } from '@/api/prescription'
 import dayjs from 'dayjs'
 
 // 日期选择
@@ -136,12 +136,14 @@ const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const prescriptionStats = reactive({
   today: null,    // 当天数据
   yesterday: null, // 前一天数据
-  trendData: []    // 趋势数据
+  trendData: [],   // 趋势数据
+  paymentTypes: [] // 支付方式数据
 })
 
 // 加载状态
 const loading = ref(false)
 const trendLoading = ref(false)
+const paymentTypeLoading = ref(false)
 
 // 获取统计数据
 const fetchPrescriptionStats = async () => {
@@ -238,6 +240,29 @@ const fetchTrendData = async () => {
   }
 }
 
+const fetchPaymentTypeData = async () => {
+  if (!selectedDate.value) return
+  
+  paymentTypeLoading.value = true
+  
+  try {
+    const res = await getStatisticsByPaymentType(selectedDate.value)
+    console.log('原始支付方式数据:', res.data.data)
+    
+    // 确保赋值的是数组
+    prescriptionStats.paymentTypes = Array.isArray(res.data.data) ? res.data.data : []
+    
+    console.log('-----------', prescriptionStats.paymentTypes)
+    // 等待下一个tick确保DOM更新
+    await nextTick()
+    updatePaymentChart()
+  } catch (error) {
+    console.error('获取支付方式数据失败:', error)
+  } finally {
+    paymentTypeLoading.value = false
+  }
+}
+
 // 更新趋势图表
 const updateTrendChart = () => {
   if (!prescriptionStats.trendData.length || !trendChart.value) return
@@ -278,7 +303,7 @@ const updateTrendChart = () => {
       type: 'value',
       name: '金额(元)',
       axisLabel: {
-        formatter: value => (value / 1000) + 'k' // 显示为千元单位
+        formatter: value => (value / 1000) + 'k'
       }
     },
     series: [
@@ -308,6 +333,66 @@ const updateTrendChart = () => {
       }
     ]
   }
+  
+  chart.setOption(option)
+}
+
+// 更新支付方式图表
+const updatePaymentChart = () => {
+  // 确保访问原始数据而不是代理对象
+  const paymentTypes = toRaw(prescriptionStats.paymentTypes) || []
+  console.log('更新支付方式图表=====', paymentTypes.length)
+  
+  if (!paymentTypes.length || !paymentChart.value) return
+  
+  const chart = echarts.getInstanceByDom(paymentChart.value) || echarts.init(paymentChart.value)
+  
+  console.log('支付方式图表数据:', paymentTypes)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      data: prescriptionStats.paymentTypes.map(item => item.paymentType)
+    },
+    series: [
+      {
+        name: '支付方式',
+        type: 'pie',
+        radius: ['50%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '18',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: prescriptionStats.paymentTypes.map(item => ({
+          value: item.amount,
+          name: item.paymentType
+        }))
+      }
+    ]
+  }
+
+  console.log('支付方式图表数据:', option)
   
   chart.setOption(option)
 }
@@ -368,60 +453,11 @@ const paymentStats = reactive({
   medicalItemAmount: 1100.00
 })
 
-// 图表引用（保持不变）
+// 图表引用
 const trendChart = ref(null)
 const paymentChart = ref(null)
 const doctorChart = ref(null)
 const departmentChart = ref(null)
-
-// 初始化支付方式图表（保持不变）
-const initPaymentChart = () => {
-  const chart = echarts.init(paymentChart.value)
-  const option = {
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      orient: 'vertical',
-      right: 10,
-      top: 'center'
-    },
-    series: [
-      {
-        name: '支付方式',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: '18',
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: [
-          { value: 40, name: '现金' },
-          { value: 30, name: '微信' },
-          { value: 20, name: '支付宝' },
-          { value: 10, name: '医保卡' }
-        ]
-      }
-    ]
-  }
-  chart.setOption(option)
-}
 
 // 初始化医生排行图表（保持不变）
 const initDoctorChart = () => {
@@ -529,13 +565,14 @@ const initDepartmentChart = () => {
 watch(selectedDate, () => {
   fetchPrescriptionStats()
   fetchTrendData()
+  fetchPaymentTypeData()
   refreshCharts()
 })
 
-// 刷新图表（保持不变）
+// 刷新图表
 const refreshCharts = () => {
   updateTrendChart()
-  initPaymentChart()
+  updatePaymentChart()
   initDoctorChart()
   initDepartmentChart()
 }
@@ -544,10 +581,11 @@ const refreshCharts = () => {
 onMounted(() => {
   fetchPrescriptionStats()
   fetchTrendData()
+  fetchPaymentTypeData()
   refreshCharts()
 })
 
-// 窗口大小变化时重新调整图表大小（保持不变）
+// 窗口大小变化时重新调整图表大小
 window.addEventListener('resize', () => {
   if (trendChart.value) {
     echarts.getInstanceByDom(trendChart.value)?.resize()

@@ -78,3 +78,12 @@ export function updateChargeItem(id, data) {
   })
 }
 
+
+//获取支付类型信息
+export function getStatisticsByPaymentType(date) {
+  return http.get('/prescription/getStatisticsByPaymentType', { 
+    params: { date } 
+  })
+}
+
+//获取医生收入信息

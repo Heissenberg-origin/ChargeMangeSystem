@@ -245,9 +245,13 @@ const fetchTableData = async () => {
 // 处理表格数据
 const processTableData = (apiData) => {
   try {
+
+    console.log('原始API数据：', apiData)
     const groupData = queryParams.statisticsType === 'department' 
-      ? apiData.byDepartment 
-      : apiData.byDoctor
+      ? apiData.groupedStats
+      : apiData.groupedStats
+
+      console.log('处理后的分组数据：', groupData)
     
     if (!groupData) {
       console.error('缺少分组数据:', apiData)
