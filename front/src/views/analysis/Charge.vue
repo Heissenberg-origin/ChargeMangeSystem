@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch,nextTick, toRaw } from 'vue'
+import { ref, reactive, onMounted, watch, nextTick, toRaw } from 'vue'
 import { User, Money, RefreshLeft, Document, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { getPrescriptionStats, getStatisticsByPaymentType } from '@/api/prescription'
@@ -134,16 +134,26 @@ const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 
 // 处方统计数据
 const prescriptionStats = reactive({
-  today: null,    // 当天数据
-  yesterday: null, // 前一天数据
-  trendData: [],   // 趋势数据
-  paymentTypes: [] // 支付方式数据
+  today: null,       // 当天数据
+  yesterday: null,   // 前一天数据
+  trendData: [],     // 趋势数据
+  paymentTypes: [],  // 支付方式数据
+  doctorStats: [],   // 医生统计数据
+  departmentStats: [] // 科室统计数据
 })
 
 // 加载状态
 const loading = ref(false)
 const trendLoading = ref(false)
 const paymentTypeLoading = ref(false)
+const doctorLoading = ref(false)
+const departmentLoading = ref(false)
+
+// 图表引用
+const trendChart = ref(null)
+const paymentChart = ref(null)
+const doctorChart = ref(null)
+const departmentChart = ref(null)
 
 // 获取统计数据
 const fetchPrescriptionStats = async () => {
@@ -152,17 +162,14 @@ const fetchPrescriptionStats = async () => {
   loading.value = true
   
   try {
-    // 获取当天数据
     const today = dayjs(selectedDate.value)
     const todayStart = today.startOf('day').format('YYYY-MM-DD HH:mm:ss')
     const todayEnd = today.endOf('day').format('YYYY-MM-DD HH:mm:ss')
     
-    // 获取前一天数据
     const yesterday = today.subtract(1, 'day')
     const yesterdayStart = yesterday.startOf('day').format('YYYY-MM-DD HH:mm:ss')
     const yesterdayEnd = yesterday.endOf('day').format('YYYY-MM-DD HH:mm:ss')
     
-    // 并发请求当天和前一天的数据
     const [todayRes, yesterdayRes] = await Promise.all([
       getPrescriptionStats({
         startTime: todayStart,
@@ -178,7 +185,6 @@ const fetchPrescriptionStats = async () => {
       })
     ])
     
-    // 存储数据
     prescriptionStats.today = todayRes.data
     prescriptionStats.yesterday = yesterdayRes.data
     
@@ -197,9 +203,8 @@ const fetchTrendData = async () => {
   
   try {
     const endDate = dayjs(selectedDate.value)
-    const startDate = endDate.subtract(9, 'day') // 获取前9天，共10天数据
+    const startDate = endDate.subtract(9, 'day')
     
-    // 生成日期范围
     const dateRange = []
     let currentDate = startDate.clone()
     
@@ -208,7 +213,6 @@ const fetchTrendData = async () => {
       currentDate = currentDate.add(1, 'day')
     }
     
-    // 并发获取10天数据
     const promises = dateRange.map(date => {
       const start = dayjs(date).startOf('day').format('YYYY-MM-DD HH:mm:ss')
       const end = dayjs(date).endOf('day').format('YYYY-MM-DD HH:mm:ss')
@@ -223,14 +227,12 @@ const fetchTrendData = async () => {
     
     const results = await Promise.all(promises)
     
-    // 处理趋势数据
     prescriptionStats.trendData = results.map((res, index) => ({
       date: dateRange[index],
       paidAmount: res.data?.paidAmount || 0,
       refundAmount: res.data?.refundAmount || 0
     }))
     
-    // 更新趋势图表
     updateTrendChart()
     
   } catch (error) {
@@ -240,6 +242,7 @@ const fetchTrendData = async () => {
   }
 }
 
+// 获取支付方式数据
 const fetchPaymentTypeData = async () => {
   if (!selectedDate.value) return
   
@@ -247,19 +250,93 @@ const fetchPaymentTypeData = async () => {
   
   try {
     const res = await getStatisticsByPaymentType(selectedDate.value)
-    console.log('原始支付方式数据:', res.data.data)
-    
-    // 确保赋值的是数组
-    prescriptionStats.paymentTypes = Array.isArray(res.data.data) ? res.data.data : []
-    
-    console.log('-----------', prescriptionStats.paymentTypes)
-    // 等待下一个tick确保DOM更新
+    prescriptionStats.paymentTypes = Array.isArray(res.data?.data) ? res.data.data : []
     await nextTick()
     updatePaymentChart()
   } catch (error) {
     console.error('获取支付方式数据失败:', error)
   } finally {
     paymentTypeLoading.value = false
+  }
+}
+
+// 获取医生统计数据
+const fetchDoctorStats = async () => {
+  if (!selectedDate.value) return
+  
+  doctorLoading.value = true
+  
+  try {
+    const today = dayjs(selectedDate.value)
+    const startTime = today.startOf('day').format('YYYY-MM-DD HH:mm:ss')
+    const endTime = today.endOf('day').format('YYYY-MM-DD HH:mm:ss')
+    
+    const res = await getPrescriptionStats({
+      startTime,
+      endTime,
+      timeType: 'day',
+      groupBy: 'doctor'
+    })
+    
+    // 合并同一医生的收入
+    const doctorMap = new Map()
+    res.data?.groupedStats?.forEach(item => {
+      const currentAmount = doctorMap.get(item.groupName) || 0
+      doctorMap.set(item.groupName, currentAmount + item.totalAmount)
+    })
+    
+    // 转换为数组并排序
+    prescriptionStats.doctorStats = Array.from(doctorMap.entries())
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+    
+    updateDoctorChart()
+    
+  } catch (error) {
+    console.error('获取医生统计数据失败:', error)
+  } finally {
+    doctorLoading.value = false
+  }
+}
+
+// 获取科室统计数据
+const fetchDepartmentStats = async () => {
+  if (!selectedDate.value) return
+  
+  departmentLoading.value = true
+  
+  try {
+    const today = dayjs(selectedDate.value)
+    const startTime = today.startOf('day').format('YYYY-MM-DD HH:mm:ss')
+    const endTime = today.endOf('day').format('YYYY-MM-DD HH:mm:ss')
+    
+    const res = await getPrescriptionStats({
+      startTime,
+      endTime,
+      timeType: 'day',
+      groupBy: 'department'
+    })
+    
+    // 合并同一科室的收入
+    const departmentMap = new Map()
+    res.data?.groupedStats?.forEach(item => {
+      const currentAmount = departmentMap.get(item.groupName) || 0
+      departmentMap.set(item.groupName, currentAmount + item.totalAmount)
+    })
+    
+    // 转换为数组并排序
+    prescriptionStats.departmentStats = Array.from(departmentMap.entries())
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+    
+    updateDepartmentChart()
+    
+  } catch (error) {
+    console.error('获取科室统计数据失败:', error)
+  } finally {
+    departmentLoading.value = false
   }
 }
 
@@ -272,29 +349,15 @@ const updateTrendChart = () => {
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      },
-      formatter: params => {
-        const date = params[0].axisValue
-        const paid = params[0].data
-        const refund = params[1].data
-        return `
-          <div>日期: ${date}</div>
-          <div>收费金额: ${formatCurrency(paid)}元</div>
-          <div>退费金额: ${formatCurrency(refund)}元</div>
-        `
-      }
+      axisPointer: { type: 'shadow' },
+      formatter: params => `
+        <div>日期: ${params[0].axisValue}</div>
+        <div>收费金额: ${formatCurrency(params[0].data)}元</div>
+        <div>退费金额: ${formatCurrency(params[1].data)}元</div>
+      `
     },
-    legend: {
-      data: ['收费金额', '退费金额']
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
+    legend: { data: ['收费金额', '退费金额'] },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
       data: prescriptionStats.trendData.map(item => dayjs(item.date).format('M-DD'))
@@ -302,9 +365,7 @@ const updateTrendChart = () => {
     yAxis: {
       type: 'value',
       name: '金额(元)',
-      axisLabel: {
-        formatter: value => (value / 1000) + 'k'
-      }
+      axisLabel: { formatter: value => (value / 1000) + 'k' }
     },
     series: [
       {
@@ -312,24 +373,16 @@ const updateTrendChart = () => {
         type: 'line',
         data: prescriptionStats.trendData.map(item => item.paidAmount),
         smooth: true,
-        lineStyle: {
-          width: 3
-        },
-        itemStyle: {
-          color: '#409EFF'
-        }
+        lineStyle: { width: 3 },
+        itemStyle: { color: '#409EFF' }
       },
       {
         name: '退费金额',
         type: 'line',
         data: prescriptionStats.trendData.map(item => item.refundAmount),
         smooth: true,
-        lineStyle: {
-          width: 3
-        },
-        itemStyle: {
-          color: '#F56C6C'
-        }
+        lineStyle: { width: 3 },
+        itemStyle: { color: '#F56C6C' }
       }
     ]
   }
@@ -339,71 +392,145 @@ const updateTrendChart = () => {
 
 // 更新支付方式图表
 const updatePaymentChart = () => {
-  // 确保访问原始数据而不是代理对象
   const paymentTypes = toRaw(prescriptionStats.paymentTypes) || []
-  console.log('更新支付方式图表=====', paymentTypes.length)
-  
   if (!paymentTypes.length || !paymentChart.value) return
   
   const chart = echarts.getInstanceByDom(paymentChart.value) || echarts.init(paymentChart.value)
   
-  console.log('支付方式图表数据:', paymentTypes)
   const option = {
     tooltip: {
       trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
+      formatter: '{a} <br/>{b}: ¥{c} ({d}%)'
     },
     legend: {
       orient: 'vertical',
       right: 10,
       top: 'center',
-      data: prescriptionStats.paymentTypes.map(item => item.paymentType)
+      data: paymentTypes.map(item => item.paymentType)
     },
-    series: [
-      {
-        name: '支付方式',
-        type: 'pie',
-        radius: ['50%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: '18',
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: prescriptionStats.paymentTypes.map(item => ({
-          value: item.amount,
-          name: item.paymentType
-        }))
-      }
-    ]
+    series: [{
+      name: '支付方式',
+      type: 'pie',
+      radius: ['50%', '70%'],
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: '18', fontWeight: 'bold' }
+      },
+      labelLine: { show: false },
+      data: paymentTypes.map(item => ({
+        value: item.amount,
+        name: item.paymentType
+      }))
+    }]
   }
-
-  console.log('支付方式图表数据:', option)
   
   chart.setOption(option)
 }
 
-// 计算比较值
-const calcComparison = (todayValue, yesterdayValue) => {
-  if (!yesterdayValue || todayValue === undefined || todayValue === null) return 0
-  return todayValue - yesterdayValue
+// 更新医生排行图表（高收入在上方）
+const updateDoctorChart = () => {
+  if (!prescriptionStats.doctorStats.length || !doctorChart.value) return
+  
+  const chart = echarts.getInstanceByDom(doctorChart.value) || echarts.init(doctorChart.value)
+  
+  // 反转数据顺序（高收入在上）
+  const reversedData = [...prescriptionStats.doctorStats].reverse()
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: params => `
+        <div>医生: ${params[0].axisValue}</div>
+        <div>收入: ${formatCurrency(params[0].data)}元</div>
+      `
+    },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: {
+      type: 'value',
+      axisLabel: { formatter: value => formatCurrency(value) }
+    },
+    yAxis: {
+      type: 'category',
+      data: reversedData.map(item => item.name),
+      axisLabel: { interval: 0, fontSize: 12 }
+    },
+    series: [{
+      name: '收入',
+      type: 'bar',
+      data: reversedData.map(item => item.amount),
+      itemStyle: {
+        color: params => ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399'][params.dataIndex],
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: {
+        show: true,
+        position: 'right',
+        formatter: params => formatCurrency(params.value)
+      }
+    }]
+  }
+  
+  chart.setOption(option)
 }
 
-// 格式化货币
+// 更新科室排行图表（高收入在上方）
+const updateDepartmentChart = () => {
+  if (!prescriptionStats.departmentStats.length || !departmentChart.value) return
+  
+  const chart = echarts.getInstanceByDom(departmentChart.value) || echarts.init(departmentChart.value)
+  
+  // 反转数据顺序（高收入在上）
+  const reversedData = [...prescriptionStats.departmentStats].reverse()
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: params => `
+        <div>科室: ${params[0].axisValue}</div>
+        <div>收入: ${formatCurrency(params[0].data)}元</div>
+      `
+    },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: {
+      type: 'value',
+      axisLabel: { formatter: value => formatCurrency(value) }
+    },
+    yAxis: {
+      type: 'category',
+      data: reversedData.map(item => item.name),
+      axisLabel: { 
+        interval: 0,
+        fontSize: 12,
+        formatter: value => value.length > 6 ? value.substring(0, 6) + '...' : value
+      }
+    },
+    series: [{
+      name: '收入',
+      type: 'bar',
+      data: reversedData.map(item => item.amount),
+      itemStyle: {
+        color: params => ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399'][params.dataIndex],
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: {
+        show: true,
+        position: 'right',
+        formatter: params => formatCurrency(params.value)
+      }
+    }]
+  }
+  
+  chart.setOption(option)
+}
+
+// 工具方法
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '0.00'
   return parseFloat(value).toLocaleString('zh-CN', {
@@ -412,153 +539,21 @@ const formatCurrency = (value) => {
   })
 }
 
-// 格式化比较值
+const calcComparison = (todayValue, yesterdayValue) => {
+  if (!yesterdayValue || todayValue === undefined || todayValue === null) return 0
+  return todayValue - yesterdayValue
+}
+
 const formatCompare = (value, unit) => {
-  if (value > 0) {
-    return `较昨日增加${Math.abs(value)}${unit}`
-  } else if (value < 0) {
-    return `较昨日减少${Math.abs(value)}${unit}`
-  } else {
-    return `与昨日持平`
-  }
+  if (value > 0) return `较昨日增加${Math.abs(value)}${unit}`
+  if (value < 0) return `较昨日减少${Math.abs(value)}${unit}`
+  return `与昨日持平`
 }
 
-// 获取比较样式类
 const getCompareClass = (value) => {
-  if (value > 0) {
-    return 'positive'
-  } else if (value < 0) {
-    return 'negative'
-  } else {
-    return 'neutral'
-  }
-}
-
-// 原有支付统计数据（保持不变）
-const paymentStats = reactive({
-  patientCount: 266,
-  patientCountChange: -20,
-  prescriptionPatientCount: 150,
-  prescriptionAmount: 3250.00,
-  prescriptionAmountChange: -300.00,
-  paymentAmount: 3250.00,
-  paymentAmountChange: -300.00,
-  examPatientCount: 80,
-  examAmount: 1200.00,
-  refundAmount: 500.00,
-  refundAmountChange: -100.00,
-  labPatientCount: 60,
-  labAmount: 800.00,
-  medicalItemPatientCount: 90,
-  medicalItemAmount: 1100.00
-})
-
-// 图表引用
-const trendChart = ref(null)
-const paymentChart = ref(null)
-const doctorChart = ref(null)
-const departmentChart = ref(null)
-
-// 初始化医生排行图表（保持不变）
-const initDoctorChart = () => {
-  const chart = echarts.init(doctorChart.value)
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      show: false
-    },
-    yAxis: {
-      type: 'category',
-      data: ['李医生', '王医生', '张医生', '刘医生', '黄医生'],
-      axisLabel: {
-        interval: 0,
-        fontSize: 12
-      }
-    },
-    series: [
-      {
-        name: '收入',
-        type: 'bar',
-        data: [50000, 45000, 40000, 35000, 30000],
-        itemStyle: {
-          color: function(params) {
-            const colorList = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399']
-            return colorList[params.dataIndex]
-          },
-          borderRadius: [0, 4, 4, 0]
-        },
-        label: {
-          show: true,
-          position: 'right',
-          formatter: '{c}元'
-        }
-      }
-    ]
-  }
-  chart.setOption(option)
-}
-
-// 初始化科室排行图表（保持不变）
-const initDepartmentChart = () => {
-  const chart = echarts.init(departmentChart.value)
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      max: 500
-    },
-    yAxis: {
-      type: 'category',
-      data: ['门诊外科', '呼吸内科', '耳鼻喉科', '骨科', '眼科'],
-      axisLabel: {
-        interval: 0,
-        fontSize: 12
-      }
-    },
-    series: [
-      {
-        name: '收入',
-        type: 'bar',
-        data: [450, 380, 320, 280, 200],
-        itemStyle: {
-          color: function(params) {
-            const colorList = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399']
-            return colorList[params.dataIndex]
-          },
-          borderRadius: [0, 4, 4, 0]
-        },
-        label: {
-          show: true,
-          position: 'right',
-          formatter: '{c}元'
-        }
-      }
-    ]
-  }
-  chart.setOption(option)
+  if (value > 0) return 'positive'
+  if (value < 0) return 'negative'
+  return 'neutral'
 }
 
 // 监听日期变化
@@ -566,39 +561,26 @@ watch(selectedDate, () => {
   fetchPrescriptionStats()
   fetchTrendData()
   fetchPaymentTypeData()
-  refreshCharts()
+  fetchDoctorStats()
+  fetchDepartmentStats()
 })
-
-// 刷新图表
-const refreshCharts = () => {
-  updateTrendChart()
-  updatePaymentChart()
-  initDoctorChart()
-  initDepartmentChart()
-}
 
 // 组件挂载时初始化
 onMounted(() => {
   fetchPrescriptionStats()
   fetchTrendData()
   fetchPaymentTypeData()
-  refreshCharts()
+  fetchDoctorStats()
+  fetchDepartmentStats()
 })
 
 // 窗口大小变化时重新调整图表大小
 window.addEventListener('resize', () => {
-  if (trendChart.value) {
-    echarts.getInstanceByDom(trendChart.value)?.resize()
-  }
-  if (paymentChart.value) {
-    echarts.getInstanceByDom(paymentChart.value)?.resize()
-  }
-  if (doctorChart.value) {
-    echarts.getInstanceByDom(doctorChart.value)?.resize()
-  }
-  if (departmentChart.value) {
-    echarts.getInstanceByDom(departmentChart.value)?.resize()
-  }
+  ;[trendChart, paymentChart, doctorChart, departmentChart].forEach(chartRef => {
+    if (chartRef.value) {
+      echarts.getInstanceByDom(chartRef.value)?.resize()
+    }
+  })
 })
 </script>
 
