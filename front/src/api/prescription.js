@@ -86,4 +86,25 @@ export function getStatisticsByPaymentType(date) {
   })
 }
 
+/**
+ * 根据日期查询当天的挂号信息
+ * @param {Object} params 参数对象
+ * @param {string} params.date 查询日期，格式为'YYYY-MM-DD'
+ * @returns {Promise} 返回请求的Promise对象
+ */
+export function getRegistrationByDate(params) {
+  // 将日期转换为当天的开始和结束时间
+  const startTime = `${params.date} 00:00:00`;
+  const endTime = `${params.date} 23:59:59`;
+  
+  return http.get('/registration/querybytimerange', {
+    params: {
+      startTime: startTime,
+      endTime: endTime
+    },
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
 
