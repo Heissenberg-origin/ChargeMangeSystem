@@ -14,83 +14,83 @@
     </div>
 
     <!-- 看板统计信息 -->
-<div class="stats-container">
-  <!-- 1. 挂号人数卡片 -->
-  <el-card class="stat-card">
-    <div class="stat-header">
-      <el-icon class="stat-icon"><User /></el-icon>
-      <span class="stat-title">挂号人数</span>
-    </div>
-    <div class="stat-content">
-      <div class="stat-main">
-        <span class="stat-value">{{ prescriptionStats.today?.paidPrescriptions || 0 }}</span>
-        <span class="stat-unit">人</span>
-      </div>
-      <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions))">
-        <el-icon v-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) > 0"><ArrowUp /></el-icon>
-        <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) < 0"><ArrowDown /></el-icon>
-        {{ formatCompare(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions), '人') }}
-      </div>
-    </div>
-  </el-card>
+    <div class="stats-container">
+      <!-- 1. 挂号人数卡片 -->
+      <el-card class="stat-card">
+        <div class="stat-header">
+          <el-icon class="stat-icon"><User /></el-icon>
+          <span class="stat-title">挂号人数</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-main">
+            <span class="stat-value">{{ prescriptionStats.today?.paidPrescriptions || 0 }}</span>
+            <span class="stat-unit">人</span>
+          </div>
+          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions))">
+            <el-icon v-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions), '人') }}
+          </div>
+        </div>
+      </el-card>
 
-  <!-- 2. 挂号金额卡片 -->
-  <el-card class="stat-card">
-    <div class="stat-header">
-      <el-icon class="stat-icon"><Money /></el-icon>
-      <span class="stat-title">挂号金额</span>
-    </div>
-    <div class="stat-content">
-      <div class="stat-main">
-        <span class="stat-value">{{ formatCurrency(prescriptionStats.today?.paidAmount) }}</span>
-        <span class="stat-unit">元</span>
-      </div>
-      <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount))">
-        <el-icon v-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) > 0"><ArrowUp /></el-icon>
-        <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) < 0"><ArrowDown /></el-icon>
-        {{ formatCompare(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount), '元') }}
-      </div>
-    </div>
-  </el-card>
+      <!-- 2. 挂号金额卡片 -->
+      <el-card class="stat-card">
+        <div class="stat-header">
+          <el-icon class="stat-icon"><Money /></el-icon>
+          <span class="stat-title">挂号金额</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-main">
+            <span class="stat-value">{{ formatCurrency(prescriptionStats.today?.paidAmount) }}</span>
+            <span class="stat-unit">元</span>
+          </div>
+          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount))">
+            <el-icon v-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount), '元') }}
+          </div>
+        </div>
+      </el-card>
 
-  <!-- 3. 退号人数卡片 -->
-  <el-card class="stat-card">
-    <div class="stat-header">
-      <el-icon class="stat-icon"><RefreshLeft /></el-icon>
-      <span class="stat-title">退号人数</span>
-    </div>
-    <div class="stat-content">
-      <div class="stat-main">
-        <span class="stat-value">{{ prescriptionStats.today?.refundPrescriptions || 0 }}</span>
-        <span class="stat-unit">人</span>
-      </div>
-      <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions))">
-        <el-icon v-if="calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions) > 0"><ArrowUp /></el-icon>
-        <el-icon v-else-if="calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions) < 0"><ArrowDown /></el-icon>
-        {{ formatCompare(calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions), '人') }}
-      </div>
-    </div>
-  </el-card>
+      <!-- 3. 退号人数卡片 -->
+      <el-card class="stat-card">
+        <div class="stat-header">
+          <el-icon class="stat-icon"><RefreshLeft /></el-icon>
+          <span class="stat-title">退号人数</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-main">
+            <span class="stat-value">{{ prescriptionStats.today?.refundPrescriptions || 0 }}</span>
+            <span class="stat-unit">人</span>
+          </div>
+          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions))">
+            <el-icon v-if="calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(prescriptionStats.today?.refundPrescriptions, prescriptionStats.yesterday?.refundPrescriptions), '人') }}
+          </div>
+        </div>
+      </el-card>
 
-  <!-- 4. 退号金额卡片 -->
-  <el-card class="stat-card">
-    <div class="stat-header">
-      <el-icon class="stat-icon"><Document /></el-icon>
-      <span class="stat-title">退号金额</span>
+      <!-- 4. 退号金额卡片 -->
+      <el-card class="stat-card">
+        <div class="stat-header">
+          <el-icon class="stat-icon"><Document /></el-icon>
+          <span class="stat-title">退号金额</span>
+        </div>
+        <div class="stat-content">
+          <div class="stat-main">
+            <span class="stat-value">{{ formatCurrency(prescriptionStats.today?.refundAmount) }}</span>
+            <span class="stat-unit">元</span>
+          </div>
+          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount))">
+            <el-icon v-if="calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount), '元') }}
+          </div>
+        </div>
+      </el-card>
     </div>
-    <div class="stat-content">
-      <div class="stat-main">
-        <span class="stat-value">{{ formatCurrency(prescriptionStats.today?.refundAmount) }}</span>
-        <span class="stat-unit">元</span>
-      </div>
-      <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount))">
-        <el-icon v-if="calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount) > 0"><ArrowUp /></el-icon>
-        <el-icon v-else-if="calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount) < 0"><ArrowDown /></el-icon>
-        {{ formatCompare(calcComparison(prescriptionStats.today?.refundAmount, prescriptionStats.yesterday?.refundAmount), '元') }}
-      </div>
-    </div>
-  </el-card>
-</div>
 
     <!-- 图表区域 -->
     <div class="charts-container">
@@ -321,10 +321,11 @@ const calcComparison = (todayVal, yesterdayVal) => {
 }
 
 // 格式化比较显示
-const formatCompare = (diff, unit) => {
-  if (diff === 0) return `0${unit}`
-  const sign = diff > 0 ? '+' : ''
-  return `${sign}${diff}${unit}`
+// 格式化比较显示
+const formatCompare = (value, unit) => {
+  if (value > 0) return `较昨日增加${Math.abs(value)}${unit}`
+  if (value < 0) return `较昨日减少${Math.abs(value)}${unit}`
+  return `与昨日持平`
 }
 
 // 获取比较样式类
