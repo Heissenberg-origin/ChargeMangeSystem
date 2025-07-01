@@ -474,6 +474,16 @@ public interface PrescriptionInfoMapper extends BaseMapper<PrescriptionInfo> {
                     @Param("state") String state,
                     @Param("dealerId") Integer dealerId);
 
+    @Update("UPDATE prescription_info SET " +
+            "pre_state = #{state}, " +
+            "pre_dealer_id = #{dealerId}, " +
+            "pre_deal_type = #{paymentType} "+
+            "WHERE pre_sequence = #{sequence}")
+    int updaterpayState(@Param("sequence") int sequence,
+                          @Param("state") String state,
+                          @Param("dealerId") Integer dealerId,
+                          @Param("paymentType") PrescriptionInfo.PaymentType paymentType);
+
     @Update({
             "UPDATE patient_info SET " +
                     "healthcard_balance = healthcard_balance - (SELECT pre_ci_num * ci.chargeitem_price " +
