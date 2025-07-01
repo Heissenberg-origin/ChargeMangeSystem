@@ -18,9 +18,6 @@ import org.example.entity.PatientInfo;
 public interface PatientInfoMapper extends BaseMapper<PatientInfo> {
     // void save(User user);
 
-    @Select("select count(*) from patient_info pi where pi.gender=#{gender.displayValue}")
-    int getgenderamount(PatientInfo.Gender gender);
-
     @Update("UPDATE patient_info SET healthcard_balance=0 WHERE healthcard_id=#{healthcardId}")
     void settle(int healthcardId);
 }

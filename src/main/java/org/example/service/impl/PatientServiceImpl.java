@@ -19,10 +19,7 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
     @Autowired
     private PatientInfoMapper patientInfoMapper;
 
-    public int getgendernum(PatientInfo.Gender gender){
-        int gendernum = patientInfoMapper.getgenderamount(gender);
-        return gendernum;
-    }
+
     public void settlehcard(int healthcardId){
         patientInfoMapper.settle(healthcardId);
     }

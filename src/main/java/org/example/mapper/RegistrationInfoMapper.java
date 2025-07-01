@@ -3,6 +3,7 @@ package org.example.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import org.apache.ibatis.annotations.*;
+import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 
 import java.sql.Timestamp;
@@ -439,4 +440,12 @@ public interface RegistrationInfoMapper extends BaseMapper<RegistrationInfo> {
 
     @Delete("delete from  registration_info where reg_id=#{id}")
     void mydeleteById(int id);
+
+    @Select("SELECT pi.gender, COUNT(DISTINCT pi.healthcard_id) as count " +
+            "FROM patient_info pi " +
+            "JOIN registration_info ri ON pi.healthcard_id = ri.reg_hcard_id " +
+            "WHERE DATE(ri.reg_time) = #{date} " +
+            "GROUP BY pi.gender")
+    @MapKey("gender")
+    Map<String, Map<String, Long>> getGenderStatsByDate(String date);
 }

@@ -4,14 +4,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.common.Result;
+import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 import org.example.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "挂号管理", description = "挂号信息的创建、查询、更新和删除等操作")
@@ -25,6 +30,22 @@ public class RegistrationController {
     public void createRegistration(@RequestBody RegistrationInfo registrationInfo) {
         registrationService.createRegistration(registrationInfo);
         System.out.println("创建成功");
+    }
+
+    @GetMapping("/getGenderStatsByDate")
+    @Operation(summary = "查询特定日期的性别统计",
+            description = "获取指定日期的男性和女性挂号人数统计")
+    public Result getGenderStatsByDate(
+            @RequestParam @Parameter(description = "日期，格式为yyyy-MM-dd") String date) {
+        try {
+            // 验证日期格式
+            LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e) {
+            return new Result("400", "日期格式不正确，请使用yyyy-MM-dd格式", null);
+        }
+
+        Map<String, Integer> stats = registrationService.getGenderStatsByDate(date);
+        return new Result("200", "success", stats);
     }
 
     @GetMapping("/querybyId/{regId}")

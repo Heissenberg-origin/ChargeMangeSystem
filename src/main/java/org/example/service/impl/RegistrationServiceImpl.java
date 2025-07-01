@@ -1,16 +1,14 @@
 package org.example.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 import org.example.mapper.RegistrationInfoMapper;
 import org.example.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class RegistrationServiceImpl extends ServiceImpl <RegistrationInfoMapper, RegistrationInfo> implements RegistrationService {
@@ -72,5 +70,22 @@ public class RegistrationServiceImpl extends ServiceImpl <RegistrationInfoMapper
     public void cancelRegistration(int regId){
         registrationInfoMapper.handlecancel(regId);
         registrationInfoMapper.handlecancelstate(regId,3);
+    }
+    public Map<String, Integer> getGenderStatsByDate(String date) {
+        Map<String, Map<String, Long>> rawResult = registrationInfoMapper.getGenderStatsByDate(date);
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("男", 0);
+        result.put("女", 0);
+
+        rawResult.forEach((gender, stats) -> {
+            if (stats != null && stats.containsKey("count")) {
+                // 安全地将 Long 转换为 Integer
+                result.put(gender, stats.get("count").intValue());
+            }
+        });
+
+        return result;
+
     }
 }

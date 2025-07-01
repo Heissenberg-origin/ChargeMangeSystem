@@ -39,13 +39,7 @@ public class PatientController {
         patientService.removeById(healthcardId);
     }
 
-    @GetMapping("/getgendernum")
-    @Operation(summary = "查询性别人数", description = "根据性别查看人数")
-    public Result getgenderamount(
-            @RequestParam@Parameter PatientInfo.Gender gender){
-        Result result = new Result("200","success",patientService.getgendernum(gender));
-        return result;
-    }
+
 
     @GetMapping("/querybyId/{healthcardId}")
     @Operation(summary = "就诊卡查询病人信息", description = "查询病人")

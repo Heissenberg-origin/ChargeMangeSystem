@@ -1,6 +1,7 @@
 package org.example.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 
 import java.util.Date;
@@ -26,4 +27,6 @@ public interface RegistrationService extends IService<RegistrationInfo> {
     //Map<String, Object> getRegistrationStatistics(Date startDate, Date endDate);
     List<RegistrationInfo> getRegistrationsByType(RegistrationInfo.RegistrationType type);
     void cancelRegistration(int regId);
+    Map<String, Integer> getGenderStatsByDate(String date);
+
 }
