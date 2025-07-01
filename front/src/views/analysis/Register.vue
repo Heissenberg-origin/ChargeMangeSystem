@@ -126,7 +126,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { User, Money, RefreshLeft, Document, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getRegistrationByDate } from '@/api/prescription'
+import { getRegistrationByDate, getGenderStatsByDate } from '@/api/prescription'
 import dayjs from 'dayjs'
 
 // 当前选中的日期
@@ -266,6 +266,32 @@ const updateDoctorChart = () => {
   })
 }
 
+// 获取性别统计数据
+const fetchGenderStats = async () => {
+  try {
+    // 直接传递字符串参数而不是对象
+    const res = await getGenderStatsByDate(selectedDate.value)
+    const genderData = res.data.data || { '男': 0, '女': 0 }
+    updateGenderChart(genderData)
+  } catch (error) {
+    console.error('获取性别数据失败:', error)
+    updateGenderChart({ '男': 0, '女': 0 })
+  }
+}
+
+// 更新性别比例图表
+const updateGenderChart = (genderData) => {
+  if (!paymentChartInstance) return
+  
+  paymentChartInstance.setOption({
+    series: [{
+      data: [
+        { value: genderData['男'] || 0, name: '男性' },
+        { value: genderData['女'] || 0, name: '女性' }
+      ]
+    }]
+  })
+}
 // 更新科室排行榜图表
 const updateDepartmentChart = () => {
   if (!departmentChartInstance || !prescriptionStats.value.today?.topDepartments) return
@@ -477,12 +503,14 @@ const initCharts = () => {
 // 监听日期变化
 watch(selectedDate, () => {
   fetchRegistrationStats()
+  fetchGenderStats()
 })
 
 // 组件挂载时初始化
 onMounted(() => {
   initCharts()
   fetchRegistrationStats()
+   fetchGenderStats()
 })
 
 // 窗口大小变化时重新调整图表大小
