@@ -23,6 +23,9 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
         int gendernum = patientInfoMapper.getgenderamount(gender);
         return gendernum;
     }
+    public void settlehcard(int healthcardId){
+        patientInfoMapper.settle(healthcardId);
+    }
 
     @Override
     public boolean updateByHealthcardId(int healthcardId, PatientInfo patientInfo) {

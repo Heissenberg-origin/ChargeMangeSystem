@@ -17,4 +17,5 @@ public interface PatientService extends IService<PatientInfo> {
      */
     void recharge(int healthcardId, float amount);
     int getgendernum(PatientInfo.Gender gender);
+    void settlehcard(int healthcardId);
 }

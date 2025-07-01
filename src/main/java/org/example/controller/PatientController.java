@@ -79,4 +79,12 @@ public class PatientController {
         patientService.recharge(healthcardId, amount);
 
     }
+
+    @PutMapping("/settlement/{healthcardId}")
+    @Operation(summary = "结算", description = "就诊卡余额结算")
+    public void settlebalance(
+            @Parameter(description = "就诊卡号",required = true,example = "111")
+            @PathVariable int healthcardId) {
+        patientService.settlehcard(healthcardId);
+    }
 }
