@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Search, Refresh, Download, Printer } from '@element-plus/icons-vue';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
@@ -133,7 +133,38 @@ import { getDailyInformation } from '@/api/prescription';
 import { ElMessage } from 'element-plus';
 
 // 日期范围（初始为空，由用户选择）
-const dateRange = ref([]);
+
+// 获取今天日期（格式：YYYY-MM-DD）
+function getToday() {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getDefaultDateRange = () => {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 3)
+  
+  return [
+    start.toISOString().replace('T', ' ').substring(0, 19),
+    end.toISOString().replace('T', ' ').substring(0, 19)
+  ]
+}
+
+const dateRange = ref(getDefaultDateRange())
+
+// 获取3天前的日期（格式：YYYY-MM-DD）
+function getThreeDaysAgo() {
+  const date = new Date()
+  date.setDate(date.getDate() - 3)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 // 表格数据
 const tableData = ref([]);
@@ -165,9 +196,9 @@ const fetchData = async () => {
     }
 
     const params = {
-      startDate: dateRange.value[0],
-      endDate: dateRange.value[1]
-    };
+  startDate: `${dateRange.value[0]} 00:00:00`, // 保持原有格式
+  endDate: `${dateRange.value[1]} 00:00:00`    // 保持原有格式
+};
 
     const response = await getDailyInformation(params);
     console.log('获取到的完整响应:', response);
@@ -212,7 +243,7 @@ const fetchData = async () => {
 
 // 重置查询
 const reset = () => {
-  dateRange.value = [];
+  dateRange.value = [getThreeDaysAgo(), getToday()] ;
   tableData.value = [];
   summary.value = {
     receivable: 0,
@@ -300,6 +331,10 @@ const printReport = () => {
   document.body.innerHTML = originalContent;
   window.location.reload();
 };
+
+onMounted(() => {
+  fetchData() // 自动加载最近3天数据
+})
 
 // 可选：监听日期范围变化自动查询（根据需要开启）
 // watch(dateRange, (newVal) => {

@@ -70,7 +70,21 @@ import { getBusinessInformation } from '@/api/prescription';
 import { ElMessage } from 'element-plus';
 
 // 日期范围
-const dateRange = ref([]);
+
+// 获取当前日期时间（格式：YYYY-MM-DD HH:mm:ss）
+const getCurrentDateTime = () => {
+  const now = new Date();
+  return now.toISOString().replace('T', ' ').substring(0, 19);
+};
+
+// 获取3天前的日期时间（格式：YYYY-MM-DD HH:mm:ss）
+const getThreeDaysAgoDateTime = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 3);
+  return date.toISOString().replace('T', ' ').substring(0, 19);
+};
+
+const dateRange = ref([getThreeDaysAgoDateTime(), getCurrentDateTime()]);
 
 // 业务数据
 const businessData = ref({
@@ -143,7 +157,7 @@ const fetchData = async () => {
 
 // 重置查询
 const reset = () => {
-  dateRange.value = [];
+  dateRange.value = [getThreeDaysAgoDateTime(), getCurrentDateTime()]; // 重置为3天前到现在
   businessData.value = {
     totalRegistrationCount: 0,
     totalRegistrationFee: 0,
