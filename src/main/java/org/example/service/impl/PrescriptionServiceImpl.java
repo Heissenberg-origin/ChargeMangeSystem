@@ -92,7 +92,7 @@ public class PrescriptionServiceImpl extends ServiceImpl<PrescriptionInfoMapper,
     }
     public void payPrescription(int sequence, int dealerId, PrescriptionInfo.PaymentType paymentType){
         prescriptionInfoMapper.payPrescription(sequence,dealerId,paymentType);
-        prescriptionInfoMapper.updateState(sequence,"待执行",dealerId);
+        prescriptionInfoMapper.updaterpayState(sequence,"待执行",dealerId,paymentType);
 
     }
     public void refundPrescription(int sequence, int dealerId){
