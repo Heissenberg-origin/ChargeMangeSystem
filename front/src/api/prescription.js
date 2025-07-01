@@ -118,3 +118,12 @@ export function getGenderStatsByDate(date) {
     params: { date }
   });
 }
+
+//创建收费项目
+export function createChargeItem(data) {
+  return http.post('/chargeitem/create', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
