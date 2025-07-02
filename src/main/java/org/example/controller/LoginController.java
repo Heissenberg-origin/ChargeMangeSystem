@@ -28,12 +28,12 @@ public class LoginController {
     // 登录接口
     @PostMapping("/login")
     public ResponseEntity<?> doLogin(
-            @RequestParam int id,
+            @RequestParam String account,
             @RequestParam String password,
             @RequestParam(required = false) String redirect,
             HttpSession session) {
 
-        LoginInfo user = loginService.login(id, password);
+        LoginInfo user = loginService.login(account, password);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("用户名或密码错误");
@@ -61,14 +61,14 @@ public class LoginController {
     // 修改密码接口
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(
-            @RequestParam int id,
+            @RequestParam String account,
             @RequestParam String oldPassword,
             @RequestParam String newPassword,
             HttpSession session) {
 
         // 检查用户是否登录
         LoginInfo currentUser = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
-        if (currentUser == null || currentUser.getId() != id) {
+        if (currentUser == null || currentUser.getAccount() != account) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("请先登录");
         }
@@ -78,7 +78,7 @@ public class LoginController {
                     .body("新密码长度不能少于4位");
         }
 
-        boolean success = loginService.changePassword(id, oldPassword, newPassword);
+        boolean success = loginService.changePassword(account, oldPassword, newPassword);
 
         if (success) {
             return ResponseEntity.ok("密码修改成功");

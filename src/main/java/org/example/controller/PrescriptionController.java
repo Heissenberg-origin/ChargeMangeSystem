@@ -197,25 +197,25 @@ public class PrescriptionController {
     }
 
     @Operation(summary = "收费操作", description = "对处方进行收费操作")
-    @PatchMapping("/pay/{sequence}")
+    @PutMapping("/pay/{sequence}/{dealerId}/{paymentType}")
     public void payPrescription(
             @Parameter(description = "处方序号", required = true)
             @PathVariable int sequence,
             @Parameter(description = "收费员ID", required = true)
-            @RequestParam int dealerId,
+            @PathVariable int dealerId,
             @Parameter(description = "支付类型", required = true)
-            @RequestParam PrescriptionInfo.PaymentType paymentType) {
+            @PathVariable PrescriptionInfo.PaymentType paymentType) {
         prescriptionService.payPrescription(sequence, dealerId, paymentType);
         System.out.println("已完成收费："+sequence);
     }
 
     @Operation(summary = "退费操作", description = "对处方进行退费操作")
-    @PatchMapping("/refund/{sequence}")
+    @PutMapping("/refund/{sequence}/{dealerId}")
     public void refundPrescription(
             @Parameter(description = "处方序号", required = true)
             @PathVariable int sequence,
             @Parameter(description = "操作员ID", required = true)
-            @RequestParam int dealerId) {
+            @PathVariable int dealerId) {
         prescriptionService.refundPrescription(sequence, dealerId);
     }
 
