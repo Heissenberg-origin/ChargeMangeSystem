@@ -127,3 +127,11 @@ export function createChargeItem(data) {
     }
   });
 }
+
+export function aiChatBot(data){
+  return http.post('/aichat/aiProject', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
