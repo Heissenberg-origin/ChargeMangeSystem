@@ -545,8 +545,9 @@ const calcComparison = (todayValue, yesterdayValue) => {
 }
 
 const formatCompare = (value, unit) => {
-  if (value > 0) return `较昨日增加${Math.abs(value)}${unit}`
-  if (value < 0) return `较昨日减少${Math.abs(value)}${unit}`
+  const formattedValue = Math.abs(value).toFixed(2) // 确保显示两位小数
+  if (value > 0) return `较昨日增加${formattedValue}${unit}`
+  if (value < 0) return `较昨日减少${formattedValue}${unit}`
   return `与昨日持平`
 }
 

@@ -66,6 +66,10 @@
             <el-table-column prop="projectCode" label="项目编码" align="center" width="120" />
             <el-table-column prop="projectName" label="项目名称" align="center" width="150" />
             <el-table-column prop="pinyinCode" label="拼音码" align="center" width="120" />
+            <!-- 新增的执行部门列 -->
+            <el-table-column prop="depname" label="执行部门" align="center" width="120" />
+            <!-- 新增的项目余量列 -->
+            <el-table-column prop="chargeItemBalance" label="项目余量" align="center" width="100" />
             <el-table-column prop="unit" label="单位" align="center" width="80">
               <template #default="{row}">
                 {{ unitOptions.find(u => u.value === row.unit)?.label || row.unit }}
@@ -124,8 +128,8 @@
       width="600px"
     >
       <el-form :model="projectForm" :rules="rules" ref="projectFormRef" label-width="100px">
-        <el-form-item label="项目编码" prop="projectCode">
-          <el-input v-model="projectForm.projectCode" placeholder="请输入项目编码" />
+        <el-form-item label="项目拼音码" prop="projectCode">
+          <el-input v-model="projectForm.projectCode" placeholder="请输入项目拼音码" />
         </el-form-item>
         
         <el-form-item label="项目名称" prop="projectName">
@@ -163,6 +167,15 @@
             />
           </el-select>
         </el-form-item>
+
+        <!-- 在对话框表单中添加新字段 -->
+        <el-form-item label="执行部门" prop="depname">
+          <el-input v-model="projectForm.depname" placeholder="请输入执行部门" />
+        </el-form-item>
+
+        <el-form-item label="执行方法" prop="chargeItemMethod">
+          <el-input v-model="projectForm.chargeItemMethod" placeholder="请输入执行方法" />
+        </el-form-item>
         
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="projectForm.status">
@@ -181,10 +194,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getChargeitemList, deleteChargeItem, updateChargeItem } from '@/api/prescription'
+import { getChargeitemList, deleteChargeItem, updateChargeItem, createChargeItem } from '@/api/prescription'
 
 // 查询参数
 const queryParams = reactive({
@@ -231,13 +244,24 @@ const projectForm = reactive({
   unit: '次',
   price: 0,
   feeType: '',
-  status: '1'
+  status: '1',
+  depname: '', // 新增执行部门
+  chargeItemMethod: '', // 新增执行方法
+  chargeItemExDepId: 0 // 新增执行部门ID
+})
+
+// 计算最大ID，用于自动生成新ID
+const maxId = computed(() => {
+  return rawTableData.value.length > 0 
+    ? Math.max(...rawTableData.value.map(item => item.id)) + 1
+    : 1000
 })
 
 // 表单验证规则
+
 const rules = {
   projectCode: [
-    { required: true, message: '请输入项目编码', trigger: 'blur' },
+    { required: true, message: '请输入项目拼音码', trigger: 'blur' },
     { max: 20, message: '长度不能超过20个字符', trigger: 'blur' }
   ],
   projectName: [
@@ -253,6 +277,30 @@ const rules = {
   ],
   feeType: [
     { required: true, message: '请选择费用类型', trigger: 'change' }
+  ],
+  // 新增字段的验证规则
+  depname: [
+    { required: true, message: '请输入执行部门', trigger: 'blur' },
+    { max: 50, message: '长度不能超过50个字符', trigger: 'blur' }
+  ],
+  chargeItemMethod: [
+    { required: true, message: '请输入执行方法', trigger: 'blur' },
+    { max: 50, message: '长度不能超过50个字符', trigger: 'blur' }
+  ],
+  chargeItemExDepId: [
+    { required: true, message: '请选择执行部门ID', trigger: 'blur' },
+    { 
+      validator: (rule, value, callback) => {
+        if (value === null || value === undefined) {
+          callback(new Error('请输入部门ID'))
+        } else if (value < 0 || value > 88) {
+          callback(new Error('部门ID必须在0-88之间'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -271,8 +319,10 @@ const fetchTableData = async () => {
     
     const response = await getChargeitemList({
       pageNum: 1,
-      pageSize: 10000 // 获取足够大的数量
+      pageSize: 10000
     })
+
+    console.log('响应数据为------', response)
 
     if (response.data?.code === '200') {
       rawTableData.value = response.data.data.map(item => ({
@@ -280,15 +330,33 @@ const fetchTableData = async () => {
         projectCode: item.chargeItemId,
         projectName: item.chargeItemName,
         pinyinCode: item.chargeItemCode,
+        depname: item.depname || '未指定', // 新增的执行部门字段
+        chargeItemBalance: item.chargeItemBalance || 0, // 新增的项目余量字段
         unit: item.chargeItemUnit,
         price: item.chargeItemPrice,
         status: item.chargeItemState === '启用' ? '1' : '0',
         feeType: getFeeTypeValue(item.chargeItemType),
         creator: item.chargeItemCreator,
-        createTime: item.chargeItemTime
+        createTime: item.chargeItemTime,
+        originalData: {
+          chargeItemId: item.chargeItemId,
+          chargeItemName: item.chargeItemName,
+          chargeItemType: item.chargeItemType,
+          chargeItemCode: item.chargeItemCode,
+          chargeItemExDepId: item.chargeItemExDepId,
+          depname: item.depname || 'string',
+          chargeItemMethod: item.chargeItemMethod,
+          chargeItemUnit: item.chargeItemUnit,
+          chargeItemBalance: item.chargeItemBalance,
+          chargeItemPrice: item.chargeItemPrice,
+          chargeItemState: item.chargeItemState,
+          chargeItemCreator: item.chargeItemCreator,
+          chargeItemTime: item.chargeItemTime,
+          chargeItemLatestFixer: item.chargeItemLatestFixer || 'admin'
+        }
       }))
       
-      filterTableData() // 初始显示所有数据
+      filterTableData()
     } else {
       ElMessage.error(response.data?.message || '获取数据失败')
     }
@@ -383,10 +451,53 @@ const showCreateDialog = () => {
     unit: '次',
     price: 0,
     feeType: '',
-    status: '1'
+    status: '1',
+    depname: '',
+    chargeItemMethod: '',
+    chargeItemExDepId: Math.floor(Math.random() * 88 + 1) // 随机0-88的部门ID
   })
   projectDialogVisible.value = true
 }
+
+// 提交创建表单
+const submitCreateForm = async () => {
+  try {
+    loading.value = true
+    
+    const requestBody = {
+      chargeItemId: maxId.value, // 自动生成ID
+      chargeItemName: projectForm.projectName,
+      chargeItemType: getFeeTypeLabel(projectForm.feeType),
+      chargeItemCode: projectForm.projectCode,
+      chargeItemExDepId: projectForm.chargeItemExDepId,
+      depname: projectForm.depname,
+      chargeItemMethod: projectForm.chargeItemMethod,
+      chargeItemUnit: projectForm.unit,
+      chargeItemBalance: 50, // 默认余量50
+      chargeItemPrice: projectForm.price,
+      chargeItemState: projectForm.status === '1' ? '启用' : '停用',
+      chargeItemCreator: '系统管理员',
+      chargeItemTime: formatDateTime(new Date()),
+      chargeItemLatestFixer: '系统管理员'
+    }
+
+    const response = await createChargeItem(requestBody)
+    
+    if (response.status === 200 || response.data?.code === '200') {
+      ElMessage.success('创建成功')
+      projectDialogVisible.value = false
+      fetchTableData()
+    } else {
+      ElMessage.error(response.data?.message || '创建失败')
+    }
+  } catch (error) {
+    console.error('创建项目失败:', error)
+    ElMessage.error('创建失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
+  }
+}
+
 
 // 编辑项目
 const handleEdit = (row) => {
@@ -398,7 +509,11 @@ const handleEdit = (row) => {
     unit: row.unit,
     price: row.price,
     feeType: row.feeType,
-    status: row.status
+    status: row.status,
+    // 新增字段的赋值
+    depname: row.originalData.depname,
+    chargeItemMethod: row.originalData.chargeItemMethod,
+    chargeItemExDepId: row.originalData.chargeItemExDepId
   })
   projectDialogVisible.value = true
 }
@@ -416,15 +531,6 @@ const handleDelete = async (row) => {
     await deleteChargeItem(row.id)
     
     ElMessage.success('删除成功')
-    
-    // 重新获取数据（两种方案任选其一）
-    
-    // 方案1：直接在前端删除（适用于小数据量）
-    // const index = tableData.value.findIndex(item => item.id === row.id)
-    // if (index !== -1) {
-    //   tableData.value.splice(index, 1)
-    //   totalItems.value -= 1
-    // }
     
     // 方案2：重新获取数据（推荐，保证数据一致性）
     fetchTableData()
@@ -444,26 +550,45 @@ const submitProjectForm = () => {
   projectFormRef.value.validate(async (valid) => {
     if (!valid) return
     
+     if (isEdit.value) {
+      submitUpdateForm()
+    } else {
+      submitCreateForm()
+    }
     try {
       loading.value = true
       
-      // 构造后端需要的参数结构
-      const updateData = {
-        chargeItemCode: projectForm.projectCode,
+      // 1. 找到原始数据
+      const originalItem = rawTableData.value.find(item => item.id === projectForm.id)
+      if (!originalItem) {
+        ElMessage.error('未找到原始项目数据')
+        return
+      }
+      
+      // 2. 构造完整的JSON请求体
+      const requestBody = {
+        ...originalItem.originalData, // 原始数据中的所有字段
         chargeItemName: projectForm.projectName,
+        chargeItemCode: projectForm.projectCode,
         chargeItemUnit: projectForm.unit,
         chargeItemPrice: projectForm.price,
-        chargeItemType: getFeeTypeLabel(projectForm.feeType), // 转换为中文
-        chargeItemState: projectForm.status === '1' ? '启用' : '停用'
+        chargeItemType: getFeeTypeLabel(projectForm.feeType),
+        chargeItemState: projectForm.status === '1' ? '启用' : '停用',
+        chargeItemLatestFixer: 'admin',
+        chargeItemTime: formatDateTime(new Date()),
+        // 确保包含新增字段
+        depname: originalItem.originalData.depname,
+        chargeItemBalance: originalItem.originalData.chargeItemBalance
       }
 
-      // 调用更新接口
-      const response = await updateChargeItem(projectForm.id, updateData)
+      // 3. 调用更新接口
+      const response = await updateChargeItem(projectForm.id, requestBody)
       
-      if (response.data?.code === '200') {
+      // 修改响应判断逻辑
+      if (response.status === 200 || response.data?.code === '200') {
         ElMessage.success('更新成功')
         projectDialogVisible.value = false
-        fetchTableData() // 刷新表格数据
+        fetchTableData()
       } else {
         ElMessage.error(response.data?.message || '更新失败')
       }
@@ -476,10 +601,27 @@ const submitProjectForm = () => {
   })
 }
 
+// 格式化时间为 "YYYY-MM-DD HH:mm:ss"
+const formatDateTime = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0') // 补零
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 // 将费用类型值转换为中文标签
 const getFeeTypeLabel = (value) => {
-  const type = feeTypeOptions.find(item => item.value === value)
-  return type ? type.label : '未知类型'
+  switch(value) {
+    case '1': return '检查'
+    case '2': return '治疗'
+    case '3': return '手术'
+    case '4': return '材料'
+    default: return '检查'
+  }
 }
 
 // 初始化加载数据

@@ -187,6 +187,14 @@
         </div>
       </div>
     </el-dialog>
+    <div>
+    <p>消息总数: {{ messageCount }}</p>
+    <ChatBot 
+      @message-submitted="handleMessage"
+      @button-clicked="handleButton"
+      @tag-clicked="handleTag"
+    />
+  </div>
   </div>
 </template>
 
@@ -195,6 +203,25 @@ import { ref, reactive, computed } from 'vue'
 import { Refresh, Download, Printer, PieChart } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
+import ChatBot from '@/components/ChatBot.vue'
+
+const messageCount = ref(0)
+
+const handleMessage = (message) => {
+  console.log('用户发送的消息:', message)
+  messageCount.value++
+  // 在这里处理消息发送逻辑
+}
+
+const handleButton = (type) => {
+  console.log('按钮被点击:', type)
+  // 根据不同类型执行不同操作
+}
+
+const handleTag = (tag) => {
+  console.log('标签被点击:', tag)
+  // 根据标签执行不同操作
+}
 
 // 查询参数
 const queryParams = reactive({

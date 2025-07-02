@@ -1,17 +1,36 @@
 <template>
   <div class="login-container">
-    <el-card class="login-box">
+    <!-- 粒子背景 -->
+    <vue-particles 
+      class="particles" 
+      color="#409EFF" 
+      :particleOpacity="0.7" 
+      :particlesNumber="60" 
+      shapeType="circle"
+      :particleSize="4" 
+      linesColor="#409EFF" 
+      :linesWidth="1" 
+      :lineLinked="true" 
+      :lineOpacity="0.4"
+      :linesDistance="150" 
+      :moveSpeed="2"
+    ></vue-particles>
+    
+    <el-card class="login-box" :class="{'animated-box': animatedBox}">
       <h2 class="login-title">门诊挂号收费系统</h2>
       <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
         <el-form-item prop="id">
           <el-input
-            v-model.number="loginForm.id"
+            v-model="loginForm.id"
             placeholder="请输入用户ID"
             size="large"
-            type="number"
+            type="text"
+            @input="filterNumberInput"
+            @focus="handleInputFocus('id')"
+            @blur="handleInputBlur"
           >
             <template #prefix>
-              <el-icon><User /></el-icon>
+              <el-icon class="input-icon"><User /></el-icon>
             </template>
           </el-input>
         </el-form-item>
@@ -23,9 +42,11 @@
             placeholder="请输入密码"
             size="large"
             show-password
+            @focus="handleInputFocus('password')"
+            @blur="handleInputBlur"
           >
             <template #prefix>
-              <el-icon><Lock /></el-icon>
+              <el-icon class="input-icon"><Lock /></el-icon>
             </template>
           </el-input>
         </el-form-item>
@@ -38,7 +59,8 @@
             class="login-btn"
             :loading="loading"
           >
-            登录
+            <span v-if="!loading">登 录</span>
+            <span v-else>登 录 中...</span>
           </el-button>
         </el-form-item>
       </el-form>
@@ -47,30 +69,64 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { login } from '@/api/auth'
+import VueParticles from 'vue-particles'
 
 const router = useRouter()
 const loading = ref(false)
 const loginFormRef = ref(null)
+const animatedBox = ref(false)
+const activeInput = ref(null)
 
 const loginForm = ref({
   id: '',
   password: ''
 })
 
+// 过滤非数字输入
+const filterNumberInput = () => {
+  loginForm.value.id = loginForm.value.id.replace(/[^\d]/g, '')
+}
+
 const loginRules = {
   id: [
     { required: true, message: '请输入用户ID', trigger: 'blur' },
-    { type: 'number', message: 'ID必须为数字', trigger: 'blur' }
+    { 
+      validator: (rule, value, callback) => {
+        if (!value) {
+          callback(new Error('请输入用户ID'))
+        } else if (!/^\d+$/.test(value)) {
+          callback(new Error('ID必须为数字'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 4, message: '密码长度不能小于4个字符', trigger: 'blur' }
   ]
+}
+
+onMounted(() => {
+  // 页面加载动画
+  setTimeout(() => {
+    animatedBox.value = true
+  }, 100)
+})
+
+const handleInputFocus = (field) => {
+  activeInput.value = field
+}
+
+const handleInputBlur = () => {
+  activeInput.value = null
 }
 
 const handleLogin = () => {
@@ -81,7 +137,7 @@ const handleLogin = () => {
     
     try {
       const { data } = await login({
-        id: loginForm.value.id,
+        id: Number(loginForm.value.id), // 转换为数字
         password: loginForm.value.password
       })
       
@@ -92,7 +148,6 @@ const handleLogin = () => {
           name: data.name || `用户${data.id}`,
           rank: data.rank,
           lastLoginTime: data.lastLoginTime || new Date().toLocaleString(),
-          // 实际项目中应该存储加密后的密码，而不是明文
           encryptedPassword: data.encryptedPassword 
         }
         localStorage.setItem('userInfo', JSON.stringify(userData))
@@ -121,7 +176,18 @@ const handleLogin = () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f5f7fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 .login-box {
@@ -129,26 +195,116 @@ const handleLogin = () => {
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+
+.login-box.animated-box {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .login-title {
   text-align: center;
   margin-bottom: 40px;
   color: #409EFF;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.login-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: #409EFF;
+  border-radius: 3px;
 }
 
 .login-btn {
   width: 100%;
   font-size: 16px;
   letter-spacing: 2px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(64, 158, 255, 0.4);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.login-btn:hover::before {
+  left: 100%;
 }
 
 :deep(.el-input__wrapper) {
   padding: 0 15px;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
 }
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409EFF inset;
+  transform: translateY(-2px);
+}
+
 :deep(.el-input__prefix) {
   display: flex;
   align-items: center;
   margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+.input-icon {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper.is-focus) .input-icon {
+  color: #409EFF;
+  transform: scale(1.2);
+}
+
+/* 移除数字输入框的增减按钮 */
+:deep(input[type="number"]::-webkit-outer-spin-button),
+:deep(input[type="number"]::-webkit-inner-spin-button) {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .login-box {
+    width: 90%;
+    padding: 30px 20px;
+  }
 }
 </style>

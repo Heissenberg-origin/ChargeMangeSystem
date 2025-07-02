@@ -108,3 +108,30 @@ export function getRegistrationByDate(params) {
   });
 }
 
+/**
+ * 获取指定日期的性别统计信息
+ * @param {string} date 日期，格式为'yyyy-MM-dd'
+ * @returns {Promise} 返回请求的Promise对象
+ */
+export function getGenderStatsByDate(date) {
+  return http.get('/registration/getGenderStatsByDate', {
+    params: { date }
+  });
+}
+
+//创建收费项目
+export function createChargeItem(data) {
+  return http.post('/chargeitem/create', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+export function aiChatBot(data){
+  return http.post('/aichat/aiProject', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
