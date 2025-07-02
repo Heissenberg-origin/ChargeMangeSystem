@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.Objects;
 
 @RestController
 @Tag(name = "登录管理", description = "登陆账号的创建、查询、更新和删除等操作")
@@ -68,7 +69,7 @@ public class LoginController {
 
         // 检查用户是否登录
         LoginInfo currentUser = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
-        if (currentUser == null || currentUser.getAccount() != account) {
+        if (currentUser == null || !Objects.equals(currentUser.getAccount(), account)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("请先登录");
         }
