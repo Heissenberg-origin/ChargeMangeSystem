@@ -19,14 +19,13 @@
     <el-card class="login-box" :class="{'animated-box': animatedBox}">
       <h2 class="login-title">门诊挂号收费系统</h2>
       <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
-        <el-form-item prop="id">
+        <el-form-item prop="account">
           <el-input
-            v-model="loginForm.id"
-            placeholder="请输入用户ID"
+            v-model="loginForm.account"
+            placeholder="请输入账号"
             size="large"
             type="text"
-            @input="filterNumberInput"
-            @focus="handleInputFocus('id')"
+            @focus="handleInputFocus('account')"
             @blur="handleInputBlur"
           >
             <template #prefix>
@@ -83,30 +82,13 @@ const animatedBox = ref(false)
 const activeInput = ref(null)
 
 const loginForm = ref({
-  id: '',
+  account: '',  // 修改为account
   password: ''
 })
 
-// 过滤非数字输入
-const filterNumberInput = () => {
-  loginForm.value.id = loginForm.value.id.replace(/[^\d]/g, '')
-}
-
 const loginRules = {
-  id: [
-    { required: true, message: '请输入用户ID', trigger: 'blur' },
-    { 
-      validator: (rule, value, callback) => {
-        if (!value) {
-          callback(new Error('请输入用户ID'))
-        } else if (!/^\d+$/.test(value)) {
-          callback(new Error('ID必须为数字'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
+  account: [  // 修改为account
+    { required: true, message: '请输入账号', trigger: 'blur' },
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -137,15 +119,16 @@ const handleLogin = () => {
     
     try {
       const { data } = await login({
-        id: Number(loginForm.value.id), // 转换为数字
-        password: loginForm.value.password
-      })
+        account: loginForm.value.account,  // 修改为account
+        password: loginForm.value.password,
+      });
       
       if (data) {
         // 存储完整的用户信息
         const userData = {
           id: data.id,
-          name: data.name || `用户${data.id}`,
+          account: data.account,  // 新增account字段
+          name: data.name || `用户${data.account}`,
           rank: data.rank,
           lastLoginTime: data.lastLoginTime || new Date().toLocaleString(),
           encryptedPassword: data.encryptedPassword 
