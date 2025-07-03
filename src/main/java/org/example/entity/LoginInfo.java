@@ -12,7 +12,8 @@ public class LoginInfo {
     @Schema(description = "用户权限等级")
     public enum UserRank {
         @Schema(description = "管理员") administrator,
-        @Schema(description = "操作员") operator
+        @Schema(description = "操作员") operator,
+        @Schema(description = "医务人员") doctor
     }
 
     // ==================== 字段声明 ====================
