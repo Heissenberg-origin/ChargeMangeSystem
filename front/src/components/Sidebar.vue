@@ -21,7 +21,11 @@
       <el-menu-item index="/patient-register">患者登记</el-menu-item>
       <el-menu-item index="/patient-list">患者列表</el-menu-item>
     </el-sub-menu>
-
+    <!-- 医生 -->
+     <el-menu-item index="/doctor/Consultation">
+      
+      <span>医生</span>
+    </el-menu-item>
     <!-- 门诊收费管理 -->
     <el-sub-menu index="2">
       <template #title>

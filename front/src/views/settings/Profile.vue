@@ -8,9 +8,10 @@
       </template>
       
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="用户ID">{{ userInfo.id }}</el-descriptions-item>
+        <el-descriptions-item label="用户ID">{{ userId }}</el-descriptions-item>
+        <el-descriptions-item label="账号">{{ userInfo.fullAccount }}</el-descriptions-item>
         <el-descriptions-item label="职务">{{ rankText }}</el-descriptions-item>
-        <el-descriptions-item label="上次登录时间">2023-05-15 14:30:22</el-descriptions-item>
+        <el-descriptions-item label="上次登录时间">{{ userInfo.lastLoginTime }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
   </div>
@@ -18,11 +19,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 
+// 从localStorage获取用户信息
 const userInfo = JSON.parse(localStorage.getItem('userInfo'))
-const router = useRouter()
 
+// 计算属性：用户ID（直接使用存储的数字ID）
+const userId = computed(() => userInfo.id)
+
+// 计算属性：职务文本
 const rankText = computed(() => {
   const rankMap = {
     'administrator': '管理员',

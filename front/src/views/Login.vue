@@ -82,12 +82,12 @@ const animatedBox = ref(false)
 const activeInput = ref(null)
 
 const loginForm = ref({
-  account: '',  // 修改为account
+  account: '',
   password: ''
 })
 
 const loginRules = {
-  account: [  // 修改为account
+  account: [
     { required: true, message: '请输入账号', trigger: 'blur' },
   ],
   password: [
@@ -97,7 +97,6 @@ const loginRules = {
 }
 
 onMounted(() => {
-  // 页面加载动画
   setTimeout(() => {
     animatedBox.value = true
   }, 100)
@@ -111,6 +110,12 @@ const handleInputBlur = () => {
   activeInput.value = null
 }
 
+// 提取账号中的数字部分
+const extractNumberFromAccount = (account) => {
+  const match = account.match(/\d+/)
+  return match ? parseInt(match[0]) : 0
+}
+
 const handleLogin = () => {
   loginFormRef.value.validate(async (valid) => {
     if (!valid) return
@@ -119,19 +124,20 @@ const handleLogin = () => {
     
     try {
       const { data } = await login({
-        account: loginForm.value.account,  // 修改为account
+        account: loginForm.value.account,
         password: loginForm.value.password,
       });
       
       if (data) {
-        // 存储完整的用户信息
+        // 存储完整的用户信息，包括提取的数字ID
         const userData = {
-          id: data.id,
-          account: data.account,  // 新增account字段
+          id: extractNumberFromAccount(data.account), // 这里修改为提取的数字ID
+          account: data.account,
           name: data.name || `用户${data.account}`,
           rank: data.rank,
           lastLoginTime: data.lastLoginTime || new Date().toLocaleString(),
-          encryptedPassword: data.encryptedPassword 
+          encryptedPassword: data.encryptedPassword,
+          fullAccount: data.account // 保留完整账号
         }
         localStorage.setItem('userInfo', JSON.stringify(userData))
         router.push('/home')

@@ -26,7 +26,9 @@ const router = createRouter({
           name: 'Home',
           component: () => import('@/views/Home.vue')
         },
-        //analysis
+
+
+        //analysis  (管理员)
       {
           path: '/charge-analysis',
           name: 'ChargeAnalysis',
@@ -37,7 +39,9 @@ const router = createRouter({
           name: 'RegisterAnalysis',
           component: () => import('@/views/analysis/Register.vue')
         },
-        //charge
+
+
+        //charge (操作员)
         {
           path: '/register-charge',
           name: 'RegisterCharge',
@@ -48,13 +52,14 @@ const router = createRouter({
           name: 'OrderCharge',
           component: () => import('@/views/charge/Order.vue')
         },
-        
         {
           path: '/card-recharge',
           name: '/CardRecharge',
           component: () => import('@/views/charge/Recharge.vue')
         },
-        //fee-query
+
+
+        //fee-query  (操作员)
         {
           path: '/register-fee-query',
           name: 'RegisterFeeQuery',
@@ -65,14 +70,12 @@ const router = createRouter({
           name: 'RegisterFeeDetail',
           component: () => import('@/views/fee-query/RegisterDetail.vue')
         },
-
-     {
-  path: '/prescription-detail',
-  name: 'PrescriptionDetail',
-  component: () => import('@/views/fee-query/PrescriptionDetail.vue'),
-  meta: { title: '处方详情' }
-},
-         
+        {
+          path: '/prescription-detail',
+          name: 'PrescriptionDetail',
+          component: () => import('@/views/fee-query/PrescriptionDetail.vue'),
+          meta: { title: '处方详情' }
+        },
         {
           path: '/prescription-fee-query',
           name: 'PrescriptionFeeQuery',
@@ -88,7 +91,9 @@ const router = createRouter({
           name: 'CardSettlementQuery',
           component: () => import('@/views/fee-query/Settlement.vue')
         },
-        //patient
+
+
+        //patient (操作员)
          {
           path: '/patient-register',
           name: 'PatientRegister',
@@ -111,7 +116,10 @@ const router = createRouter({
         component: () => import('@/views/patient/PatientEdit.vue'),
         meta: { title: '编辑患者' }
         },
-        //report
+
+
+
+        //report (管理员)
         {
           path: '/prescription-summary',
           
@@ -136,7 +144,10 @@ const router = createRouter({
       
           component: () => import('@/views/report/OrderFee.vue')
         },
-        //settlement
+
+
+
+        //settlement(操作员)
         {
           path: '/order-refund',
       
@@ -152,9 +163,10 @@ const router = createRouter({
       
           component: () => import('@/views/settlement/Daily.vue')
         },
-        //system
 
-         {
+
+        //system(管理员)
+        {
           path: '/charge-items',
       
           component: () => import('@/views/system/ChargeItems.vue')
@@ -169,7 +181,9 @@ const router = createRouter({
       
           component: () => import('@/views/system/LogManagement.vue')
         },
-        //settings
+
+
+        //settings(公共)
         {
           path:'/settings/profile',
           component: () => import('@/views/settings/Profile.vue'),
@@ -177,10 +191,19 @@ const router = createRouter({
         {
           path:'/settings/change-password',
           component: () => import('@/views/settings/ChangePassword.vue'),
+        },
+
+
+
+        //医生doctor
+        {
+          path:'/doctor/Consultation',
+          component: () => import('@/views/doctor/Consultation.vue'),
         }
       ]},
     
     // 默认重定向
+
     
   ]
 })
