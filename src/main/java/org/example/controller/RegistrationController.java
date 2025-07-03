@@ -150,12 +150,12 @@ public class RegistrationController {
         return result.success(result.getData());
     }
 
-    @PutMapping("/updatestate")
+    @PutMapping("/updatestate/{regId}/{state}")
     @Operation(summary = "更新挂号状态")
     public void updateRegistrationState(
-            @Parameter(description = "门诊号") int regId,
-            @Parameter(description = "新状态") RegistrationInfo.RegistrationState state) {
-         registrationService.updateRegistrationState(regId, state);
+            @PathVariable @Parameter(description = "门诊号") int regId,
+            @PathVariable @Parameter(description = "新状态") RegistrationInfo.RegistrationState state) {
+        registrationService.updateRegistrationState(regId, state);
     }
 
     @GetMapping("/querybytimerange")
