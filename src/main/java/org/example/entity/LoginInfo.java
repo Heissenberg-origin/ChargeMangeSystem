@@ -19,6 +19,9 @@ public class LoginInfo {
     @Schema(description = "用户ID", example = "1001")
     private int id;
 
+    @Schema(description = "账号名", example = "admin1")
+    private String account;
+
     @Schema(description = "登录密码", example = "encryptedPassword123")
     private String password;
 

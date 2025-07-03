@@ -14,20 +14,20 @@ public class LoginServiceImpl implements LoginService {
     private LoginInfoMapper loginInfoMapper;
 
     @Override
-    public LoginInfo login(int id, String password) {
-        return loginInfoMapper.checkLogin(id, password);
+    public LoginInfo login(String account, String password) {
+        return loginInfoMapper.checkLogin(account, password);
     }
 
     @Override
     @Transactional
-    public boolean changePassword(int id, String oldPassword, String newPassword) {
+    public boolean changePassword(String account, String oldPassword, String newPassword) {
         // 验证旧密码是否正确
-        LoginInfo user = loginInfoMapper.checkLogin(id, oldPassword);
+        LoginInfo user = loginInfoMapper.checkLogin(account, oldPassword);
         if (user == null) {
             return false;
         }
 
         // 更新密码
-        return loginInfoMapper.updatePassword(id, oldPassword, newPassword) > 0;
+        return loginInfoMapper.updatePassword(account, oldPassword, newPassword) > 0;
     }
 }

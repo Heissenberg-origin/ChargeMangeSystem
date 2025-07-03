@@ -4,8 +4,8 @@ import org.example.entity.LoginInfo;
 
 public interface LoginService {
     // 登录验证
-    LoginInfo login(int id, String password);
+    LoginInfo login(String account, String password);
 
     // 修改密码
-    boolean changePassword(int id, String oldPassword, String newPassword);
+    boolean changePassword(String account, String oldPassword, String newPassword);
 }

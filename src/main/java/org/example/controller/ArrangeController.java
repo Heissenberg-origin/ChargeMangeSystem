@@ -111,13 +111,13 @@ public class ArrangeController {
         return result.success(result.getData());
     }
 
-    @GetMapping("/QueryBydoctoranddate")
+    @GetMapping("/QueryBydoctoranddate/{doctorId}/{date}")
     @Operation(summary = "根据医生和日期查询排班", description = "获取指定医生在指定日期的排班信息")
     public Result getArrangeInfosByDoctorAndDate(
             @Parameter(description = "医生ID", required = true)
-            @RequestParam int doctorId,
+            @PathVariable int doctorId,
             @Parameter(description = "排班日期，格式yyyy-MM-dd", required = true)
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         Result result = new Result("200","success",arrangeService.getArrangeInfosByDoctorAndDate(doctorId, date));
         return result.success(result.getData());
     }

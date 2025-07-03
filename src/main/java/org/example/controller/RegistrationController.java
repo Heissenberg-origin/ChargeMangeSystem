@@ -152,13 +152,13 @@ public class RegistrationController {
         return result.success(result.getData());
     }
 
-    @PutMapping("/handlepayment")
+    @PutMapping("/handlepayment/{regId}/{dealerId}/{paymentType}")
     @Operation(summary = "处理挂号支付")
     public void processRegistrationPayment(
-            @RequestParam @Parameter(description = "门诊号") int regId,
-            @RequestParam @Parameter(description = "收费员ID") int dealerId,
-            @RequestParam @Parameter(description = "支付方式") RegistrationInfo.PaymentType paymentType) {
-       registrationService.processRegistrationPayment(regId, dealerId, paymentType);
+            @PathVariable @Parameter(description = "门诊号") int regId,
+            @PathVariable @Parameter(description = "收费员ID") int dealerId,
+            @PathVariable @Parameter(description = "支付方式") RegistrationInfo.PaymentType paymentType) {
+        registrationService.processRegistrationPayment(regId, dealerId, paymentType);
     }
 
 //    @GetMapping("/statistics")
