@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 

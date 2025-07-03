@@ -8,7 +8,7 @@ import org.example.entity.RegistrationInfo;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.sql.Timestamp;
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 

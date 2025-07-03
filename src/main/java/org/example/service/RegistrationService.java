@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
