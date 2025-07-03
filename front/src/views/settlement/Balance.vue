@@ -1,223 +1,258 @@
 <template>
-  <div class="balance-refund-container">
-    <h1>结算信息</h1>
-    
-    <!-- 刷卡区域 -->
-    <div class="card-swipe">
-      <el-input
-        v-model="cardNumber"
-        placeholder="请输入就诊卡号"
-        clearable
-        class="card-input"
-      />
-      <el-button 
-        type="primary" 
-        @click="swipeCard"
-        class="swipe-button"
-      >
-        刷卡
-      </el-button>
-      <span class="swipe-hint">双击选择就诊卡</span>
-    </div>
-    
-    <!-- 患者信息展示 -->
-    <el-card class="patient-card">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="就诊卡号">{{ patientInfo.medicalCardNumber }}</el-descriptions-item>
-        <el-descriptions-item label="账户余额(元)">{{ patientInfo.balance.toFixed(2) }}</el-descriptions-item>
-        
-        <el-descriptions-item label="姓名">{{ patientInfo.name }}</el-descriptions-item>
-        <el-descriptions-item label="性别">{{ patientInfo.gender }}</el-descriptions-item>
-        
-        <el-descriptions-item label="年龄">{{ patientInfo.age }}</el-descriptions-item>
-        <el-descriptions-item label="患者性质">{{ patientInfo.patientType }}</el-descriptions-item>
-        
-        <el-descriptions-item label="建档操作员">{{ patientInfo.operator }}</el-descriptions-item>
-        <el-descriptions-item label="建档时间">{{ patientInfo.createTime }}</el-descriptions-item>
-      </el-descriptions>
+  <div class="balance-container">
+    <!-- 搜索区域保持不变 -->
+    <el-card class="search-card">
+      <el-form :model="searchForm" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="就诊卡号" prop="healthcardId">
+              <el-input 
+                v-model.number="searchForm.healthcardId" 
+                placeholder="请输入就诊卡号" 
+                clearable 
+                @keyup.enter="handleSearch"
+                @dblclick="mockSwipeCard"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch" :loading="loading">
+                <el-icon><Search /></el-icon>
+                查询
+              </el-button>
+              <el-button @click="resetSearch">
+                <el-icon><Refresh /></el-icon>
+                重置
+              </el-button>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
     </el-card>
-    
-    <!-- 结算金额输入 -->
-    <div class="refund-amount" v-if="patientInfo.medicalCardNumber">
-      <h3>退费金额</h3>
-      <el-input
-        v-model="refundAmount"
-        type="number"
-        :min="0"
-        :max="patientInfo.balance"
-        placeholder="请输入退费金额"
-        class="amount-input"
-      >
-        <template #append>元</template>
-      </el-input>
-    </div>
-    
-    <!-- 操作按钮 -->
-    <div class="action-buttons">
-      <el-button @click="resetForm">重置</el-button>
-      <el-button 
-        type="primary" 
-        @click="confirmRefund"
-        :disabled="!canRefund"
-      >
-        确认结算
-      </el-button>
-    </div>
+
+    <!-- 患者信息展示保持不变 -->
+    <el-card class="info-card" v-loading="loading">
+      <el-descriptions :column="2" border v-if="patientData.healthcardId">
+        <el-descriptions-item label="就诊卡号">{{ patientData.healthcardId }}</el-descriptions-item>
+        <el-descriptions-item label="账户余额">
+          <span :class="balanceClass">{{ patientData.balance.toFixed(2) }} 元</span>
+        </el-descriptions-item>
+        
+        <el-descriptions-item label="患者姓名">{{ patientData.name }}</el-descriptions-item>
+        <el-descriptions-item label="性别">{{ formatGender(patientData.gender) }}</el-descriptions-item>
+        
+        <el-descriptions-item label="年龄">{{ patientData.age }}</el-descriptions-item>
+        <el-descriptions-item label="患者类型">{{ formatPatientType(patientData.type) }}</el-descriptions-item>
+        
+        <el-descriptions-item label="联系电话">{{ patientData.phoneNumber }}</el-descriptions-item>
+        <el-descriptions-item label="建档时间">{{ patientData.createTime }}</el-descriptions-item>
+      </el-descriptions>
+      <div v-else class="empty-tip">
+        请输入就诊卡号查询患者信息
+      </div>
+    </el-card>
+
+    <!-- 简化后的结算操作区域 -->
+    <el-card class="action-card" v-if="patientData.healthcardId && patientData.balance > 0">
+      <div class="refund-section">
+        <h3>结算操作</h3>
+        <el-button 
+          type="primary" 
+          @click="handleRefund"
+          :loading="refundLoading"
+        >
+          确认结算
+        </el-button>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
+import { queryPatients, settlehcard } from '@/api/patient'
 
-// 就诊卡号输入
-const cardNumber = ref('')
+// 搜索表单
+const searchForm = reactive({
+  healthcardId: null
+})
 
-// 患者信息
-const patientInfo = ref({
-  medicalCardNumber: '',
+// 患者数据
+const patientData = reactive({
+  healthcardId: '',
   name: '',
   gender: '',
   age: '',
-  patientType: '',
-  operator: '',
+  type: '',
+  phoneNumber: '',
   createTime: '',
   balance: 0
 })
 
-// 退费金额
-const refundAmount = ref('')
+// 加载状态
+const loading = ref(false)
+const refundLoading = ref(false)
 
-// 是否可以退费
-const canRefund = computed(() => {
-  const amount = parseFloat(refundAmount.value) || 0
-  return patientInfo.value.medicalCardNumber && 
-         amount > 0 &&
-         amount <= patientInfo.value.balance
+// 计算属性
+const balanceClass = computed(() => {
+  return patientData.balance > 0 ? 'positive-balance' : 'zero-balance'
 })
 
-// 刷卡操作
-const swipeCard = () => {
-  if (!cardNumber.value) {
-    cardNumber.value = '530101199805666666' // 模拟刷卡得到的卡号
-  }
-  
-  // 模拟从后端获取患者信息
-  patientInfo.value = {
-    medicalCardNumber: cardNumber.value,
-    name: '张三',
-    gender: '男',
-    age: '35',
-    patientType: '普通患者',
-    operator: '管理员001',
-    createTime: '2023-01-15 10:30:25',
-    balance: 1500.50
-  }
-  
-  ElMessage.success('刷卡成功，已获取患者信息')
+// 格式化函数
+const formatGender = (gender) => {
+  const genderMap = { '1': '男', '2': '女', '男': '男', '女': '女' }
+  return genderMap[gender] || gender || '未知'
 }
 
-// 确认结算
-const confirmRefund = () => {
-  if (!canRefund.value) {
-    ElMessage.warning('请输入有效的退费金额')
+const formatPatientType = (type) => {
+  const typeMap = {
+    'REGULAR': '普通',
+    'VIP': 'VIP',
+    'CHILD': '儿童',
+    'ELDERLY': '老年',
+    'DISABLED': '残疾'
+  }
+  return typeMap[type] || type
+}
+
+// 模拟刷卡（开发用）
+const mockSwipeCard = () => {
+  if (!searchForm.healthcardId) {
+    searchForm.healthcardId = '530101199805666666'
+    handleSearch()
+  }
+}
+
+// 查询患者信息
+const handleSearch = async () => {
+  if (!searchForm.healthcardId) {
+    ElMessage.warning('请输入就诊卡号')
     return
   }
-  
-  const amount = parseFloat(refundAmount.value)
-  
-  // 模拟退费操作
-  patientInfo.value.balance -= amount
-  
-  ElMessage.success(`成功退费 ${amount.toFixed(2)} 元`)
-  
-  // 重置退费金额
-  refundAmount.value = ''
+
+  try {
+    loading.value = true
+    const response = await queryPatients(searchForm.healthcardId)
+    
+    if (response.data) {
+      const data = response.data.data || response.data
+      Object.assign(patientData, {
+        healthcardId: data.healthcardId || data.healthcard_id,
+        name: data.name,
+        gender: data.gender,
+        age: data.age,
+        type: data.type,
+        phoneNumber: data.phoneNumber || data.phonenumber,
+        createTime: data.createTime || data.create_time,
+        balance: data.balance || data.healthcard_balance || 0
+      })
+      
+      if (patientData.balance <= 0) {
+        ElMessage.warning('该就诊卡没有可结算余额')
+      }
+    } else {
+      ElMessage.error('未找到患者信息')
+      resetPatientData()
+    }
+  } catch (error) {
+    console.error('查询患者失败:', error)
+    ElMessage.error(error.response?.data?.message || error.message || '查询患者信息失败')
+    resetPatientData()
+  } finally {
+    loading.value = false
+  }
 }
 
-// 重置表单
-const resetForm = () => {
-  cardNumber.value = ''
-  patientInfo.value = {
-    medicalCardNumber: '',
+// 重置搜索
+const resetSearch = () => {
+  searchForm.healthcardId = null
+  resetPatientData()
+}
+
+// 重置患者数据
+const resetPatientData = () => {
+  Object.assign(patientData, {
+    healthcardId: '',
     name: '',
     gender: '',
     age: '',
-    patientType: '',
-    operator: '',
+    type: '',
+    phoneNumber: '',
     createTime: '',
     balance: 0
+  })
+}
+
+// 执行结算
+const handleRefund = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要结算就诊卡 ${patientData.healthcardId} 的全部余额 ${patientData.balance.toFixed(2)} 元吗？`,
+      '确认结算',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+
+    refundLoading.value = true
+    await settlehcard(patientData.healthcardId)
+    
+    // 更新本地余额
+    patientData.balance = 0
+    
+    ElMessage.success('结算成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('结算失败:', error)
+      ElMessage.error(error.response?.data?.message || error.message || '结算失败')
+    }
+  } finally {
+    refundLoading.value = false
   }
-  refundAmount.value = ''
 }
 </script>
 
 <style scoped>
-.balance-refund-container {
+/* 样式保持不变 */
+.balance-container {
   padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
 }
 
-h1 {
-  color: #333;
+.search-card {
   margin-bottom: 20px;
+}
+
+.info-card {
+  margin-bottom: 20px;
+}
+
+.empty-tip {
+  padding: 20px;
   text-align: center;
+  color: #909399;
 }
 
-.card-swipe {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  margin-bottom: 30px;
+.action-card {
+  margin-top: 20px;
 }
 
-.card-input {
-  width: 250px;
+.refund-section {
+  padding: 20px;
 }
 
-.swipe-button {
-  width: 120px;
-  height: 40px;
+.refund-section h3 {
+  margin-bottom: 20px;
+  color: #606266;
 }
 
-.swipe-hint {
-  color: #666;
-  font-size: 14px;
+.positive-balance {
+  color: #67c23a;
+  font-weight: bold;
 }
 
-.patient-card {
-  margin-bottom: 30px;
-}
-
-.refund-amount {
-  margin: 30px 0;
-  text-align: center;
-}
-
-.refund-amount h3 {
-  color: #666;
-  margin-bottom: 15px;
-}
-
-.amount-input {
-  width: 250px;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 30px;
-}
-
-.action-buttons .el-button {
-  width: 120px;
-  height: 40px;
-}
-
-.el-descriptions {
-  margin-top: 10px;
+.zero-balance {
+  color: #f56c6c;
+  font-weight: bold;
 }
 </style>

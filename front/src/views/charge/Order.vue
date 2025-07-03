@@ -1,10 +1,5 @@
 <template>
   <div class="charge-page">
-    <!-- 第一块：新建患者按钮 -->
-    <div class="header">
-      <el-button type="primary" @click="goToPatientRegister">新建患者</el-button>
-    </div>
-    
     <!-- 第二块：患者信息 -->
     <div class="patient-info">
       <h3>患者信息</h3>
@@ -12,14 +7,19 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="门(就)诊号">
-              <el-input v-model="patientInfo.visitNumber" placeholder="双击或选中回车加联数据" />
+              <el-input 
+                v-model="patientInfo.visitNumber" 
+                placeholder="输入门诊号后按回车" 
+                @keyup.enter="fetchPatientInfo"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="费用类型">
-              <el-select v-model="patientInfo.feeType" placeholder="请选择">
-                <el-option label="自费" value="self" />
-                <el-option label="医保" value="insurance" />
+              <el-select v-model="patientInfo.feeType" placeholder="请选择" disabled>
+                <el-option label="自费" value="SELF_PAY" />
+                <el-option label="职工医保" value="EMPLOYEE_INSURANCE" />
+                <el-option label="居民医保" value="RESIDENT_INSURANCE" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -28,52 +28,53 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="门诊号">
-              <el-input v-model="patientInfo.outpatientNumber" />
+              <el-input v-model="patientInfo.outpatientNumber" readonly />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="就诊卡号">
-              <el-input v-model="patientInfo.medicalCardNumber" />
+              <el-input v-model="patientInfo.medicalCardNumber" readonly />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="姓名">
-              <el-input v-model="patientInfo.name" />
+              <el-input v-model="patientInfo.name" readonly />
             </el-form-item>
           </el-col>
         </el-row>
         
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="性别">
-              <el-select v-model="patientInfo.gender" placeholder="请选择">
-                <el-option label="男" value="male" />
-                <el-option label="女" value="female" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="年龄">
-              <el-input v-model="patientInfo.age" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
             <el-form-item label="挂号时间">
               <el-date-picker
                 v-model="patientInfo.registerTime"
                 type="datetime"
                 placeholder="选择日期时间"
+                readonly
               />
             </el-form-item>
           </el-col>
         </el-row>
         
-        <el-form-item label="就医诊断">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="挂号科室">
+              <el-input v-model="patientInfo.department" readonly />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="挂号医生">
+              <el-input v-model="patientInfo.doctor" readonly />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <el-form-item label="医嘱内容">
           <el-input
             v-model="patientInfo.diagnosis"
             type="textarea"
             :rows="2"
-            placeholder="请输入就医诊断"
+            placeholder="请输入医嘱内容"
           />
         </el-form-item>
       </el-form>
@@ -87,6 +88,7 @@
       </div>
       
       <el-table :data="chargeItems" border style="width: 100%">
+        <el-table-column prop="itemId" label="项目ID" width="120" />
         <el-table-column prop="itemCode" label="项目编码" width="120" />
         <el-table-column prop="itemName" label="项目名称" width="180" />
         <el-table-column prop="quantity" label="数量" width="80">
@@ -142,7 +144,7 @@
       </div>
       <div class="action-buttons">
         <el-button @click="resetAll">重置</el-button>
-        <el-button type="primary" @click="printReceipt">打印收费单</el-button>
+        <el-button type="primary" @click="createPrescription">创建处方</el-button>
         <el-button type="success" @click="confirmCharge">确认收费</el-button>
       </div>
     </div>
@@ -156,47 +158,90 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  getRegistrationById,
+  createCharge,
+   createPrescription as apiCreatePrescription // 添加别名
+} from '@/api/charge'
 import AddItemDialog from '@/components/AddItemDialog.vue'
 
 const router = useRouter()
 
-// 第一块：新建患者按钮功能
-const goToPatientRegister = () => {
-  router.push('/patient-register')
-}
-
-// 第二块：患者信息数据
+// 患者信息数据
 const patientInfo = ref({
   visitNumber: '',
-  feeType: 'self',
-  outpatientNumber: 'OP20230001',
-  medicalCardNumber: 'MC20230001',
-  name: '张三',
-  gender: 'male',
-  age: '35',
-  registerTime: new Date(),
-  diagnosis: '上呼吸道感染'
+  feeType: '',
+  outpatientNumber: '',
+  medicalCardNumber: '',
+  name: '',
+  gender: '',
+  age: '',
+  registerTime: '',
+  diagnosis: '',
+  department: '',
+  doctor: ''
 })
 
-// 第三块：收费项目数据
+// 根据门诊号查询患者信息
+const fetchPatientInfo = async () => {
+  if (!patientInfo.value.visitNumber) {
+    ElMessage.warning('请输入门诊号')
+    return
+  }
+  
+  try {
+    const response = await getRegistrationById(patientInfo.value.visitNumber)
+    const data = response.data.data
+    
+    patientInfo.value = {
+      ...patientInfo.value,
+      outpatientNumber: data.regId,
+      name: data.regPname,
+      feeType: data.regFeeType,
+      department: data.regdepName,
+      doctor: data.regdocName,
+      registerTime: data.regTime,
+      medicalCardNumber: data.regHcardId
+    }
+  } catch (error) {
+    ElMessage.error('获取患者信息失败: ' + (error.response?.data?.message || error.message))
+    resetPatientInfo()
+  }
+}
+
+// 重置患者信息
+const resetPatientInfo = () => {
+  patientInfo.value = {
+    visitNumber: patientInfo.value.visitNumber,
+    feeType: '',
+    outpatientNumber: '',
+    medicalCardNumber: '',
+    name: '',
+    gender: '',
+    age: '',
+    registerTime: '',
+    diagnosis: '',
+    department: '',
+    doctor: ''
+  }
+}
+
+// 收费项目数据
 const chargeItems = ref([])
 const showDialog = ref(false)
-
-// 收费项目数据源
-const medicalItems = [
-  { itemCode: '6520050869', itemName: '静脉切开置管术', unit: '次', unitPrice: 200.00, pinyinCode: 'JMQKZGS', executDept: '门诊外科', note: '自费' },
-  { itemCode: '6520050869', itemName: '静脉切开置管术', unit: '次', unitPrice: 200.00, pinyinCode: 'JMQKZGS1', executDept: '门诊外科', note: '自费' },
-  { itemCode: '6520050869', itemName: '治疗费', unit: '个', unitPrice: 10.00, pinyinCode: 'ZLF', executDept: '输液室', note: '自费' },
-  { itemCode: '6520050869', itemName: '急诊监护费', unit: '日', unitPrice: 65.00, pinyinCode: 'JZJHF', executDept: '急诊室', note: '自费' },
-  { itemCode: '6520050869', itemName: '单人间', unit: '床日', unitPrice: 10.00, pinyinCode: 'DRJ', executDept: '', note: '自费' },
-  { itemCode: '6520050869', itemName: '双人间', unit: '床日', unitPrice: 6.00, pinyinCode: 'SRJ', executDept: '', note: '自费' },
-  { itemCode: '6520050869', itemName: '三人间', unit: '床日', unitPrice: 4.00, pinyinCode: 'SRJ', executDept: '', note: '自费' }
-]
+const currentReceipt = ref('')
+const receiptRange = ref('')
+const totalAmount = ref(0)
 
 // 显示添加项目弹窗
 const showAddItemDialog = () => {
+  if (!patientInfo.value.visitNumber) {
+    ElMessage.warning('请先输入门诊号并获取患者信息')
+    return
+  }
   showDialog.value = true
 }
 
@@ -206,9 +251,9 @@ const addChargeItem = (item) => {
     ...item,
     quantity: 1,
     reductionAmount: 0,
-    prescribingDoctor: '李医生',
-    prescribingDept: '内科',
-    executDept: item.executDept || '通用'
+    prescribingDoctor: patientInfo.value.doctor,
+    prescribingDept: patientInfo.value.department,
+    executingDept: item.executDept || '通用'
   }
   chargeItems.value.push(newItem)
   calculateTotal()
@@ -219,11 +264,6 @@ const removeItem = (index) => {
   chargeItems.value.splice(index, 1)
   calculateTotal()
 }
-
-// 第四块：合计和操作按钮
-const currentReceipt = ref('10060021')
-const receiptRange = ref('10060001 - 1006150')
-const totalAmount = ref(0)
 
 // 计算总金额
 const calculateTotal = () => {
@@ -236,25 +276,97 @@ const calculateTotal = () => {
 const resetAll = () => {
   chargeItems.value = []
   totalAmount.value = 0
+  resetPatientInfo()
 }
 
-// 打印收费单
-const printReceipt = () => {
-  // 这里可以调用浏览器的打印功能
-  window.print()
+// 创建处方
+const createPrescription = async () => {
+  if (!patientInfo.value.visitNumber) {
+    ElMessage.warning('请先输入门诊号并获取患者信息')
+    return
+  }
+
+  if (chargeItems.value.length === 0) {
+    ElMessage.warning('请添加收费项目')
+    return
+  }
+
+  // 格式化当前时间
+  const formatTime = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const seconds = String(now.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  }
+
+  const currentTime = formatTime()
+
+  // 准备处方数据
+  const prescriptionInfos = chargeItems.value.map(item => ({
+    preRegId: patientInfo.value.outpatientNumber,
+    prepname: patientInfo.value.name,
+    predepname: patientInfo.value.department,
+    predocname: patientInfo.value.doctor,
+    preContent: patientInfo.value.diagnosis,
+    preCiId: item.itemId,
+    preCiNum: item.quantity,
+    preprice: item.unitPrice,
+    preState: "待缴费",
+    preTime: currentTime,
+    preDealerId: 2,
+    preDealType: "现金",
+    preDealTime: currentTime
+  }))
+
+  // 打印将要发送的数据
+  console.log("准备发送给后端的处方数据:", JSON.stringify(prescriptionInfos, null, 2))
+  
+  try {
+    const response = await apiCreatePrescription(prescriptionInfos)
+    console.log("后端响应:", response)
+    ElMessage.success('处方创建成功')
+  } catch (error) {
+    console.error("请求错误详情:", {
+      requestData: prescriptionInfos,
+      errorResponse: error.response?.data,
+      errorMessage: error.message
+    })
+    ElMessage.error('处方创建失败: ' + (error.response?.data?.message || error.message))
+  }
 }
 
 // 确认收费
-const confirmCharge = () => {
+const confirmCharge = async () => {
   if (chargeItems.value.length === 0) {
     ElMessage.warning('请添加收费项目')
     return
   }
   
-  // 这里可以添加提交到后端的逻辑
-  ElMessage.success('收费成功')
-  alert("收费成功")
-  resetAll()
+  try {
+    const chargeData = {
+      regId: patientInfo.value.visitNumber,
+      items: chargeItems.value.map(item => ({
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        reductionAmount: item.reductionAmount,
+        actualAmount: item.unitPrice * item.quantity - item.reductionAmount
+      })),
+      totalAmount: totalAmount.value,
+      diagnosis: patientInfo.value.diagnosis
+    }
+    
+    await createCharge(chargeData)
+    ElMessage.success('收费成功')
+    resetAll()
+  } catch (error) {
+    ElMessage.error('收费失败: ' + (error.response?.data?.message || error.message))
+  }
 }
 </script>
 

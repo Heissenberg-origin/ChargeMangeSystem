@@ -5,32 +5,12 @@
       <el-form :model="searchForm" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="就诊卡号">
+            <el-form-item label="就诊卡号" prop="healthcardId">
               <el-input 
-                v-model.number="searchForm.healthcard_id" 
+                v-model.number="searchForm.healthcardId" 
                 placeholder="请输入就诊卡号" 
                 clearable 
                 type="number"
-                @keyup.enter="handleSearch"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="证件号">
-              <el-input 
-                v-model="searchForm.identification_id" 
-                placeholder="请输入证件号" 
-                clearable 
-                @keyup.enter="handleSearch"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <el-form-item label="患者姓名">
-              <el-input 
-                v-model="searchForm.name" 
-                placeholder="请输入患者姓名" 
-                clearable 
                 @keyup.enter="handleSearch"
               />
             </el-form-item>
@@ -70,38 +50,31 @@
         height="calc(100vh - 350px)"
         highlight-current-row
       >
-        <el-table-column prop="healthcard_id" label="就诊卡号" width="120" sortable />
+        <el-table-column prop="healthcardId" label="就诊卡号" width="120" sortable />
         <el-table-column prop="name" label="患者姓名" width="100" />
         <el-table-column prop="gender" label="性别" width="80">
           <template #default="{ row }">
-            {{ row.gender === '1' ? '男' : row.gender === '2' ? '女' : '未知' }}
+            {{ formatGender(row.gender) }}
           </template>
         </el-table-column>
-        <el-table-column prop="identification_type" label="证件类型" width="120">
-          <template #default="{ row }">
-            {{ formatIdType(row.identification_type) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="identification_id" label="证件号" width="180">
-          <template #default="{ row }">
-            {{ row.identification_id ? formatIdNumber(row.identification_id) : '' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="birthdate" label="出生日期" width="120" sortable />
-        <el-table-column prop="phonenumber" label="联系电话" width="120" />
+        <el-table-column prop="identificationType" label="证件类型" width="120" />
+        <el-table-column prop="identificationId" label="证件号" width="180" />
+        <el-table-column prop="birthdate" label="出生日期" width="120" />
+        <el-table-column prop="age" label="年龄" width="80" />
+        <el-table-column prop="phoneNumber" label="联系电话" width="120" />
         <el-table-column prop="type" label="患者类型" width="100" />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button 
               size="small" 
               type="primary"
-              @click="viewDetail(row.healthcard_id)"
+              @click="viewDetail(row.healthcardId)"
             >
               详情
             </el-button>
             <el-button 
               size="small"
-              @click="editPatient(row.healthcard_id)"
+              @click="editPatient(row.healthcardId)"
             >
               编辑
             </el-button>
@@ -109,31 +82,19 @@
               size="small" 
               type="danger"
               @click="handleDeactivate(row)"
-              :loading="deletingId === row.healthcard_id"
+              :loading="deletingId === row.healthcardId"
             >
               注销
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-
-      <!-- 分页 -->
-      <el-pagination
-        class="pagination"
-        v-model:current-page="pagination.currentPage"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="pagination.total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -143,139 +104,73 @@ const router = useRouter()
 
 // 搜索表单
 const searchForm = reactive({
-  healthcard_id: null,
-  identification_id: '',
-  name: ''
-})
-
-// 分页信息
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
+  healthcardId: null
 })
 
 // 加载状态
 const loading = ref(false)
 const deletingId = ref(null)
-const hasSearched = ref(false) // 标记是否已经进行过搜索
 
 // 表格数据
 const tableData = ref([])
 
-// 证件类型映射
-const idTypeMap = {
-  '1': '身份证',
-  '2': '护照',
-  '3': '军官证',
-  '4': '驾驶证',
-  '5': '其他'
-}
-
-// 格式化证件类型
-const formatIdType = (type) => {
-  return idTypeMap[type] || type || '未知'
-}
-
-// 格式化证件号显示
-const formatIdNumber = (id) => {
-  if (!id) return ''
-  // 身份证号脱敏处理
-  if (id.length === 18) {
-    return id.replace(/(\d{6})\d+(\d{4})/, '$1******$2')
+// 格式化性别显示
+const formatGender = (gender) => {
+  const genderMap = {
+    '1': '男',
+    '2': '女',
+    '男': '男',
+    '女': '女'
   }
-  // 其他证件号显示后4位
-  return `****${id.slice(-4)}`
+  return genderMap[gender] || gender || '未知'
 }
 
 // 获取患者数据
 const fetchPatients = async () => {
+  if (!searchForm.healthcardId) {
+    ElMessage.warning('请输入就诊卡号')
+    return
+  }
+  
   try {
     loading.value = true
+    const response = await queryPatients(searchForm.healthcardId)
+    const data = response.data.data // 假设数据结构与参考示例一致
     
-    // 构建查询参数
-    const params = {
-      ...(searchForm.healthcard_id && { healthcardId: searchForm.healthcard_id }),
-      ...(searchForm.identification_id && { identificationId: searchForm.identification_id }),
-      ...(searchForm.name && { name: searchForm.name }),
-      page: pagination.currentPage,
-      size: pagination.pageSize
-    }
-    
-    // 如果是首次加载且没有搜索条件，则不请求
-    if (!hasSearched.value && !searchForm.healthcard_id && !searchForm.identification_id && !searchForm.name) {
-      loading.value = false
-      return
-    }
-    
-    // 调用API
-    const response = await queryPatients(params)
-    
-    // 处理响应数据
-    if (Array.isArray(response?.data?.records)) {
-      tableData.value = response.data.records
-      pagination.total = response.data.total
-    } else if (Array.isArray(response?.data)) {
-      tableData.value = response.data
-      pagination.total = response.data.length
-    } else {
-      tableData.value = []
-      pagination.total = 0
-      if (hasSearched.value) {
-        ElMessage.warning('未查询到符合条件的患者')
-      }
-    }
-    
-    hasSearched.value = true
+    // 映射字段到表格数据
+    tableData.value = [{
+      healthcardId: data.healthcardId || data.healthcard_id,
+      name: data.name,
+      gender: data.gender,
+      identificationType: data.identificationType || data.identification_type,
+      identificationId: data.identificationId || data.identification_id,
+      birthdate: data.birthdate,
+      age: data.age,
+      phoneNumber: data.phoneNumber || data.phonenumber,
+      type: data.type,
+      // 其他字段...
+      healthcardBalance: data.healthcardBalance || data.healthcard_balance,
+      address: data.address
+    }]
     
   } catch (error) {
-    console.error('获取患者列表失败:', error)
-    if (hasSearched.value) {
-      ElMessage.error(`获取患者列表失败: ${error.message}`)
-    }
+    console.error('获取患者信息失败:', error)
+    ElMessage.error('获取患者信息失败: ' + (error.response?.data?.message || error.message))
     tableData.value = []
-    pagination.total = 0
   } finally {
     loading.value = false
   }
 }
 
-// 初始化时不自动加载数据
-onMounted(() => {
-  ElMessage.info('请输入搜索条件查询患者信息')
-})
-
 // 搜索处理
 const handleSearch = () => {
-  if (!searchForm.healthcard_id && !searchForm.identification_id && !searchForm.name) {
-    ElMessage.warning('请输入至少一个搜索条件')
-    return
-  }
-  pagination.currentPage = 1
   fetchPatients()
 }
 
 // 重置搜索
 const resetSearch = () => {
-  searchForm.healthcard_id = null
-  searchForm.identification_id = ''
-  searchForm.name = ''
-  hasSearched.value = false
+  searchForm.healthcardId = null
   tableData.value = []
-  pagination.total = 0
-}
-
-// 分页大小变化
-const handleSizeChange = (val) => {
-  pagination.pageSize = val
-  pagination.currentPage = 1
-  fetchPatients()
-}
-
-// 当前页变化
-const handleCurrentChange = (val) => {
-  pagination.currentPage = val
-  fetchPatients()
 }
 
 // 跳转到登记页面
@@ -299,59 +194,30 @@ const editPatient = (healthcardId) => {
   })
 }
 
-// 注销患者（优化版）
+// 注销患者
 const handleDeactivate = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要注销患者 ${row.name} (就诊卡号: ${row.healthcard_id}) 吗？此操作不可恢复！`,
+      `确定要注销患者 ${row.name} (就诊卡号: ${row.healthcardId})？此操作不可恢复！`,
       '确认注销',
       {
         confirmButtonText: '确认注销',
         cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger',
-        beforeClose: async (action, instance, done) => {
-          if (action === 'confirm') {
-            instance.confirmButtonLoading = true
-            deletingId.value = row.healthcard_id
-            try {
-              const { data } = await deletePatient(row.healthcard_id)
-              if (data === true) {
-                ElMessage.success(`患者 ${row.name} 已成功注销`)
-                // 重新加载当前页数据
-                await fetchPatients()
-              } else {
-                ElMessage.error('注销失败，服务器返回异常')
-              }
-            } catch (error) {
-              console.error('注销请求失败:', error)
-              let errorMsg = '注销失败'
-              if (error.response) {
-                // 处理500错误
-                if (error.response.status === 500) {
-                  errorMsg += ': 服务器内部错误，请检查患者是否已被注销'
-                } else {
-                  errorMsg += `: ${error.response.data?.message || error.response.statusText}`
-                }
-              } else {
-                errorMsg += `: ${error.message}`
-              }
-              ElMessage.error(errorMsg)
-            } finally {
-              instance.confirmButtonLoading = false
-              deletingId.value = null
-              done()
-            }
-          } else {
-            done()
-          }
-        }
+        type: 'warning'
       }
     )
+    
+    deletingId.value = row.healthcardId
+    await deletePatient(row.healthcardId)
+    ElMessage.success('患者注销成功')
+    fetchPatients()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('注销操作异常:', error)
+      console.error('注销失败:', error)
+      ElMessage.error(`注销失败: ${error.response?.data?.message || error.message}`)
     }
+  } finally {
+    deletingId.value = null
   }
 }
 </script>
@@ -372,11 +238,6 @@ const handleDeactivate = async (row) => {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
-}
-
-.pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
 }
 
 .el-table {

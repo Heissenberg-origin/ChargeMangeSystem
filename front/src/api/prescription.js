@@ -135,3 +135,48 @@ export function aiChatBot(data){
     }
   });
 }
+
+
+export function getAllPrescriptions() {
+  return http.get('/prescription/findall', jsonConfig)
+    .then(response => {
+      // 修改响应处理逻辑
+      if (response.data && response.data.code === '200') {
+        return response.data // 直接返回整个响应数据
+      }
+      throw new Error(response.data?.message || '获取处方信息列表失败')
+    })
+    .catch(error => {
+      console.error('获取处方信息列表错误:', error)
+      throw error
+    })
+}
+export function refundPrescription(sequence, dealerId) {
+  return http.put(`/prescription/refund/${sequence}/${dealerId}`, {}, jsonConfig)
+}
+export function getRegistrationById(regId) {
+  return http.get(`/registration/querybyId/${regId}`, jsonConfig)
+    .then(response => {
+      if (response.data && response.data.code === '200') {
+        return response.data.data
+      }
+      throw new Error(response.data?.message || '获取挂号信息失败')
+    })
+    .catch(error => {
+      console.error('获取挂号信息错误:', error)
+      throw error
+    })
+}
+export function getPrescriptionsByRegistrationId(registrationId) {
+  return http.get(`/prescription/queryByRegistrationId/${registrationId}`, jsonConfig)
+    .then(response => {
+      if (response.data && response.data.code === '200') {
+        return response.data.data || []
+      }
+      throw new Error(response.data?.message || '获取处方信息失败')
+    })
+    .catch(error => {
+      console.error('获取处方信息错误:', error)
+      throw error
+    })
+}

@@ -1,3 +1,4 @@
+<!-- 不用了 -->
 <template>
   <el-dialog v-model="visible" title="添加药品" width="80%">
     <el-table :data="medicines" border style="width: 100%">

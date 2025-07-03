@@ -1,194 +1,126 @@
 <template>
   <div class="register-detail">
     <el-card shadow="never">
-      <!-- 操作按钮 -->
-      <div class="action-buttons">
-        <el-button type="primary" @click="handleOpenInvoice">开启发票</el-button>
-        <el-button @click="handleCancelRegister" :disabled="registerInfo.status !== 'pending'">取消挂号</el-button>
-        <el-button @click="handlePrintReceipt">打印小票</el-button>
-      </div>
-      
-      <!-- 患者信息 -->
-      <div class="section">
-        <h2>患者信息</h2>
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="就诊卡号">{{ patientInfo.cardNumber }}</el-descriptions-item>
-          <el-descriptions-item label="门(就)诊号">{{ registerInfo.registerNumber }}</el-descriptions-item>
-          <el-descriptions-item label="患者姓名">{{ patientInfo.name }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ patientInfo.gender }}</el-descriptions-item>
-          <el-descriptions-item label="证件类型">{{ patientInfo.idType }}</el-descriptions-item>
-          <el-descriptions-item label="证件号">{{ patientInfo.idNumber }}</el-descriptions-item>
-          <el-descriptions-item label="出生日期">{{ patientInfo.birthDate }}</el-descriptions-item>
-          <el-descriptions-item label="年龄">{{ patientInfo.age }}</el-descriptions-item>
-          <el-descriptions-item label="联系电话">{{ patientInfo.phone }}</el-descriptions-item>
-          <el-descriptions-item label="监护人关系">{{ patientInfo.guardianRelation || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="监护人">{{ patientInfo.guardian || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="监护人电话">{{ patientInfo.guardianPhone || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="现住地址">{{ patientInfo.address }}</el-descriptions-item>
-          <el-descriptions-item label="现住详细地址" :span="2">{{ patientInfo.detailAddress }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      
-      <!-- 挂号信息 -->
-      <div class="section">
-        <h2>挂号信息</h2>
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="门诊类型">{{ registerInfo.outpatientType }}</el-descriptions-item>
-          <el-descriptions-item label="费用类型">{{ registerInfo.feeType }}</el-descriptions-item>
-          <el-descriptions-item label="就诊类型">{{ registerInfo.visitType }}</el-descriptions-item>
-          <el-descriptions-item label="挂号科室">{{ registerInfo.department }}</el-descriptions-item>
-          <el-descriptions-item label="挂号医生">{{ registerInfo.doctor }}</el-descriptions-item>
-          <el-descriptions-item label="挂号日期">{{ registerInfo.registerDate }}</el-descriptions-item>
-          <el-descriptions-item label="排队号">{{ registerInfo.queueNumber }}</el-descriptions-item>
-          <el-descriptions-item label="挂号种类">{{ registerInfo.registerType }}</el-descriptions-item>
-          <el-descriptions-item label="挂号时间">{{ registerInfo.registerTime }}</el-descriptions-item>
-          <el-descriptions-item label="挂号金额">{{ registerInfo.amount }}</el-descriptions-item>
-          <el-descriptions-item label="发票号">{{ registerInfo.invoiceNumber }}</el-descriptions-item>
-          <el-descriptions-item label="发票状态">{{ registerInfo.invoiceStatus }}</el-descriptions-item>
-          <el-descriptions-item label="收费员工号">{{ registerInfo.cashierId }}</el-descriptions-item>
-          <el-descriptions-item label="收费员">{{ registerInfo.cashierName }}</el-descriptions-item>
-          <el-descriptions-item label="订单收据号">{{ registerInfo.orderNumber }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
+      <template #header>
+        <div class="card-header">
+          <span>挂号详情</span>
+          <el-button type="primary" @click="handleBack">返回列表</el-button>
+        </div>
+      </template>
+
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="挂号ID">{{ detailData.regId }}</el-descriptions-item>
+        <el-descriptions-item label="就诊卡号">{{ detailData.regHcardId }}</el-descriptions-item>
+        <el-descriptions-item label="患者姓名">{{ detailData.regPname }}</el-descriptions-item>
+        <el-descriptions-item label="挂号科室">{{ detailData.regdepName }}</el-descriptions-item>
+        <el-descriptions-item label="挂号医生">{{ detailData.regdocName }}</el-descriptions-item>
+        <el-descriptions-item label="挂号金额">¥{{ detailData.regfee?.toFixed(2) }}</el-descriptions-item>
+        <el-descriptions-item label="挂号状态">
+          <el-tag :type="getStatusTagType(detailData.regState)">
+            {{ getStatusText(detailData.regState) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="挂号时间">{{ detailData.regTime }}</el-descriptions-item>
+        <el-descriptions-item label="挂号类型">{{ detailData.regType }}</el-descriptions-item>
+        <el-descriptions-item label="费用类型">{{ getFeeTypeText(detailData.regFeeType) }}</el-descriptions-item>
+        <el-descriptions-item label="就诊时段">{{ detailData.regTimezone }}</el-descriptions-item>
+        <el-descriptions-item label="处理时间">{{ detailData.regDealTime }}</el-descriptions-item>
+        <el-descriptions-item label="支付类型">{{ getDealTypeText(detailData.regDealType) }}</el-descriptions-item>
+      </el-descriptions>
     </el-card>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { getRegistrationById } from '@/api/charge' // 使用收费页面相同的API
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
-const registerId = route.params.id
+const router = useRouter()
 
-// 模拟API调用 - 获取挂号详情
-const getRegisterDetail = (id) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: {
-          patientInfo: {
-            cardNumber: '530101199805666666',
-            name: '张晓晓',
-            gender: '女',
-            idType: '居民身份证',
-            idNumber: '530101199805666666',
-            birthDate: '2000-05-20',
-            age: '24岁',
-            phone: '15266668888',
-            guardianRelation: '--',
-            guardian: '--',
-            guardianPhone: '--',
-            address: '四川省成都市锦江区',
-            detailAddress: '春熙路666号'
-          },
-          registerInfo: {
-            registerNumber: '20240106002',
-            outpatientType: '普通门诊',
-            feeType: '自费',
-            visitType: '初诊',
-            department: '门诊外科',
-            doctor: '李医生',
-            registerDate: '2024-01-06 08:00:09.00',
-            queueNumber: '1号',
-            registerType: '主任医师号',
-            registerTime: '2024-01-06 09:20:30',
-            amount: '¥200.00',
-            invoiceNumber: '1112234556',
-            invoiceStatus: '已开具',
-            cashierId: 'SFR001',
-            cashierName: '收费员001',
-            orderNumber: 'DD20180606175013',
-            status: 'pending'
-          }
-        }
-      })
-    }, 500)
-  })
+const detailData = ref({})
+
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const map = {
+    PENDING: 'warning',
+    COMPLETED: 'success',
+    CANCELLED: 'info',
+    EXPIRED: 'danger',
+    PENDING_PAYMENT: 'warning'
+  }
+  return map[status] || ''
 }
 
-// 患者信息
-const patientInfo = ref({
-  cardNumber: '',
-  name: '',
-  gender: '',
-  idType: '',
-  idNumber: '',
-  birthDate: '',
-  age: '',
-  phone: '',
-  guardianRelation: '',
-  guardian: '',
-  guardianPhone: '',
-  address: '',
-  detailAddress: ''
-})
+// 获取状态文本
+const getStatusText = (status) => {
+  const map = {
+    PENDING: '待就诊',
+    COMPLETED: '已就诊',
+    CANCELLED: '已取消',
+    EXPIRED: '已过期',
+    PENDING_PAYMENT: '待支付'
+  }
+  return map[status] || status
+}
 
-// 挂号信息
-const registerInfo = ref({
-  registerNumber: '',
-  outpatientType: '',
-  feeType: '',
-  visitType: '',
-  department: '',
-  doctor: '',
-  registerDate: '',
-  queueNumber: '',
-  registerType: '',
-  registerTime: '',
-  amount: '',
-  invoiceNumber: '',
-  invoiceStatus: '',
-  cashierId: '',
-  cashierName: '',
-  orderNumber: '',
-  status: ''
-})
+// 获取费用类型文本
+const getFeeTypeText = (type) => {
+  const map = {
+    SELF_PAY: '自费',
+    EMPLOYEE_INSURANCE: '职工医保',
+    RESIDENT_INSURANCE: '居民医保'
+  }
+  return map[type] || type
+}
 
-// 获取详情
-const fetchRegisterDetail = async () => {
+// 获取支付类型文本
+const getDealTypeText = (type) => {
+  const map = {
+    CASH: '现金',
+    CARD: '银行卡',
+    WECHAT: '微信',
+    ALIPAY: '支付宝',
+    INSURANCE_PAY: '医保支付'
+  }
+  return map[type] || type
+}
+
+// 获取详情数据 - 使用与收费页面相同的API
+const fetchDetail = async () => {
   try {
-    const res = await getRegisterDetail(registerId)
-    patientInfo.value = res.data.patientInfo
-    registerInfo.value = res.data.registerInfo
+    const response = await getRegistrationById(route.params.id)
+    if (response.data && response.data.code === '200') {
+      detailData.value = response.data.data || {}
+    } else {
+      ElMessage.error(response.data?.message || '获取详情失败')
+    }
   } catch (error) {
-    console.error('获取挂号详情失败:', error)
+    console.error('获取详情失败:', error)
+    ElMessage.error('获取详情失败: ' + (error.response?.data?.message || error.message))
   }
 }
 
-const handleOpenInvoice = () => {
-  console.log('开启发票')
-}
-
-// 取消挂号
-const handleCancelRegister = () => {
-  console.log('取消挂号')
-}
-
-// 打印小票
-const handlePrintReceipt = () => {
-  console.log('打印小票')
+// 返回列表
+const handleBack = () => {
+  router.push({ name: 'RegisterFeeQuery' })
 }
 
 onMounted(() => {
-  fetchRegisterDetail()
+  fetchDetail()
 })
 </script>
+
 <style scoped>
 .register-detail {
   padding: 20px;
 }
 
-.action-buttons {
-  margin-bottom: 20px;
-}
-
-.section {
-  margin-bottom: 30px;
-}
-
-.section h2 {
-  margin-bottom: 15px;
-  font-size: 18px;
-  color: #333;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>

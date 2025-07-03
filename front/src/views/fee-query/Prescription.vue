@@ -1,421 +1,414 @@
 <template>
-  <div class="prescription-pricing-container">
-    <!-- 搜索区域 -->
-    <div class="search-container">
-      <el-card shadow="never">
-        <div class="search-header">
-          <span class="title">处方划价查询</span>
-          <el-button type="text" @click="toggleSearch">
-            {{ showSearch ? '收起' : '展开' }}
-            <el-icon>
-              <arrow-up v-if="showSearch" />
-              <arrow-down v-else />
-            </el-icon>
-          </el-button>
-        </div>
-
-        <el-collapse-transition>
-          <div v-show="showSearch">
-            <el-form :model="searchForm" label-width="100px">
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <el-form-item label="门(急)诊号">
-                    <el-input v-model="searchForm.outpatientNo" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="处方号">
-                    <el-input v-model="searchForm.prescriptionNo" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="开单医生">
-                    <el-input v-model="searchForm.doctor" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <el-form-item label="患者姓名">
-                    <el-input v-model="searchForm.patientName" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="缴费状态">
-                    <el-select v-model="searchForm.paymentStatus" placeholder="全部状态" clearable>
-                      <el-option label="全部缴费" value="all" />
-                      <el-option label="已缴费" value="paid" />
-                      <el-option label="已退费" value="refunded" />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="开单科室">
-                    <el-input v-model="searchForm.department" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-row :gutter="20">
-                <el-col :span="8">
-                  <el-form-item label="证件号">
-                    <el-input v-model="searchForm.idNumber" placeholder="请输入" clearable />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label=" ">
-                    <el-button type="primary" @click="handleSearch">刷卡</el-button>
-                  </el-form-item>
-                </el-col>
-                <el-col :span="8">
-                  <el-form-item label="收费时间">
-                    <el-date-picker
-                      v-model="searchForm.dateRange"
-                      type="daterange"
-                      range-separator="至"
-                      start-placeholder="开始日期"
-                      end-placeholder="结束日期"
-                      value-format="YYYY-MM-DD"
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-
-              <el-row>
-                <el-col :span="24" style="text-align: right;">
-                  <el-button @click="resetSearch">重置</el-button>
-                  <el-button type="primary" @click="handleSearch">查询</el-button>
-                </el-col>
-              </el-row>
-            </el-form>
-          </div>
-        </el-collapse-transition>
-      </el-card>
-    </div>
-
-    <!-- 统计信息 -->
-    <div class="stats-container">
-      <el-card shadow="never">
-        <el-space :size="30">
-          <span>全部缴费</span>
-          <span>已缴费</span>
-          <span>已退费</span>
-        </el-space>
+  <div class="prescription-query-container">
+    <el-card shadow="never">
+      <!-- 搜索区域 -->
+      <div class="search-area">
+        <el-form :model="searchForm" label-width="100px">
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-form-item label="就诊卡号">
+                <el-input 
+                  v-model="searchForm.prehcard" 
+                  placeholder="请输入就诊卡号" 
+                  clearable 
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="患者姓名">
+                <el-input 
+                  v-model="searchForm.prepname" 
+                  placeholder="请输入患者姓名" 
+                  clearable
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="处方状态">
+                <el-select 
+                  v-model="searchForm.preState" 
+                  placeholder="全部状态" 
+                  clearable
+                  @change="handleSearch"
+                >
+                  <el-option label="全部状态" value="" />
+                  <el-option label="已完成" value="已完成" />
+                  <el-option label="待执行" value="待执行" />
+                  <el-option label="已退费" value="已退费" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <el-form-item label="科室">
+                <el-input 
+                  v-model="searchForm.predepname" 
+                  placeholder="请输入科室" 
+                  clearable
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="医生">
+                <el-input 
+                  v-model="searchForm.predocname" 
+                  placeholder="请输入医生姓名" 
+                  clearable
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="处方ID">
+                <el-input 
+                  v-model="searchForm.preId" 
+                  placeholder="请输入处方ID" 
+                  clearable
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
         
-        <div class="stats-details">
-          <span>划价处方单数：{{ stats.totalPrescriptions }}单</span>
-          <span>划价处方金额：￥{{ stats.totalAmount.toFixed(2) }}</span>
-          <span>退费单数：{{ stats.refundedPrescriptions }}单</span>
-          <span>退费金额：￥{{ stats.refundedAmount.toFixed(2) }}</span>
+        <div class="action-buttons">
+          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
         </div>
-      </el-card>
-    </div>
-
-    <!-- 表格区域 -->
-    <div class="table-container">
-      <el-card shadow="never">
-        <el-table :data="tableData" border style="width: 100%">
-          <el-table-column prop="outpatientNo" label="门(急)诊号" width="150" />
-          <el-table-column prop="prescriptionNo" label="处方号" width="150" />
-          <el-table-column prop="medicalCardNo" label="就诊卡号" width="150" />
-          <el-table-column prop="patientName" label="患者姓名" width="120" />
-          <el-table-column prop="department" label="开单科室" width="120" />
-          <el-table-column prop="doctor" label="开单医生" width="120" />
-          <el-table-column prop="amount" label="缴费金额" width="120">
-            <template #default="{ row }">
-              ¥{{ row.amount.toFixed(2) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="paymentStatus" label="缴费状态" width="120">
-            <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.paymentStatus)">
-                {{ row.paymentStatus }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="250">
-  <template #default="{ row }">
-    <el-button 
-      type="text" 
-      size="small" 
-      @click="goToPrescriptionDetail(row)"
-                >详情</el-button>
-                  <el-button 
-                    type="text" 
-                    size="small" 
-                  @click="goToOrderRefund(row)"
-                >处方退费</el-button>
-              <el-button type="text" size="small">更多</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <div class="pagination-container">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :total="total"
-            :page-sizes="[10, 20, 30, 50]"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
+      </div>
+      
+      <!-- 统计信息 -->
+      <div class="statistics">
+        <div class="statistics-info">
+          <span>处方总数：{{ statistics.total }}单</span>
+          <span>总金额：¥{{ formatPrice(statistics.totalAmount) }}</span>
+          <span>已完成：{{ statistics.completed }}单</span>
+          <span>待执行：{{ statistics.pending }}单</span>
+          <span>已退费：{{ statistics.canceled }}单</span>
         </div>
-      </el-card>
-    </div>
+      </div>
+      
+      <!-- 表格区域 -->
+      <el-table 
+        :data="tableData" 
+        border 
+        style="width: 100%"
+        v-loading="loading"
+      >
+        <el-table-column prop="preId" label="处方ID" width="100" />
+        <el-table-column prop="preSequence" label="处方序号" width="100" />
+        <el-table-column prop="prehcard" label="就诊卡号" width="120" />
+        <el-table-column prop="prepname" label="患者姓名" width="100" />
+        <el-table-column prop="predepname" label="科室" width="150" />
+        <el-table-column prop="predocname" label="医生" width="120" />
+        <el-table-column prop="preContent" label="处方内容" width="200" />
+        <el-table-column prop="preprice" label="处方金额" width="120">
+          <template #default="{ row }">
+            ¥{{ formatPrice(row.preprice) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="preState" label="处方状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row.preState)">
+              {{ row.preState }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="preTime" label="开方时间" width="180" />
+        <el-table-column prop="preDealType" label="支付方式" width="120" />
+         <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-select
+              v-model="row.selectedDealerId"
+              placeholder="选择操作员"
+              size="small"
+              style="width: 120px; margin-right: 10px"
+              v-if="row.preState === '待执行'"
+              @change="handleDealerSelect(row)"
+            >
+              <el-option
+                v-for="dealer in dealers"
+                :key="dealer.id"
+                :label="dealer.name"
+                :value="dealer.id"
+              />
+            </el-select>
+            <el-button 
+              type="text" 
+              @click="handleRefund(row)"
+              :disabled="row.preState !== '待执行' || !row.selectedDealerId"
+            >
+              退费
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { getAllPrescriptions, refundPrescription } from '@/api/prescription'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 
-// 跳转到处方详情
-const goToPrescriptionDetail = (row) => {
-  router.push({
-    path: '/prescription-detail',
-    query: {
-      prescriptionNo: row.prescriptionNo,
-      outpatientNo: row.outpatientNo
-    }
-  })
-}
-
-// 跳转到医嘱退费
-const goToOrderRefund = (row) => {
-  router.push({
-    path: '/order-refund',
-    query: {
-      prescriptionNo: row.prescriptionNo,
-      outpatientNo: row.outpatientNo
-    }
-  })
-}
 // 搜索表单
 const searchForm = ref({
-  outpatientNo: '',
-  prescriptionNo: '',
-  doctor: '',
-  patientName: '',
-  paymentStatus: '',
-  department: '',
-  idNumber: '',
-  dateRange: ['2024-01-06', '2024-01-06']
+  prehcard: '',
+  prepname: '',
+  preState: '',
+  predepname: '',
+  predocname: '',
+  preId: ''
 })
 
-const showSearch = ref(true)
+// 加载状态
+const loading = ref(false)
 
 // 统计信息
-const stats = ref({
-  totalPrescriptions: 50,
-  totalAmount: 6500,
-  refundedPrescriptions: 10,
-  refundedAmount: 500
+const statistics = ref({
+  total: 0,
+  totalAmount: 0,
+  completed: 0,
+  pending: 0,
+  canceled: 0
 })
 
 // 表格数据
-const tableData = ref([
-  {
-    outpatientNo: '6520050869',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050869',
-    patientName: '张晓晓',
-    department: '门诊外科',
-    doctor: '李医生',
-    amount: 30.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050868',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050868',
-    patientName: '王一',
-    department: '门诊外科',
-    doctor: '李医生',
-    amount: 30.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050867',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050867',
-    patientName: '李梅',
-    department: '门诊外科',
-    doctor: '李医生',
-    amount: 30.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050866',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050866',
-    patientName: '张晓珂',
-    department: '儿科',
-    doctor: '李医生',
-    amount: 30.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050865',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050865',
-    patientName: '刘亮',
-    department: '骨科',
-    doctor: '李医生',
-    amount: 200.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050864',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050864',
-    patientName: '小明',
-    department: '骨科',
-    doctor: '李医生',
-    amount: 200.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050863',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050863',
-    patientName: '张三',
-    department: '骨科',
-    doctor: '李医生',
-    amount: 200.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050862',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050862',
-    patientName: '张三',
-    department: '皮肤科',
-    doctor: '李医生',
-    amount: 66.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050861',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050861',
-    patientName: '张三',
-    department: '皮肤科',
-    doctor: '李医生',
-    amount: 20.00,
-    paymentStatus: '已缴费'
-  },
-  {
-    outpatientNo: '6520050860',
-    prescriptionNo: 'CF20240708',
-    medicalCardNo: '20050860',
-    patientName: '张三',
-    department: '皮肤科',
-    doctor: '李医生',
-    amount: 20.00,
-    paymentStatus: '部分退费'
-  }
-])
+const tableData = ref([])
+
+// 原始数据（用于筛选）
+const rawData = ref([])
 
 // 分页
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(50)
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0
+})
 
-// 方法
-const toggleSearch = () => {
-  showSearch.value = !showSearch.value
+// 金额格式化方法
+const formatPrice = (price) => {
+  if (price === undefined || price === null || price === '') return '0.00'
+  const num = Number(price)
+  return isNaN(num) ? '0.00' : num.toFixed(2)
 }
 
-const handleSearch = () => {
-  currentPage.value = 1
-  // 这里应该是调用API获取数据
-  console.log('搜索条件:', searchForm.value)
-}
-
-const resetSearch = () => {
-  searchForm.value = {
-    outpatientNo: '',
-    prescriptionNo: '',
-    doctor: '',
-    patientName: '',
-    paymentStatus: '',
-    department: '',
-    idNumber: '',
-    dateRange: ['2024-01-06', '2024-01-06']
-  }
-}
-
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  // 这里应该是调用API获取数据
-  console.log(`每页 ${val} 条`)
-}
-
-const handleCurrentChange = (val) => {
-  currentPage.value = val
-  // 这里应该是调用API获取数据
-  console.log(`当前页: ${val}`)
-}
-
+// 获取状态标签类型
 const getStatusTagType = (status) => {
-  switch (status) {
-    case '已缴费':
-      return 'success'
-    case '部分退费':
-      return 'warning'
-    case '已退费':
-      return 'danger'
-    default:
-      return ''
+  const map = {
+    '已完成': 'success',
+    '待执行': 'warning',
+    '已退费': 'danger'
+  }
+  return map[status] || ''
+}
+
+// 获取处方列表
+const dealers = ref([
+  { id: 1, name: '操作员1' },
+  { id: 2, name: '操作员2' },
+  { id: 3, name: '操作员3' }
+])
+
+// 获取处方列表
+const fetchPrescriptionList = async () => {
+  loading.value = true
+  try {
+    const response = await getAllPrescriptions()
+    
+    if (response.code === '200') {
+      rawData.value = (response.data || []).map(item => ({
+        ...item,
+        preprice: Number(item.preprice) || 0,
+        selectedDealerId: null // 添加操作员选择状态
+      }))
+      filterAndPaginateData()
+      updateStatistics()
+    }
+  } catch (error) {
+    console.error('获取处方列表失败:', error)
+    ElMessage.error('获取处方列表失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
+// 筛选和分页数据
+const filterAndPaginateData = () => {
+  let filteredData = [...rawData.value]
+  
+  // 根据搜索条件过滤
+  if (searchForm.value.prehcard) {
+    filteredData = filteredData.filter(item => 
+      String(item.prehcard).includes(searchForm.value.prehcard))
+  }
+  if (searchForm.value.prepname) {
+    filteredData = filteredData.filter(item => 
+      item.prepname?.includes(searchForm.value.prepname))
+  }
+  if (searchForm.value.preState) {
+    filteredData = filteredData.filter(item => 
+      item.preState === searchForm.value.preState)
+  }
+  if (searchForm.value.predepname) {
+    filteredData = filteredData.filter(item => 
+      item.predepname?.includes(searchForm.value.predepname))
+  }
+  if (searchForm.value.predocname) {
+    filteredData = filteredData.filter(item => 
+      item.predocname?.includes(searchForm.value.predocname))
+  }
+  if (searchForm.value.preId) {
+    filteredData = filteredData.filter(item => 
+      String(item.preId).includes(searchForm.value.preId))
+  }
+  
+  pagination.value.total = filteredData.length
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  tableData.value = filteredData.slice(start, end)
+}
+
+// 更新统计信息
+const updateStatistics = () => {
+  const allData = rawData.value
+  
+  statistics.value = {
+    total: allData.length,
+    totalAmount: allData.reduce((sum, item) => sum + (item.preprice || 0), 0),
+    completed: allData.filter(item => item.preState === '已完成').length,
+    pending: allData.filter(item => item.preState === '待执行').length,
+    canceled: allData.filter(item => item.preState === '已退费').length
+  }
+}
+const handleDealerSelect = (row) => {
+  console.log(`处方 ${row.preId} 选择操作员: ${row.selectedDealerId}`)
+}
+// 退费操作
+const handleRefund = (row) => {
+  ElMessageBox.confirm(`确定要退费处方 ${row.preId} 吗?`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    if (!row.selectedDealerId) {
+      ElMessage.error('请先选择操作员')
+      return
+    }
+    
+    loading.value = true
+    refundPrescription(row.preSequence, row.selectedDealerId)
+      .then(() => {
+        ElMessage.success('退费操作成功')
+        fetchPrescriptionList()
+      })
+      .catch(error => {
+        console.error('退费失败:', error)
+        ElMessage.error(error.message || '退费操作失败')
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  }).catch(() => {
+    // 取消操作
+  })
+}
+// 重置搜索条件
+const handleReset = () => {
+  searchForm.value = {
+    prehcard: '',
+    prepname: '',
+    preState: '',
+    predepname: '',
+    predocname: '',
+    preId: ''
+  }
+  filterAndPaginateData()
+}
+
+// 搜索
+const handleSearch = () => {
+  pagination.value.currentPage = 1
+  filterAndPaginateData()
+}
+
+// 分页大小变化
+const handleSizeChange = (val) => {
+  pagination.value.pageSize = val
+  filterAndPaginateData()
+}
+
+// 当前页变化
+const handleCurrentChange = (val) => {
+  pagination.value.currentPage = val
+  filterAndPaginateData()
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchPrescriptionList()
+})
 </script>
 
 <style scoped>
-.prescription-pricing-container {
+.prescription-query-container {
   padding: 20px;
 }
 
-.search-container {
+.search-area {
   margin-bottom: 20px;
 }
 
-.search-header {
+.action-buttons {
+  text-align: right;
+  margin-top: 10px;
+}
+
+.statistics {
+  margin-bottom: 20px;
+}
+
+.statistics-info {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-.search-header .title {
-  font-size: 16px;
-  font-weight: bold;
+.statistics-info span {
+  white-space: nowrap;
 }
 
-.stats-container {
-  margin-bottom: 20px;
-}
-
-.stats-details {
-  margin-top: 15px;
-}
-
-.stats-details span {
-  margin-right: 20px;
-}
-
-.table-container {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
+.pagination {
   margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
+}
+.el-select {
+  vertical-align: middle;
+  margin-right: 10px;
 }
 </style>

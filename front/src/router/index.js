@@ -48,11 +48,7 @@ const router = createRouter({
           name: 'OrderCharge',
           component: () => import('@/views/charge/Order.vue')
         },
-        {
-          path: '/prescription-charge',
-          name: 'PrescriptionCharge',
-          component: () => import('@/views/charge/Prescription.vue')
-        },
+        
         {
           path: '/card-recharge',
           name: '/CardRecharge',
@@ -65,16 +61,18 @@ const router = createRouter({
           component: () => import('@/views/fee-query/Register.vue')
         },
         {
-        path: '/prescription-detail',
-        name: 'PrescriptionDetail',
-        component: () => import('@/views/fee-query/PrescriptionDetail.vue'),
-        meta: { title: '处方详情' }
+          path: '/registration-detail/:id',
+          name: 'RegisterFeeDetail',
+          component: () => import('@/views/fee-query/RegisterDetail.vue')
         },
-         {
-          path: '/order-fee-query',
-          name: 'OrderFeeQuery',
-          component: () => import('@/views/fee-query/Order.vue')
-        },
+
+     {
+  path: '/prescription-detail',
+  name: 'PrescriptionDetail',
+  component: () => import('@/views/fee-query/PrescriptionDetail.vue'),
+  meta: { title: '处方详情' }
+},
+         
         {
           path: '/prescription-fee-query',
           name: 'PrescriptionFeeQuery',
@@ -155,11 +153,7 @@ const router = createRouter({
           component: () => import('@/views/settlement/Daily.vue')
         },
         //system
-        {
-          path: '/dict-management',
-      
-          component: () => import('@/views/system/DictManagement.vue')
-        },
+
          {
           path: '/charge-items',
       
