@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.sql.Date;
 
 @Service
 public class RegistrationServiceImpl extends ServiceImpl <RegistrationInfoMapper, RegistrationInfo> implements RegistrationService {
@@ -88,4 +89,8 @@ public class RegistrationServiceImpl extends ServiceImpl <RegistrationInfoMapper
         return result;
 
     }
+    public List<RegistrationInfo>getRegistrationByneed(int docId,Date date,RegistrationInfo.RegistrationState state){
+        return registrationInfoMapper.getbyneed(docId, date,state);
+    }
+
 }

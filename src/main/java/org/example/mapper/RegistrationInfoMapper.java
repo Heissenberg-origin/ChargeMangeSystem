@@ -5,9 +5,10 @@ import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import org.apache.ibatis.annotations.*;
 import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.sql.Timestamp;
-import java.util.Date;
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -448,4 +449,37 @@ public interface RegistrationInfoMapper extends BaseMapper<RegistrationInfo> {
             "GROUP BY pi.gender")
     @MapKey("gender")
     Map<String, Map<String, Long>> getGenderStatsByDate(String date);
+
+    @Select("""
+    SELECT 
+        ri.reg_id,
+        ri.reg_hcard_id,
+        pi.name AS reg_pname,
+        doci.doc_name AS regdoc_name,
+        depi.department_name AS regdep_name,
+        doci.doc_fee AS reg_fee,
+        ri.reg_state,
+        ri.reg_time,
+        ri.reg_type,
+        ri.reg_fee_type,
+        ri.reg_consultation_type,
+        ri.reg_arrange_id,
+        ai.arrange_timezone AS reg_timezone,
+        ri.reg_dealer_id,
+        ri.reg_deal_time,
+        ri.reg_deal_type
+    FROM registration_info ri
+    JOIN patient_info pi ON ri.reg_hcard_id=pi.healthcard_id
+    JOIN arrange_info ai ON ai.arrange_id=ri.reg_arrange_id
+    JOIN doctor_info doci ON ai.arrange_doc_id=doci.doc_id
+    JOIN department_info depi ON doci.doc_dp_id=depi.department_id
+    WHERE ri.reg_state=#{state.displayValue} 
+      AND ai.arrange_date=CAST(#{date} AS DATE) 
+      AND ai.arrange_doc_id=#{docId}
+""")
+    @ResultMap("RegistrationResultsMap")
+    List<RegistrationInfo> getbyneed(
+            @Param("docId") int docId,
+            @Param("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
+            @Param("state") RegistrationInfo.RegistrationState state);
 }
