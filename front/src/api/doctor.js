@@ -52,3 +52,13 @@ export function deleteDoctor(docId) {
       throw error
     })
 }
+
+export function getRegistrationByNeed(docId, date, state) {
+  return http.get(`/registration/querybyneed/${docId}/${date}/${state}`, jsonConfig)
+}
+
+// 更新挂号状态
+export function updateRegistrationState(regId, state) {
+  return http.put(`/registration/updatestate/${regId}/${state}`, jsonConfig)
+  
+}

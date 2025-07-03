@@ -159,20 +159,20 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   getRegistrationById,
   createCharge,
-   createPrescription as apiCreatePrescription // 添加别名
+  createPrescription as apiCreatePrescription
 } from '@/api/charge'
-import AddItemDialog from '@/components/AddItemDialog.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 // 患者信息数据
 const patientInfo = ref({
-  visitNumber: '',
+  visitNumber: route.query.visitNumber || '',
   feeType: '',
   outpatientNumber: '',
   medicalCardNumber: '',
@@ -183,6 +183,16 @@ const patientInfo = ref({
   diagnosis: '',
   department: '',
   doctor: ''
+})
+
+// 在组件挂载时自动查询患者信息
+onMounted(() => {
+  if (route.query.visitNumber && route.query.fromConsultation) {
+    fetchPatientInfo()
+    // 禁用门诊号输入框
+    const input = document.querySelector('.visit-number-input input')
+    if (input) input.disabled = true
+  }
 })
 
 // 根据门诊号查询患者信息
@@ -198,6 +208,7 @@ const fetchPatientInfo = async () => {
     
     patientInfo.value = {
       ...patientInfo.value,
+      visitNumber: data.regId,
       outpatientNumber: data.regId,
       name: data.regPname,
       feeType: data.regFeeType,
@@ -206,6 +217,8 @@ const fetchPatientInfo = async () => {
       registerTime: data.regTime,
       medicalCardNumber: data.regHcardId
     }
+    
+    ElMessage.success('患者信息获取成功')
   } catch (error) {
     ElMessage.error('获取患者信息失败: ' + (error.response?.data?.message || error.message))
     resetPatientInfo()
@@ -321,20 +334,11 @@ const createPrescription = async () => {
     preDealType: "现金",
     preDealTime: currentTime
   }))
-
-  // 打印将要发送的数据
-  console.log("准备发送给后端的处方数据:", JSON.stringify(prescriptionInfos, null, 2))
   
   try {
     const response = await apiCreatePrescription(prescriptionInfos)
-    console.log("后端响应:", response)
     ElMessage.success('处方创建成功')
   } catch (error) {
-    console.error("请求错误详情:", {
-      requestData: prescriptionInfos,
-      errorResponse: error.response?.data,
-      errorMessage: error.message
-    })
     ElMessage.error('处方创建失败: ' + (error.response?.data?.message || error.message))
   }
 }
@@ -369,7 +373,6 @@ const confirmCharge = async () => {
   }
 }
 </script>
-
 <style scoped>
 .charge-page {
   padding: 20px;
@@ -405,7 +408,12 @@ const confirmCharge = async () => {
   font-weight: bold;
   color: #f56c6c;
 }
-
+.visit-number-input input:disabled {
+  background-color: #f5f7fa;
+  border-color: #e4e7ed;
+  color: #c0c4cc;
+  cursor: not-allowed;
+}
 .action-buttons {
   text-align: right;
 }
