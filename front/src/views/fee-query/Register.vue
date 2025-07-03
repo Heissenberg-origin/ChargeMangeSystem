@@ -7,59 +7,39 @@
           <el-row :gutter="20">
             <el-col :span="8">
               <el-form-item label="就诊卡号">
-                <el-input v-model="searchForm.cardNumber" placeholder="请输入" clearable />
+                <el-input 
+                  v-model="searchForm.cardNumber" 
+                  placeholder="请输入就诊卡号" 
+                  clearable 
+                  @input="handleSingleSearch('cardNumber')"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="8">
               <el-form-item label="患者姓名">
-                <el-input v-model="searchForm.patientName" placeholder="请输入" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="证件号">
-                <el-input v-model="searchForm.idNumber" placeholder="请输入" clearable />
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="8">
-              <el-form-item label="就诊号">
-                <el-input v-model="searchForm.registerNumber" placeholder="请输入" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="缴费状态">
-                <el-select v-model="searchForm.paymentStatus" placeholder="全部状态" clearable>
-                  <el-option label="全部状态" value="" />
-                  <el-option label="待就诊" value="pending" />
-                  <el-option label="已就诊" value="completed" />
-                  <el-option label="已退号" value="canceled" />
-                  <el-option label="已失效" value="expired" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="挂号时间">
-                <el-date-picker
-                  v-model="searchForm.registerDateRange"
-                  type="daterange"
-                  range-separator="-"
-                  start-placeholder="开始日期"
-                  end-placeholder="结束日期"
-                  value-format="YYYY-MM-DD"
+                <el-input 
+                  v-model="searchForm.patientName" 
+                  placeholder="请输入患者姓名" 
+                  clearable
+                  @input="handleSingleSearch('patientName')"
                 />
               </el-form-item>
             </el-col>
-          </el-row>
-          <el-row :gutter="20">
             <el-col :span="8">
-              <el-form-item label="挂号医生">
-                <el-input v-model="searchForm.doctorName" placeholder="请输入" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
-              <el-form-item label="挂号科室">
-                <el-input v-model="searchForm.department" placeholder="请输入" clearable />
+              <el-form-item label="挂号状态">
+                <el-select 
+                  v-model="searchForm.regState" 
+                  placeholder="全部状态" 
+                  clearable
+                  @change="handleSingleSearch('regState')"
+                >
+                  <el-option label="全部状态" value="" />
+                  <el-option label="待就诊" value="PENDING" />
+                  <el-option label="已就诊" value="COMPLETED" />
+                  <el-option label="已取消" value="CANCELLED" />
+                  <el-option label="已过期" value="EXPIRED" />
+                  <el-option label="待支付" value="PENDING_PAYMENT" />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
@@ -68,67 +48,79 @@
         <div class="action-buttons">
           <el-button type="primary" @click="handleExport">导出</el-button>
           <el-button @click="handleReset">重置</el-button>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
         </div>
+      </div>
+      
+      <!-- 状态标签 -->
+      <div class="status-tabs">
+        <el-tabs v-model="activeStatus" @tab-change="handleStatusChange">
+          <el-tab-pane label="全部挂号" name="all" />
+          <el-tab-pane label="待就诊" name="PENDING" />
+          <el-tab-pane label="已就诊" name="COMPLETED" />
+          <el-tab-pane label="已取消" name="CANCELLED" />
+          <el-tab-pane label="已过期" name="EXPIRED" />
+          <el-tab-pane label="待支付" name="PENDING_PAYMENT" />
+        </el-tabs>
       </div>
       
       <!-- 统计信息 -->
       <div class="statistics">
-        <el-tabs v-model="activeStatus" @tab-change="handleStatusChange">
-          <el-tab-pane label="全部挂号" name="all" />
-          <el-tab-pane label="待就诊" name="pending" />
-          <el-tab-pane label="已就诊" name="completed" />
-          <el-tab-pane label="已退号" name="canceled" />
-          <el-tab-pane label="已失效" name="expired" />
-        </el-tabs>
-        
         <div class="statistics-info">
           <span>挂号总数：{{ statistics.total }}个</span>
-          <span>挂号总金额：{{ statistics.totalAmount }}元</span>
-          <span>退号数：{{ statistics.canceled }}个</span>
-          <span>退号金额：{{ statistics.canceledAmount }}元</span>
+          <span>挂号总金额：¥{{ statistics.totalAmount.toFixed(2) }}</span>
+          <span>已取消数：{{ statistics.canceled }}个</span>
+          <span>已取消金额：¥{{ statistics.canceledAmount.toFixed(2) }}</span>
+          <span>待就诊数：{{ statistics.pending }}个</span>
+          <span>待支付数：{{ statistics.pendingPayment }}个</span>
         </div>
       </div>
       
       <!-- 表格区域 -->
-      <el-table :data="tableData" border style="width: 100%">
-        <el-table-column prop="registerNumber" label="门(就)诊号" width="150" />
-        <el-table-column prop="cardNumber" label="就诊卡号" width="120" />
-        <el-table-column prop="patientName" label="患者姓名" width="100" />
-        <el-table-column prop="department" label="挂号科室" width="120" />
-        <el-table-column prop="doctorName" label="挂号医生" width="100" />
-        <el-table-column prop="amount" label="挂号金额" width="100">
+      <el-table 
+        :data="tableData" 
+        border 
+        style="width: 100%"
+        v-loading="loading"
+      >
+        <el-table-column prop="regId" label="挂号ID" width="100" />
+        <el-table-column prop="regHcardId" label="就诊卡号" width="120" />
+        <el-table-column prop="regPname" label="患者姓名" width="100" />
+        <el-table-column prop="regdepName" label="挂号科室" width="150" />
+        <el-table-column prop="regdocName" label="挂号医生" width="120" />
+        <el-table-column prop="regfee" label="挂号金额" width="120">
           <template #default="{ row }">
-            ¥{{ row.amount.toFixed(2) }}
+            ¥{{ row.regfee.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="挂号状态" width="100">
+        <el-table-column prop="regState" label="挂号状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)">
-              {{ getStatusText(row.status) }}
+            <el-tag :type="getStatusTagType(row.regState)">
+              {{ getStatusText(row.regState) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="registerDate" label="挂号日期" width="180" />
+        <el-table-column prop="regTime" label="挂号时间" width="180" />
+        <el-table-column prop="regType" label="挂号类型" width="120" />
+        <el-table-column prop="regFeeType" label="费用类型" width="120" />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="text" @click="handleDetail(row.registerNumber)">详情</el-button>
-            <el-button 
-              type="text" 
-              @click="handleCancelRegister(row.registerNumber)"
-              :disabled="row.status !== 'pending'"
-            >
-              取消挂号
-            </el-button>
-            <el-dropdown>
-              <el-button type="text">更多 <el-icon><arrow-down /></el-icon></el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handlePrintReceipt(row.registerNumber)">打印小票</el-dropdown-item>
-                  <el-dropdown-item @click="handleOpenInvoice(row.registerNumber)">开启发票</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+           <el-table-column label="操作" width="220" fixed="right">
+  <template #default="{ row }">
+    <el-button type="text" @click="handleDetail(row.regId)">详情</el-button>
+    <el-button 
+      type="text" 
+      @click="handleCancelRegister(row)"
+      :disabled="!canCancelRegister(row.regState)"
+    >
+      取消挂号
+    </el-button>
+   
+    
+  
+
+  </template>
+</el-table-column>
+          
           </template>
         </el-table-column>
       </el-table>
@@ -148,186 +140,45 @@
     </el-card>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowDown } from '@element-plus/icons-vue'
+import { getAllRegisters, cancelRegistration } from '@/api/registration'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
-
-// 模拟数据 - 挂号列表
-const mockRegisterData = [
-  {
-    registerNumber: '6520050869',
-    cardNumber: '20050869',
-    patientName: '张晓晓',
-    department: '门诊外科',
-    doctorName: '李医生',
-    amount: 30.00,
-    status: 'pending',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050868',
-    cardNumber: '20050868',
-    patientName: '王一',
-    department: '门诊外科',
-    doctorName: '李医生',
-    amount: 30.00,
-    status: 'pending',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050867',
-    cardNumber: '20050867',
-    patientName: '李梅',
-    department: '门诊外科',
-    doctorName: '李医生',
-    amount: 30.00,
-    status: 'pending',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050866',
-    cardNumber: '20050866',
-    patientName: '张晓珂',
-    department: '儿科',
-    doctorName: '王医生',
-    amount: 30.00,
-    status: 'completed',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050865',
-    cardNumber: '20050865',
-    patientName: '刘亮',
-    department: '骨科',
-    doctorName: '张医生',
-    amount: 200.00,
-    status: 'completed',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050864',
-    cardNumber: '20050864',
-    patientName: '小明',
-    department: '骨科',
-    doctorName: '张医生',
-    amount: 200.00,
-    status: 'completed',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050863',
-    cardNumber: '20050863',
-    patientName: '张三',
-    department: '骨科',
-    doctorName: '张医生',
-    amount: 200.00,
-    status: 'canceled',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050862',
-    cardNumber: '20050862',
-    patientName: '张三',
-    department: '皮肤科',
-    doctorName: '赵医生',
-    amount: 66.00,
-    status: 'canceled',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050861',
-    cardNumber: '20050861',
-    patientName: '张三',
-    department: '皮肤科',
-    doctorName: '赵医生',
-    amount: 20.00,
-    status: 'expired',
-    registerDate: '2024-01-06 08:10:00'
-  },
-  {
-    registerNumber: '6520050860',
-    cardNumber: '20050860',
-    patientName: '张三',
-    department: '皮肤科',
-    doctorName: '赵医生',
-    amount: 20.00,
-    status: 'expired',
-    registerDate: '2024-01-06 08:10:00'
-  }
-]
-
-// 模拟患者信息数据
-const mockPatientData = {
-  '6520050869': {
-    cardNumber: '530101199805666666',
-    name: '张晓晓',
-    gender: '女',
-    idType: '居民身份证',
-    idNumber: '530101199805666666',
-    birthDate: '2000-05-20',
-    age: '24岁',
-    phone: '15266668888',
-    guardianRelation: '--',
-    guardian: '--',
-    guardianPhone: '--',
-    address: '四川省成都市锦江区',
-    detailAddress: '春熙路666号'
-  }
-  // 其他患者的模拟数据可以类似添加
-}
-
-// 模拟挂号详情数据
-const mockRegisterDetail = {
-  '6520050869': {
-    registerNumber: '20240106002',
-    outpatientType: '普通门诊',
-    feeType: '自费',
-    visitType: '初诊',
-    department: '门诊外科',
-    doctor: '李医生',
-    registerDate: '2024-01-06 08:00:09.00',
-    queueNumber: '1号',
-    registerType: '主任医师号',
-    registerTime: '2024-01-06 09:20:30',
-    amount: '¥200.00',
-    invoiceNumber: '1112234556',
-    invoiceStatus: '已开具',
-    cashierId: 'SFR001',
-    cashierName: '收费员001',
-    orderNumber: 'DD20180606175013',
-    status: 'pending'
-  }
-  // 其他挂号详情的模拟数据可以类似添加
-}
 
 // 搜索表单
 const searchForm = ref({
   cardNumber: '',
   patientName: '',
-  idNumber: '',
-  registerNumber: '',
-  paymentStatus: '',
-  registerDateRange: [],
-  doctorName: '',
-  department: ''
+  regState: ''
 })
 
 // 状态标签
 const activeStatus = ref('all')
 
+// 加载状态
+const loading = ref(false)
+
 // 统计信息
 const statistics = ref({
-  total: 50,
-  totalAmount: '¥6500.00',
-  canceled: 10,
-  canceledAmount: '¥500.00'
+  total: 0,
+  totalAmount: 0,
+  canceled: 0,
+  canceledAmount: 0,
+  pending: 0,
+  expired: 0,
+  pendingPayment: 0
 })
 
 // 表格数据
 const tableData = ref([])
+
+// 原始数据（用于筛选）
+const rawData = ref([])
 
 // 分页
 const pagination = ref({
@@ -336,13 +187,20 @@ const pagination = ref({
   total: 0
 })
 
+// 检查是否可以取消挂号
+const canCancelRegister = (status) => {
+  // 只有待就诊和待支付状态可以取消
+  return ['PENDING'].includes(status)
+}
+
 // 获取状态标签类型
 const getStatusTagType = (status) => {
   const map = {
-    pending: 'warning',
-    completed: 'success',
-    canceled: 'info',
-    expired: 'danger'
+    PENDING: 'warning',
+    COMPLETED: 'success',
+    CANCELLED: 'info',
+    EXPIRED: 'danger',
+    PENDING_PAYMENT: 'warning'
   }
   return map[status] || ''
 }
@@ -350,109 +208,211 @@ const getStatusTagType = (status) => {
 // 获取状态文本
 const getStatusText = (status) => {
   const map = {
-    pending: '待就诊',
-    completed: '已就诊',
-    canceled: '已退号',
-    expired: '已失效'
+    PENDING: '待就诊',
+    COMPLETED: '已就诊',
+    CANCELLED: '已取消',
+    EXPIRED: '已过期',
+    PENDING_PAYMENT: '待支付'
   }
   return map[status] || status
 }
 
-// 模拟API调用 - 获取挂号列表
-const getRegisterList = (params) => {
-  return new Promise((resolve) => {
-    // 模拟网络延迟
-    setTimeout(() => {
-      let filteredData = [...mockRegisterData]
-      
-      // 根据状态过滤
-      if (params.status) {
-        filteredData = filteredData.filter(item => item.status === params.status)
-      }
-      
-      // 根据搜索条件过滤
-      if (params.cardNumber) {
-        filteredData = filteredData.filter(item => item.cardNumber.includes(params.cardNumber))
-      }
-      if (params.patientName) {
-        filteredData = filteredData.filter(item => item.patientName.includes(params.patientName))
-      }
-      if (params.registerNumber) {
-        filteredData = filteredData.filter(item => item.registerNumber.includes(params.registerNumber))
-      }
-      if (params.doctorName) {
-        filteredData = filteredData.filter(item => item.doctorName.includes(params.doctorName))
-      }
-      if (params.department) {
-        filteredData = filteredData.filter(item => item.department.includes(params.department))
-      }
-      
-      // 分页处理
-      const total = filteredData.length
-      const start = (params.pageNum - 1) * params.pageSize
-      const end = start + params.pageSize
-      const pageData = filteredData.slice(start, end)
-      
-      resolve({
-        data: {
-          list: pageData,
-          total: total
-        }
-      })
-    }, 500)
-  })
-}
-
-// 模拟API调用 - 获取统计信息
-const getRegisterStatistics = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: statistics.value
-      })
-    }, 300)
-  })
-}
-
 // 获取挂号列表
 const fetchRegisterList = async () => {
+  loading.value = true
   try {
-    const params = {
-      ...searchForm.value,
-      status: activeStatus.value === 'all' ? '' : activeStatus.value,
-      startDate: searchForm.value.registerDateRange?.[0] || '',
-      endDate: searchForm.value.registerDateRange?.[1] || '',
-      pageNum: pagination.value.currentPage,
-      pageSize: pagination.value.pageSize
-    }
+    const response = await getAllRegisters()
     
-    const res = await getRegisterList(params)
-    tableData.value = res.data.list
-    pagination.value.total = res.data.total
+    if (response.code === '200') {
+      rawData.value = response.data || []
+      filterAndPaginateData()
+      updateStatistics()
+    } else {
+      ElMessage.error(response.message || '获取挂号信息失败')
+    }
   } catch (error) {
     console.error('获取挂号列表失败:', error)
+    ElMessage.error('获取挂号列表失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
 
-// 获取统计信息
-const fetchStatistics = async () => {
+// 筛选和分页数据
+const filterAndPaginateData = () => {
+  let filteredData = [...rawData.value]
+  
+  // 根据状态过滤
+  if (activeStatus.value !== 'all') {
+    filteredData = filteredData.filter(item => item.regState === activeStatus.value)
+  }
+  
+  // 根据搜索条件过滤
+  if (searchForm.value.cardNumber) {
+    filteredData = filteredData.filter(item => 
+      String(item.regHcardId).includes(searchForm.value.cardNumber)
+    )
+  }
+  if (searchForm.value.patientName) {
+    filteredData = filteredData.filter(item => 
+      item.regPname?.includes(searchForm.value.patientName)
+    )
+  }
+  if (searchForm.value.regState) {
+    filteredData = filteredData.filter(item => 
+      item.regState === searchForm.value.regState
+    )
+  }
+  
+  // 更新分页总数
+  pagination.value.total = filteredData.length
+  
+  // 分页处理
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  tableData.value = filteredData.slice(start, end)
+}
+
+// 更新统计信息
+const updateStatistics = () => {
+  const allData = rawData.value
+  
+  statistics.value = {
+    total: allData.length,
+    totalAmount: allData.reduce((sum, item) => sum + (item.regfee || 0), 0),
+    canceled: allData.filter(item => item.regState === 'CANCELLED').length,
+    canceledAmount: allData
+      .filter(item => item.regState === 'CANCELLED')
+      .reduce((sum, item) => sum + (item.regfee || 0), 0),
+    pending: allData.filter(item => item.regState === 'PENDING').length,
+    expired: allData.filter(item => item.regState === 'EXPIRED').length,
+    pendingPayment: allData.filter(item => item.regState === 'PENDING_PAYMENT').length
+  }
+}
+
+// 查看详情 - 只传递regId
+const handleDetail = (regId) => {
+  router.push({ 
+    name: 'RegisterFeeDetail', 
+    params: { id: regId }
+  })
+}
+
+// 取消挂号
+// 取消挂号
+// 取消挂号
+const handleCancelRegister = async (row) => {
   try {
-    const res = await getRegisterStatistics()
-    statistics.value = res.data
+    // 检查状态是否允许取消
+    if (!canCancelRegister(row.regState)) {
+      ElMessage.warning('当前状态不允许取消挂号')
+      return
+    }
+    
+    await ElMessageBox.confirm('确定要取消此挂号吗?', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    loading.value = true
+    // 调用取消挂号接口
+    await cancelRegistration(row.regId)
+    // 由于后端没有返回值，所以只要没有抛出异常就视为成功
+    ElMessage.success('取消挂号成功')
+    // 刷新列表
+    await fetchRegisterList()
   } catch (error) {
-    console.error('获取统计信息失败:', error)
+    if (error !== 'cancel') {
+      console.error('取消挂号失败:', error)
+      ElMessage.error('取消挂号失败: ' + (error.message || '未知错误'))
+    }
+  } finally {
+    loading.value = false
   }
 }
 
-// 查看详情
-const handleDetail = (registerNumber) => {
-  router.push({ name: 'RegisterFeeDetail', params: { id: registerNumber } })
+
+
+// 重置搜索条件
+const handleReset = () => {
+  searchForm.value = {
+    cardNumber: '',
+    patientName: '',
+    regState: ''
+  }
+  activeStatus.value = 'all'
+  filterAndPaginateData()
 }
 
-// 其他方法保持不变...
+// 单个搜索条件变化
+const handleSingleSearch = () => {
+  pagination.value.currentPage = 1
+  filterAndPaginateData()
+}
 
+// 状态标签变化
+const handleStatusChange = () => {
+  pagination.value.currentPage = 1
+  filterAndPaginateData()
+}
+
+// 分页大小变化
+const handleSizeChange = (val) => {
+  pagination.value.pageSize = val
+  filterAndPaginateData()
+}
+
+// 当前页变化
+const handleCurrentChange = (val) => {
+  pagination.value.currentPage = val
+  filterAndPaginateData()
+}
+
+// 页面加载时获取数据
 onMounted(() => {
   fetchRegisterList()
-  fetchStatistics()
 })
 </script>
+
+<style scoped>
+.register-fee-query {
+  padding: 20px;
+}
+
+.search-area {
+  margin-bottom: 20px;
+}
+
+.status-tabs {
+  margin-bottom: 20px;
+}
+
+.action-buttons {
+  text-align: right;
+  margin-top: 10px;
+}
+
+.statistics {
+  margin-bottom: 20px;
+}
+
+.statistics-info {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.statistics-info span {
+  white-space: nowrap;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+</style>

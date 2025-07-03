@@ -29,9 +29,8 @@
         <span>门诊收费管理</span>
       </template>
       <el-menu-item index="/register-charge">门诊挂号收费</el-menu-item>
-      <el-menu-item index="/order-charge">门诊医嘱收费</el-menu-item>
-      <el-menu-item index="/prescription-charge">门诊处方划价</el-menu-item>
-      <el-menu-item index="/card-recharge">就诊卡充值</el-menu-item>
+      <el-menu-item index="/order-charge">门诊处方收费</el-menu-item>
+      <el-menu-item index="/card-recharge">充值</el-menu-item>
     </el-sub-menu>
 
     <!-- 门诊费用查询 -->
@@ -41,10 +40,9 @@
         <span>门诊费用查询</span>
       </template>
       <el-menu-item index="/register-fee-query">门诊挂号费用查询</el-menu-item>
-      <el-menu-item index="/order-fee-query">门诊医嘱费用查询</el-menu-item>
-      <el-menu-item index="/prescription-fee-query">门诊处方划价查询</el-menu-item>
-      <el-menu-item index="/card-recharge-query">就诊卡充值查询</el-menu-item>
-      <el-menu-item index="/card-settlement-query">就诊卡结算查询</el-menu-item>
+    
+      <el-menu-item index="/prescription-fee-query">门诊处方查询</el-menu-item>
+      <!-- <el-menu-item index="/card-settlement-query">就诊卡结算查询</el-menu-item> -->
     </el-sub-menu>
 
     <!-- 门诊结算管理 -->
@@ -53,9 +51,9 @@
         <el-icon><Money /></el-icon>
         <span>门诊结算管理</span>
       </template>
-      <el-menu-item index="/order-refund">门诊医嘱退费</el-menu-item>
+      <el-menu-item index="/order-refund">门诊处方退费</el-menu-item>
       <el-menu-item index="/card-balance">就诊卡余额结算</el-menu-item>
-      <el-menu-item index="/daily-settlement">门诊日结算</el-menu-item>
+      <!-- <el-menu-item index="/daily-settlement">门诊日结算</el-menu-item> -->
     </el-sub-menu>
 
     <!-- 报表统计 -->

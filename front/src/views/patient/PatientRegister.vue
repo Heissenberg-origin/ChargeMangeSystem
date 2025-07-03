@@ -141,49 +141,51 @@
         </el-row>
 
         <!-- 监护人信息 -->
-        <el-divider content-position="left">监护人信息</el-divider>
-        <div v-for="(guardian, index) in form.guardians" :key="index" class="guardian-item">
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <el-form-item :label="`监护人关系${index+1}`">
-                <el-select v-model="guardian.relationship" placeholder="请选择关系" style="width:100%">
-                  <el-option label="父母" value="父母" />
-                  <el-option label="配偶" value="配偶" />
-                  <el-option label="子女" value="子女" />
-                  <el-option label="其他" value="其他" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="监护人姓名">
-                <el-input v-model="guardian.name" placeholder="监护人姓名" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="监护人电话">
-                <el-input v-model="guardian.phonenum" placeholder="监护人电话" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-button 
-                v-if="index === form.guardians.length - 1" 
-                type="primary" 
-                plain 
-                @click="addGuardian"
-              >
-                添加监护人
-              </el-button>
-              <el-button 
-                v-if="index > 0" 
-                type="danger" 
-                plain 
-                @click="removeGuardian(index)"
-              >
-                删除
-              </el-button>
-            </el-col>
-          </el-row>
-        </div>
+        <!-- 监护人信息 -->
+<el-divider content-position="left">监护人信息</el-divider>
+<div v-for="(guardian, index) in form.guardians" :key="index" class="guardian-item">
+  <el-row :gutter="20">
+    <el-col :span="6">
+      <el-form-item :label="`监护人关系${index+1}`">
+        <el-select v-model="guardian.relationship" placeholder="请选择关系" style="width:100%">
+          <el-option label="父母" value="父母" />
+          <el-option label="子女" value="子女" />
+          <el-option label="亲属" value="亲属" />
+          <el-option label="朋友" value="朋友" />
+          <el-option label="其他" value="其他" />
+        </el-select>
+      </el-form-item>
+    </el-col>
+    <el-col :span="6">
+      <el-form-item label="监护人姓名">
+        <el-input v-model="guardian.name" placeholder="监护人姓名" clearable />
+      </el-form-item>
+    </el-col>
+    <el-col :span="6">
+      <el-form-item label="监护人电话">
+        <el-input v-model="guardian.phonenum" placeholder="监护人电话" clearable />
+      </el-form-item>
+    </el-col>
+    <el-col :span="6">
+      <el-button 
+        v-if="index === form.guardians.length - 1" 
+        type="primary" 
+        plain 
+        @click="addGuardian"
+      >
+        添加监护人
+      </el-button>
+      <el-button 
+        v-if="index > 0" 
+        type="danger" 
+        plain 
+        @click="removeGuardian(index)"
+      >
+        删除
+      </el-button>
+    </el-col>
+  </el-row>
+</div>
 
         <!-- 关联信息 -->
         <el-divider content-position="left">关联信息</el-divider>
@@ -201,11 +203,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="医保卡号">
+            <!-- <el-form-item label="医保卡号">
               <el-input v-model="form.micard_id" placeholder="请输入医保卡号" clearable />
-            </el-form-item>
+            </el-form-item> -->
           </el-col>
-          <el-col :span="8">
+          <!-- <el-col :span="8">
             <el-form-item label="健康卡余额">
               <el-input-number 
                 v-model="form.healthcard_balance" 
@@ -215,7 +217,7 @@
                 style="width:100%" 
               />
             </el-form-item>
-          </el-col>
+          </el-col> -->
         </el-row>
 
         <!-- 操作按钮 -->
@@ -326,8 +328,8 @@ const submitForm = async () => {
     // 准备提交数据
     const requestData = {
       ...form,
-      // 转换日期格式
-      birthdate: form.birthdate ? `${form.birthdate}T00:00:00.000Z` : null,
+      // 转换日期格式为ISO格式
+      birthdate: form.birthdate ? new Date(form.birthdate).toISOString() : null,
       // 处理监护人信息
       guardian1_name: form.guardians[0]?.name || '',
       guardian1_relationship: form.guardians[0]?.relationship || '',
@@ -337,21 +339,18 @@ const submitForm = async () => {
       guardian2_phonenum: form.guardians[1]?.phonenum || '',
       guardian3_name: form.guardians[2]?.name || '',
       guardian3_relationship: form.guardians[2]?.relationship || '',
-      guardian3_phonenum: form.guardians[2]?.phonenum || ''
+      guardian3_phonenum: form.guardians[2]?.phonenum || '',
+      // 确保健康卡ID为0（新患者）
+      healthcard_id: 0
     }
     
     // 移除前端使用的临时字段
     delete requestData.guardians
     
     // 提交数据
-    const { data } = await registerPatient(requestData)
-    
-    if (data) {
-      ElMessage.success('患者登记成功')
-      resetForm()
-    } else {
-      ElMessage.error('患者登记失败')
-    }
+    await registerPatient(requestData)
+    ElMessage.success('患者登记成功')
+    resetForm()
   } catch (error) {
     console.error('提交失败:', error)
     ElMessage.error(error.response?.data?.message || '提交失败，请检查表单')
@@ -367,6 +366,8 @@ const resetForm = () => {
   form.marital_status = '未婚'
   form.type = '自费'
   form.occupation = '职工'
+  // 重置日期字段
+  form.birthdate = ''
 }
 </script>
 
