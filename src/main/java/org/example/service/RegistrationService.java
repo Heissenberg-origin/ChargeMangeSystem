@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 
-import java.util.Date;
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -28,5 +28,6 @@ public interface RegistrationService extends IService<RegistrationInfo> {
     List<RegistrationInfo> getRegistrationsByType(RegistrationInfo.RegistrationType type);
     void cancelRegistration(int regId);
     Map<String, Integer> getGenderStatsByDate(String date);
+    List<RegistrationInfo>getRegistrationByneed(int docId,Date date,RegistrationInfo.RegistrationState state);
 
 }

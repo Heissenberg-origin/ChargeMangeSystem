@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +53,21 @@ public class RegistrationController {
     public Result getRegistrationById(
             @PathVariable @Parameter(description = "门诊号") int regId) {
         Result result = new Result("200","success",registrationService.getRegistrationById(regId));
+        return result.success(result.getData());
+    }
+
+    @GetMapping("/querybyneed/{docId}/{date}/{state}")
+    @Operation(summary = "根据医生id、日期、状态查询挂号信息")
+    public Result getRegistrationByNeed(
+            @PathVariable @Parameter(description = "医生id") int docId,
+            @PathVariable @Parameter(description = "日期(yyyy-MM-dd)") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @PathVariable @Parameter(description = "状态") RegistrationInfo.RegistrationState state) {
+
+        // Convert LocalDate to java.sql.Date for MyBatis
+        java.sql.Date sqlDate = java.sql.Date.valueOf(date);
+
+        Result result = new Result("200", "success",
+                registrationService.getRegistrationByneed(docId, sqlDate, state));
         return result.success(result.getData());
     }
 
