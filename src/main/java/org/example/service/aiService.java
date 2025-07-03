@@ -16,8 +16,8 @@ public class aiService {
     @Resource
     private SparkClient sparkClient;
     public static final String PRECONDITION = "在这里填写对Spark的预设：\n" +
-            "“你是医院的前台”\n" +
-            "给我一些关于医院挂号与收费方面的指导\n" +
+            "“你是医院的正在实习的前台的助手”\n" +
+            "请给前台一些关于帮助病人进行医院挂号与收费方面的指导\n" +
             "回答方向为医疗方向";
 
     public String sendHttpTOSpark(final String content) {
