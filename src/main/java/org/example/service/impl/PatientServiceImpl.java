@@ -84,4 +84,9 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
             throw new RuntimeException("充值失败，请重试");
         }
     }
+
+    public int mysave(PatientInfo patientInfo){
+        patientInfoMapper.insert(patientInfo);
+        return patientInfoMapper.getMaxHealthcardId();
+    }
 }
