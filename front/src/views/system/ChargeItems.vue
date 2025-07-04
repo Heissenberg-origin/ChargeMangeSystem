@@ -475,7 +475,7 @@ const submitCreateForm = async () => {
       chargeItemUnit: projectForm.unit,
       chargeItemBalance: 50, // 默认余量50
       chargeItemPrice: projectForm.price,
-      chargeItemState: projectForm.status === '1' ? '启用' : '停用',
+      chargeItemState: projectForm.status === '1' ? '启用' : '禁用',
       chargeItemCreator: '系统管理员',
       chargeItemTime: formatDateTime(new Date()),
       chargeItemLatestFixer: '系统管理员'
@@ -504,7 +504,7 @@ const handleEdit = (row) => {
   isEdit.value = true
   Object.assign(projectForm, {
     id: row.id,
-    projectCode: row.projectCode,
+    projectCode: row.pinyinCode,
     projectName: row.projectName,
     unit: row.unit,
     price: row.price,
@@ -545,58 +545,61 @@ const handleDelete = async (row) => {
   }
 }
 
+const submitUpdateForm = async () => {
+  try {
+    loading.value = true
+    
+    const originalItem = rawTableData.value.find(item => item.id === projectForm.id)
+    if (!originalItem) {
+      ElMessage.error('未找到原始项目数据')
+      return
+    }
+    
+    const requestBody = {
+      ...originalItem.originalData,
+      chargeItemName: projectForm.projectName,
+      chargeItemCode: projectForm.projectCode,
+      chargeItemUnit: projectForm.unit,
+      chargeItemPrice: projectForm.price,
+      chargeItemType: getFeeTypeLabel(projectForm.feeType),
+      chargeItemState: projectForm.status === '1' ? '启用' : '禁用',
+      chargeItemLatestFixer: 'admin',
+      chargeItemTime: formatDateTime(new Date()),
+      depname: originalItem.originalData.depname,
+      chargeItemBalance: originalItem.originalData.chargeItemBalance
+    }
+
+    const response = await updateChargeItem(projectForm.id, requestBody)
+    
+    if (response.status === 200 || response.data?.code === '200') {
+      ElMessage.success('更新成功')
+      projectDialogVisible.value = false
+      fetchTableData()
+    } else {
+      ElMessage.error(response.data?.message || '更新失败')
+    }
+  } catch (error) {
+    console.error('更新项目失败:', error)
+    ElMessage.error('更新失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
+  }
+}
+
 // 提交项目表单（更新逻辑）
 const submitProjectForm = () => {
   projectFormRef.value.validate(async (valid) => {
     if (!valid) return
     
-     if (isEdit.value) {
-      submitUpdateForm()
-    } else {
-      submitCreateForm()
-    }
     try {
-      loading.value = true
-      
-      // 1. 找到原始数据
-      const originalItem = rawTableData.value.find(item => item.id === projectForm.id)
-      if (!originalItem) {
-        ElMessage.error('未找到原始项目数据')
-        return
-      }
-      
-      // 2. 构造完整的JSON请求体
-      const requestBody = {
-        ...originalItem.originalData, // 原始数据中的所有字段
-        chargeItemName: projectForm.projectName,
-        chargeItemCode: projectForm.projectCode,
-        chargeItemUnit: projectForm.unit,
-        chargeItemPrice: projectForm.price,
-        chargeItemType: getFeeTypeLabel(projectForm.feeType),
-        chargeItemState: projectForm.status === '1' ? '启用' : '停用',
-        chargeItemLatestFixer: 'admin',
-        chargeItemTime: formatDateTime(new Date()),
-        // 确保包含新增字段
-        depname: originalItem.originalData.depname,
-        chargeItemBalance: originalItem.originalData.chargeItemBalance
-      }
-
-      // 3. 调用更新接口
-      const response = await updateChargeItem(projectForm.id, requestBody)
-      
-      // 修改响应判断逻辑
-      if (response.status === 200 || response.data?.code === '200') {
-        ElMessage.success('更新成功')
-        projectDialogVisible.value = false
-        fetchTableData()
+      if (isEdit.value) {
+        await submitUpdateForm()  // 添加await确保完成
       } else {
-        ElMessage.error(response.data?.message || '更新失败')
+        await submitCreateForm()  // 添加await确保完成
       }
     } catch (error) {
-      console.error('更新项目失败:', error)
-      ElMessage.error('更新失败: ' + (error.message || '未知错误'))
-    } finally {
-      loading.value = false
+      console.error('操作失败:', error)
+      ElMessage.error('操作失败: ' + (error.message || '未知错误'))
     }
   })
 }
