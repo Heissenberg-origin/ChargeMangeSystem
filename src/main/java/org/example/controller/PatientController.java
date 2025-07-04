@@ -30,9 +30,13 @@ public class PatientController {
      */
     @PostMapping("/register")
     @Operation(summary = "创建病人信息", description = "注册新的病人")
-    public void registerPatient(@RequestBody PatientInfo patientInfo) {
-        patientService.save(patientInfo);
+    public Result registerPatient(@RequestBody PatientInfo patientInfo) {
+
+        Result result=new Result("200","success",patientService.mysave(patientInfo));
+        return result;
     }
+
+
     @DeleteMapping("/delete/{healthcardId}")
     @Operation(summary = "注销病人信息", description = "注销患者信息")
     public void deletePatient(@PathVariable int healthcardId) {

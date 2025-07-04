@@ -17,4 +17,5 @@ public interface PatientService extends IService<PatientInfo> {
      */
     void recharge(int healthcardId, float amount);
     void settlehcard(int healthcardId);
+    int mysave(PatientInfo patientInfo);
 }
