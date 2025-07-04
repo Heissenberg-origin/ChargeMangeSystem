@@ -86,7 +86,7 @@ public class PatientServiceImpl extends ServiceImpl<PatientInfoMapper, PatientIn
     }
 
     public int mysave(PatientInfo patientInfo){
-        patientInfoMapper.saveinfo(patientInfo);
+        patientInfoMapper.insert(patientInfo);
         return patientInfoMapper.getMaxHealthcardId();
     }
 }
