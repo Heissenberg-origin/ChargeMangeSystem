@@ -52,6 +52,9 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+
+    
   </div>
 </template>
 
@@ -60,6 +63,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { queryPatients } from '@/api/patient'
+
+
 
 const route = useRoute()
 const router = useRouter()

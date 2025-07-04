@@ -208,6 +208,21 @@ const router = createRouter({
   ]
 })
 
+router.beforeEach((to, from, next) => {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  
+  // 如果是从登录页跳转且已登录
+  if (from.path === '/login' && userInfo.rank) {
+    if (userInfo.rank === 'operator' && to.path !== '/patient-register') {
+      return next('/patient-register')
+    } else if (userInfo.rank === 'doctor' && to.path !== '/doctor/Consultation') {
+      return next('/doctor/Consultation')
+    }
+  }
+  
+  next()
+})
+
 
 
 export default router
