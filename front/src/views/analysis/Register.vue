@@ -126,7 +126,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { User, Money, RefreshLeft, Document, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getRegistrationByDate, getGenderStatsByDate } from '@/api/prescription'
+import { getRegistrationByDate, getGenderStatsByDate, getRegistrationTotal } from '@/api/prescription'
 import dayjs from 'dayjs'
 
 // 当前选中的日期
@@ -136,6 +136,13 @@ const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const prescriptionStats = ref({
   today: null,
   yesterday: null
+})
+
+// 7天趋势数据
+const trendData = ref({
+  dates: [],
+  totalAmounts: [],
+  totalRefunds: []
 })
 
 // 图表引用
@@ -149,6 +156,191 @@ let trendChartInstance = null
 let paymentChartInstance = null
 let doctorChartInstance = null
 let departmentChartInstance = null
+
+// 统一色调配置
+const chartColors = {
+  blue: '#409EFF',
+  green: '#67C23A',
+  orange: '#E6A23C',
+  red: '#F56C6C',
+  gray: '#909399',
+  lightBlue: '#79bbff',
+  lightGreen: '#95d475',
+  lightOrange: '#eebe77',
+  lightRed: '#f89898',
+  lightGray: '#a6a9ad'
+}
+
+// 获取最近7天日期（包括所选日期）
+const getLast7Days = (date) => {
+  const dates = []
+  for (let i = 6; i >= 0; i--) {
+    dates.push(dayjs(date).subtract(i, 'day').format('YYYY-MM-DD'))
+  }
+  return dates
+}
+
+// 获取7天趋势数据
+const fetchTrendData = async () => {
+  try {
+    const dates = getLast7Days(selectedDate.value)
+    const requests = dates.map(date => {
+      return getRegistrationTotal({
+        startTime: `${date} 00:00:00`,
+        endTime: `${date} 23:59:59`,
+        timeType: "day",
+        groupBy: "department"
+      })
+    })
+
+    const responses = await Promise.all(requests)
+    
+    const totalAmounts = []
+    const totalRefunds = []
+    
+    responses.forEach(res => {
+      totalAmounts.push(res.data.totalAmount || 0)
+      totalRefunds.push(res.data.totalRefund || 0)
+    })
+
+    trendData.value = {
+      dates: dates.map(date => dayjs(date).format('MM-DD')),
+      totalAmounts,
+      totalRefunds
+    }
+
+    updateTrendChart()
+  } catch (error) {
+    console.error('获取趋势数据失败:', error)
+    // 重置数据
+    const dates = getLast7Days(selectedDate.value)
+    trendData.value = {
+      dates: dates.map(date => dayjs(date).format('MM-DD')),
+      totalAmounts: Array(7).fill(0),
+      totalRefunds: Array(7).fill(0)
+    }
+    updateTrendChart()
+  }
+}
+
+// 更新趋势图表
+const updateTrendChart = () => {
+  if (!trendChartInstance) return
+  
+  trendChartInstance.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: params => {
+        let result = `${params[0].axisValue}<br/>`
+        params.forEach(item => {
+          result += `${item.seriesName}: ${formatCurrency(item.value)}元<br/>`
+        })
+        return result
+      }
+    },
+    legend: {
+      data: ['挂号金额', '退号金额'],
+      bottom: 0,
+      textStyle: {
+        color: '#606266'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: trendData.value.dates,
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '金额（元）',
+      nameTextStyle: {
+        color: '#606266'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266',
+        formatter: value => formatCurrency(value)
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#EBEEF5'
+        }
+      }
+    },
+    series: [
+      {
+        name: '挂号金额',
+        type: 'line',
+        data: trendData.value.totalAmounts,
+        smooth: true,
+        itemStyle: {
+          color: chartColors.blue
+        },
+        lineStyle: {
+          width: 3
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(64, 158, 255, 0.5)' },
+            { offset: 1, color: 'rgba(64, 158, 255, 0.1)' }
+          ])
+        },
+        symbol: 'circle',
+        symbolSize: 8,
+        emphasis: {
+          itemStyle: {
+            color: chartColors.lightBlue
+          }
+        }
+      },
+      {
+        name: '退号金额',
+        type: 'line',
+        data: trendData.value.totalRefunds,
+        smooth: true,
+        itemStyle: {
+          color: chartColors.red
+        },
+        lineStyle: {
+          width: 3
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(245, 108, 108, 0.5)' },
+            { offset: 1, color: 'rgba(245, 108, 108, 0.1)' }
+          ])
+        },
+        symbol: 'circle',
+        symbolSize: 8,
+        emphasis: {
+          itemStyle: {
+            color: chartColors.lightRed
+          }
+        }
+      }
+    ]
+  })
+}
 
 // 获取热门医生数据
 const getTopDoctors = (data) => {
@@ -229,6 +421,7 @@ const fetchRegistrationStats = async () => {
     // 更新图表
     updateDoctorChart()
     updateDepartmentChart()
+    updateGenderChart()
   } catch (error) {
     console.error('获取挂号数据失败:', error)
     prescriptionStats.value = {
@@ -257,11 +450,74 @@ const updateDoctorChart = () => {
   const topDoctors = prescriptionStats.value.today.topDoctors
   
   doctorChartInstance.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { 
+        type: 'shadow' 
+      },
+      formatter: params => `
+        <div>医生: ${params[0].axisValue}</div>
+        <div>挂号人数: ${params[0].data}</div>
+      `,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: '#DCDFE6',
+      textStyle: {
+        color: '#606266'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '挂号人数',
+      nameTextStyle: {
+        color: '#606266'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#EBEEF5'
+        }
+      }
+    },
     yAxis: {
-      data: topDoctors.map(doctor => doctor.name)
+      type: 'category',
+      inverse: true,
+      data: topDoctors.map(doctor => doctor.name),
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12
+      }
     },
     series: [{
-      data: topDoctors.map(doctor => doctor.count)
+      name: '挂号人数',
+      type: 'bar',
+      data: topDoctors.map(doctor => doctor.count),
+      itemStyle: {
+        color: params => [chartColors.blue, chartColors.green, chartColors.orange, chartColors.red, chartColors.gray][params.dataIndex],
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: {
+        show: true,
+        position: 'right',
+        color: '#606266'
+      }
     }]
   })
 }
@@ -280,11 +536,58 @@ const fetchGenderStats = async () => {
 }
 
 // 更新性别比例图表
-const updateGenderChart = (genderData) => {
+const updateGenderChart = (genderData = { '男': 0, '女': 0 }) => {
   if (!paymentChartInstance) return
   
   paymentChartInstance.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c}人 ({d}%)',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: '#DCDFE6',
+      textStyle: {
+        color: '#606266'
+      }
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      textStyle: {
+        color: '#606266'
+      },
+      data: ['男性', '女性']
+    },
     series: [{
+      name: '性别比例',
+      type: 'pie',
+      radius: ['50%', '70%'],
+      center: ['40%', '50%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2,
+        color: params => params.dataIndex === 0 ? chartColors.blue : chartColors.red
+      },
+      label: { 
+        show: false,
+        color: '#606266'
+      },
+      emphasis: {
+        label: { 
+          show: true, 
+          fontSize: '14', 
+          fontWeight: 'bold',
+          color: '#303133'
+        },
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      },
+      labelLine: { show: false },
       data: [
         { value: genderData['男'] || 0, name: '男性' },
         { value: genderData['女'] || 0, name: '女性' }
@@ -292,6 +595,7 @@ const updateGenderChart = (genderData) => {
     }]
   })
 }
+
 // 更新科室排行榜图表
 const updateDepartmentChart = () => {
   if (!departmentChartInstance || !prescriptionStats.value.today?.topDepartments) return
@@ -299,11 +603,74 @@ const updateDepartmentChart = () => {
   const topDepartments = prescriptionStats.value.today.topDepartments
   
   departmentChartInstance.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { 
+        type: 'shadow' 
+      },
+      formatter: params => `
+        <div>科室: ${params[0].axisValue}</div>
+        <div>挂号人数: ${params[0].data}</div>
+      `,
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: '#DCDFE6',
+      textStyle: {
+        color: '#606266'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '挂号人数',
+      nameTextStyle: {
+        color: '#606266'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#EBEEF5'
+        }
+      }
+    },
     yAxis: {
-      data: topDepartments.map(dep => dep.name)
+      type: 'category',
+      inverse: true,
+      data: topDepartments.map(dep => dep.name.length > 6 ? dep.name.substring(0, 6) + '...' : dep.name),
+      axisLine: {
+        lineStyle: {
+          color: '#DCDFE6'
+        }
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12
+      }
     },
     series: [{
-      data: topDepartments.map(dep => dep.count)
+      name: '挂号人数',
+      type: 'bar',
+      data: topDepartments.map(dep => dep.count),
+      itemStyle: {
+        color: params => [chartColors.blue, chartColors.green, chartColors.orange, chartColors.red, chartColors.gray][params.dataIndex],
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: {
+        show: true,
+        position: 'right',
+        color: '#606266'
+      }
     }]
   })
 }
@@ -311,7 +678,10 @@ const updateDepartmentChart = () => {
 // 格式化金额
 const formatCurrency = (value) => {
   if (!value) return '0.00'
-  return (value).toFixed(2)
+  return parseFloat(value).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 // 计算比较值
@@ -321,10 +691,10 @@ const calcComparison = (todayVal, yesterdayVal) => {
 }
 
 // 格式化比较显示
-// 格式化比较显示
 const formatCompare = (value, unit) => {
-  if (value > 0) return `较昨日增加${Math.abs(value)}${unit}`
-  if (value < 0) return `较昨日减少${Math.abs(value)}${unit}`
+  const formattedValue = Math.abs(value).toFixed(2)
+  if (value > 0) return `较昨日增加${formattedValue}${unit}`
+  if (value < 0) return `较昨日减少${formattedValue}${unit}`
   return `与昨日持平`
 }
 
@@ -345,173 +715,50 @@ const initCharts = () => {
 
   // 1. 挂号收退费趋势图
   trendChartInstance = echarts.init(trendChart.value)
-  trendChartInstance.setOption({
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      data: ['挂号金额', '退号金额']
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: ['8:00', '10:00', '12:00', '14:00', '16:00', '18:00']
-    },
-    yAxis: {
-      type: 'value',
-      name: '金额（元）'
-    },
-    series: [
-      {
-        name: '挂号金额',
-        type: 'line',
-        data: [120, 132, 101, 134, 90, 230],
-        smooth: true
-      },
-      {
-        name: '退号金额',
-        type: 'line',
-        data: [10, 12, 8, 14, 5, 20],
-        smooth: true
-      }
-    ]
-  })
+  updateTrendChart()
 
   // 2. 挂号人群性别比例
   paymentChartInstance = echarts.init(paymentChart.value)
-  paymentChartInstance.setOption({
-    tooltip: {
-      trigger: 'item'
-    },
-    legend: {
-      top: '5%',
-      left: 'center'
-    },
-    series: [
-      {
-        name: '性别比例',
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 2
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: '18',
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: [
-          { value: 1048, name: '男性' },
-          { value: 735, name: '女性' }
-        ]
-      }
-    ]
-  })
+  updateGenderChart()
 
   // 3. 热门医生排行
   doctorChartInstance = echarts.init(doctorChart.value)
-  doctorChartInstance.setOption({
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      },
-      formatter: params => `${params[0].name}<br/>挂号人数: ${params[0].value}`
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      boundaryGap: [0, 0.01],
-      name: '挂号人数'
-    },
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: []
-    },
-    series: [{
-      name: '挂号人数',
-      type: 'bar',
-      data: [],
-      itemStyle: {
-        color: params => ['#c23531','#2f4554','#61a0a8','#d48265','#91c7ae'][params.dataIndex]
-      }
-    }]
-  })
+  if (prescriptionStats.value.today?.topDoctors) {
+    updateDoctorChart()
+  } else {
+    doctorChartInstance.setOption({
+      xAxis: { type: 'value', name: '挂号人数' },
+      yAxis: { type: 'category', data: [] },
+      series: [{ type: 'bar', data: [] }]
+    })
+  }
 
   // 4. 热门科室排行
   departmentChartInstance = echarts.init(departmentChart.value)
-  departmentChartInstance.setOption({
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      },
-      formatter: params => `${params[0].name}<br/>挂号人数: ${params[0].value}`
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      boundaryGap: [0, 0.01],
-      name: '挂号人数'
-    },
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: []
-    },
-    series: [{
-      name: '挂号人数',
-      type: 'bar',
-      data: [],
-      itemStyle: {
-        color: params => ['#c23531','#2f4554','#61a0a8','#d48265','#91c7ae'][params.dataIndex]
-      }
-    }]
-  })
+  if (prescriptionStats.value.today?.topDepartments) {
+    updateDepartmentChart()
+  } else {
+    departmentChartInstance.setOption({
+      xAxis: { type: 'value', name: '挂号人数' },
+      yAxis: { type: 'category', data: [] },
+      series: [{ type: 'bar', data: [] }]
+    })
+  }
 }
 
 // 监听日期变化
 watch(selectedDate, () => {
   fetchRegistrationStats()
   fetchGenderStats()
+  fetchTrendData()
 })
 
 // 组件挂载时初始化
 onMounted(() => {
   initCharts()
   fetchRegistrationStats()
-   fetchGenderStats()
+  fetchGenderStats()
+  fetchTrendData()
 })
 
 // 窗口大小变化时重新调整图表大小

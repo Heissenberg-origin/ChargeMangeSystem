@@ -180,3 +180,12 @@ export function getPrescriptionsByRegistrationId(registrationId) {
       throw error
     })
 }
+
+
+export function getRegistrationTotal(data) {
+  return http.post('/api/stats/registration', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
