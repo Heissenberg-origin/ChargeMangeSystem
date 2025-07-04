@@ -7,11 +7,7 @@
     active-text-color="#ffffff"
     class="sidebar-menu"
   >
-    <!-- 公共菜单项 - 首页 -->
-    <el-menu-item index="/home">
-      <el-icon><HomeFilled /></el-icon>
-      <span>首页</span>
-    </el-menu-item>
+    
 
     <!-- 操作员(接待员)菜单 -->
     <template v-if="userRank === 'operator'">
@@ -63,10 +59,17 @@
         <el-icon><User /></el-icon>
         <span>医生工作站</span>
       </el-menu-item>
+      <el-menu-item index="/order-charge">门诊处方收费</el-menu-item>
     </template>
 
     <!-- 管理员菜单 -->
     <template v-if="userRank === 'administrator'">
+
+      <!-- 公共菜单项 - 首页 -->
+    <el-menu-item index="/home">
+      <el-icon><HomeFilled /></el-icon>
+      <span>首页</span>
+    </el-menu-item>
       <!-- 报表统计 -->
       <el-sub-menu index="5">
         <template #title>
@@ -75,7 +78,7 @@
         </template>
         <el-menu-item index="/prescription-summary">门诊处方汇总统计</el-menu-item>
         <el-menu-item index="/register-fee-summary">挂号费用汇总统计</el-menu-item>
-        <el-menu-item index="/order-fee-summary">医嘱费用汇总统计</el-menu-item>
+        <!-- <el-menu-item index="/order-fee-summary">医嘱费用汇总统计</el-menu-item> -->
         <el-menu-item index="/daily-report">门诊日结报表统计</el-menu-item>
         <el-menu-item index="/business-report">门诊业务报表统计</el-menu-item>
       </el-sub-menu>
@@ -96,10 +99,10 @@
           <el-icon><Setting /></el-icon>
           <span>系统管理</span>
         </template>
-        <el-menu-item index="/dict-management">字典管理</el-menu-item>
+        <!-- <el-menu-item index="/dict-management">字典管理</el-menu-item> -->
         <el-menu-item index="/charge-items">收费项目管理</el-menu-item>
-        <el-menu-item index="/receipt-config">财务收据配置</el-menu-item>
-        <el-menu-item index="/log-management">日志管理</el-menu-item>
+        <!-- <el-menu-item index="/receipt-config">财务收据配置</el-menu-item>
+        <el-menu-item index="/log-management">日志管理</el-menu-item> -->
       </el-sub-menu>
     </template>
   </el-menu>

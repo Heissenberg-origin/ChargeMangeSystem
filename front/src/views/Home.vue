@@ -120,14 +120,7 @@
       </el-card>
     </div>
 
-    <div>
-    <!-- <p>消息总数: {{ messageCount }}</p> -->
-    <ChatBot 
-      @message-submitted="handleMessage"
-      @button-clicked="handleButton"
-      @tag-clicked="handleTag"
-    />
-  </div>
+    
   </div>
 </template>
 
@@ -137,25 +130,7 @@ import { User, Money, RefreshLeft, Document, ArrowDown, ArrowUp } from '@element
 import * as echarts from 'echarts'
 import { getRegistrationByDate, getGenderStatsByDate, getPrescriptionStats, getStatisticsByPaymentType } from '@/api/prescription'
 import dayjs from 'dayjs'
-import ChatBot from '@/components/ChatBot.vue'
 
-const messageCount = ref(0)
-
-const handleMessage = (message) => {
-  console.log('用户发送的消息:', message)
-  messageCount.value++
-  // 在这里处理消息发送逻辑
-}
-
-const handleButton = (type) => {
-  console.log('按钮被点击:', type)
-  // 根据不同类型执行不同操作
-}
-
-const handleTag = (tag) => {
-  console.log('标签被点击:', tag)
-  // 根据标签执行不同操作
-}
 
 // 日期选择
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
