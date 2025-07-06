@@ -108,7 +108,7 @@ const submitForm = async () => {
     
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
     const response = await changePassword({
-      id: userInfo.id,
+      account: userInfo.account, // 使用account而不是id
       oldPassword: form.value.oldPassword,
       newPassword: form.value.newPassword
     })

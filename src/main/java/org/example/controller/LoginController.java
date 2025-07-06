@@ -4,13 +4,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.common.Constants;
 import org.example.entity.LoginInfo;
 import org.example.service.LoginService;
+import org.example.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @Tag(name = "登录管理", description = "登陆账号的创建、查询、更新和删除等操作")
@@ -20,19 +21,13 @@ public class LoginController {
     @Autowired
     private LoginService loginService;
 
-    @GetMapping("/login")
-    public ResponseEntity<String> showLoginPage() {
-        return ResponseEntity.ok("请使用POST方法提交登录表单");
-        // 实际项目中可以返回登录页面HTML或重定向到前端登录页
-    }
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
-    // 登录接口
     @PostMapping("/login")
     public ResponseEntity<?> doLogin(
             @RequestParam String account,
-            @RequestParam String password,
-            @RequestParam(required = false) String redirect,
-            HttpSession session) {
+            @RequestParam String password) {
 
         LoginInfo user = loginService.login(account, password);
         if (user == null) {
@@ -40,38 +35,30 @@ public class LoginController {
                     .body("用户名或密码错误");
         }
 
-        session.setAttribute(Constants.USER_SESSION_KEY, user);
+        // 生成JWT token
+        String token = jwtTokenUtil.generateToken(user);
 
-        if (redirect != null && !redirect.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", redirect)
-                    .build();
-        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", user);
+        response.put("token", token);
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(response);
     }
 
-    // 登出接口
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
-        // 使session失效
-        session.invalidate();
-        return ResponseEntity.ok("登出成功");
-    }
-
-    // 修改密码接口
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(
             @RequestParam String account,
             @RequestParam String oldPassword,
             @RequestParam String newPassword,
-            HttpSession session) {
+            @RequestHeader("Authorization") String authHeader) {
 
-        // 检查用户是否登录
-        LoginInfo currentUser = (LoginInfo) session.getAttribute(Constants.USER_SESSION_KEY);
-        if (currentUser == null || !Objects.equals(currentUser.getAccount(), account)) {
+        // 验证token
+        String token = authHeader.substring(7); // 去掉"Bearer "前缀
+        LoginInfo currentUser = loginService.login(account, oldPassword);
+
+        if (currentUser == null || !jwtTokenUtil.validateToken(token, currentUser)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("请先登录");
+                    .body("认证失败，请重新登录");
         }
 
         if (newPassword == null || newPassword.length() < 4) {
