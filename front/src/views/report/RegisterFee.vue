@@ -163,12 +163,16 @@
               {{ formatCurrency(row.amount) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="挂号状态" align="center">
-            <template #default="{row}">
-              <el-tag :type="getStatusTagType(row.status)">
-                {{ row.status }}
-              </el-tag>
-            </template>
+          <el-table-column prop="status" label="状态" width="120">
+          <template #default="{row}">
+            <el-tag 
+            :type="getStatusTagType(row.statusCode)" 
+            class="status-tag"
+            effect="plain"
+            >
+              {{ row.status }}
+            </el-tag>
+          </template>
           </el-table-column>
           <el-table-column prop="date" label="挂号日期" align="center" />
         </el-table>
@@ -226,6 +230,15 @@ const detailCurrentPage = ref(1)
 const detailPageSize = ref(10)
 const detailTotal = ref(0)
 
+// 状态映射
+const statusMap = {
+  'PENDING': '待就诊',
+  'COMPLETED': '已就诊',
+  'CANCELLED': '已退号',
+  'EXPIRED': '已失效',
+  'PENDING_PAYMENT': '待缴费'
+}
+
 /* 工具函数 */
 // 获取当月第一天
 function getFirstDayOfMonth() {
@@ -268,9 +281,15 @@ const getStatusTagType = (status) => {
   switch(status) {
     case 'COMPLETED': return 'success'
     case 'PENDING': return 'warning'
-    case 'CANCELED': return 'danger'
+    case 'CANCELLED': return 'danger'
+    case 'PENDING_PAYMENT': return 'primary'
     default: return 'info'
   }
+}
+
+// 获取状态中文显示
+const getStatusText = (status) => {
+  return statusMap[status] || status
 }
 
 /* 数据获取与处理 */
@@ -335,10 +354,10 @@ const processRegistrationData = (apiData) => {
           ...item,
           statisticsType: getStatisticsTypeLabel(item),
           totalCount: 1,
-          cancelCount: item.regState === 'CANCELED' ? 1 : 0,
+          cancelCount: item.regState === 'CANCELLED' ? 1 : 0,
           receivableAmount: item.regfee || 0,
-          receivedAmount: item.regState !== 'CANCELED' ? (item.regfee || 0) : 0,
-          cancelAmount: item.regState === 'CANCELED' ? (item.regfee || 0) : 0
+          receivedAmount: item.regState !== 'CANCELLED' ? (item.regfee || 0) : 0,
+          cancelAmount: item.regState === 'CANCELLED' ? (item.regfee || 0) : 0
         }))
     }
     
@@ -509,7 +528,8 @@ const fetchRegistrationDetails = async (row) => {
         department: item.regdepName,
         doctor: item.regdocName,
         amount: item.regfee,
-        status: item.regState,
+        status: getStatusText(item.regState), // 使用中文状态
+        statusCode: item.regState, // 保留原始状态码
         date: item.regTime
       }))
     
@@ -603,6 +623,40 @@ watch(() => queryParams.dateRange, (newVal) => {
 </script>
 
 <style scoped>
+
+/* 状态标签样式 */
+.status-tag {
+  margin: 2px;
+}
+
+/* 特定状态标签的额外样式（可选） */
+:deep(.el-tag.el-tag--success) { /* 已就诊 */
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+
+:deep(.el-tag.el-tag--warning) { /* 待就诊 */
+  background-color: #fdf6ec;
+  color: #e6a23c;
+}
+
+:deep(.el-tag.el-tag--danger) { /* 已退号 */
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+
+:deep(.el-tag.el-tag--info) { /* 已失效 */
+  background-color: #f4f4f5;
+  color: #909399;
+}
+
+/* 待缴费（默认primary色） */
+:deep(.el-tag:not([class*="el-tag--"])),
+:deep(.el-tag.el-tag--primary) {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
 .registration-summary-container {
   padding: 20px;
   background-color: #f5f7fa;

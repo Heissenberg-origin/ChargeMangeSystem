@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Search, Refresh, Download, Printer } from '@element-plus/icons-vue';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
@@ -216,6 +216,10 @@ const printReport = () => {
   document.body.innerHTML = originalContent;
   window.location.reload();
 };
+
+onMounted(() => {
+  fetchData();
+});
 </script>
 
 <style scoped>

@@ -9,6 +9,7 @@
           type="date"
           placeholder="选择日期"
           value-format="YYYY-MM-DD"
+          @change="fetchAllData"
         />
       </div>
     </div>
@@ -23,13 +24,13 @@
         </div>
         <div class="stat-content">
           <div class="stat-main">
-            <span class="stat-value">{{ prescriptionStats.today?.paidPrescriptions || 0 }}</span>
+            <span class="stat-value">{{ registrationStats.today?.paidPrescriptions || 0 }}</span>
             <span class="stat-unit">人</span>
           </div>
-          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions))">
-            <el-icon v-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) > 0"><ArrowUp /></el-icon>
-            <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions) < 0"><ArrowDown /></el-icon>
-            {{ formatCompare(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions), '人') }}
+          <div class="stat-compare" :class="getCompareClass(calcComparison(registrationStats.today?.paidPrescriptions, registrationStats.yesterday?.paidPrescriptions))">
+            <el-icon v-if="calcComparison(registrationStats.today?.paidPrescriptions, registrationStats.yesterday?.paidPrescriptions) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(registrationStats.today?.paidPrescriptions, registrationStats.yesterday?.paidPrescriptions) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(registrationStats.today?.paidPrescriptions, registrationStats.yesterday?.paidPrescriptions), '人') }}
           </div>
         </div>
       </el-card>
@@ -42,13 +43,13 @@
         </div>
         <div class="stat-content">
           <div class="stat-main">
-            <span class="stat-value">{{ formatCurrency(prescriptionStats.today?.paidAmount) }}</span>
+            <span class="stat-value">{{ formatCurrency(registrationStats.today?.paidAmount) }}</span>
             <span class="stat-unit">元</span>
           </div>
-          <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount))">
-            <el-icon v-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) > 0"><ArrowUp /></el-icon>
-            <el-icon v-else-if="calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount) < 0"><ArrowDown /></el-icon>
-            {{ formatCompare(calcComparison(prescriptionStats.today?.paidAmount, prescriptionStats.yesterday?.paidAmount), '元') }}
+          <div class="stat-compare" :class="getCompareClass(calcComparison(registrationStats.today?.paidAmount, registrationStats.yesterday?.paidAmount))">
+            <el-icon v-if="calcComparison(registrationStats.today?.paidAmount, registrationStats.yesterday?.paidAmount) > 0"><ArrowUp /></el-icon>
+            <el-icon v-else-if="calcComparison(registrationStats.today?.paidAmount, registrationStats.yesterday?.paidAmount) < 0"><ArrowDown /></el-icon>
+            {{ formatCompare(calcComparison(registrationStats.today?.paidAmount, registrationStats.yesterday?.paidAmount), '元') }}
           </div>
         </div>
       </el-card>
@@ -119,8 +120,6 @@
         <div class="chart-container" ref="departmentChart" style="height: 300px;"></div>
       </el-card>
     </div>
-
-    
   </div>
 </template>
 
@@ -131,18 +130,23 @@ import * as echarts from 'echarts'
 import { getRegistrationByDate, getGenderStatsByDate, getPrescriptionStats, getStatisticsByPaymentType } from '@/api/prescription'
 import dayjs from 'dayjs'
 
-
 // 日期选择
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 
-// 处方统计数据
-const prescriptionStats = reactive({
+// 挂号统计数据
+const registrationStats = reactive({
   today: null,       // 当天挂号数据
   yesterday: null,   // 前一天挂号数据
   trendData: [],     // 趋势数据
-  paymentTypes: [],  // 支付方式数据
   doctorStats: [],   // 医生统计数据
   departmentStats: [] // 科室统计数据
+})
+
+// 处方统计数据
+const prescriptionStats = reactive({
+  today: null,       // 当天处方数据
+  yesterday: null,   // 前一天处方数据
+  paymentTypes: []   // 支付方式数据
 })
 
 // 加载状态
@@ -151,7 +155,6 @@ const trendLoading = ref(false)
 const paymentTypeLoading = ref(false)
 const doctorLoading = ref(false)
 const departmentLoading = ref(false)
-// const genderLoading = ref(false)
 
 // 图表引用
 const trendChart = ref(null)
@@ -185,20 +188,18 @@ const fetchRegistrationStats = async () => {
     const refundYesterday = yesterdayData.filter(item => item.regState === 'CANCELLED')
 
     // 更新统计数据
-    prescriptionStats.today = {
+    registrationStats.today = {
       paidPrescriptions: paidToday.length,
       paidAmount: paidToday.reduce((sum, item) => sum + item.regfee, 0),
       refundPrescriptions: refundToday.length,
-      refundAmount: refundToday.reduce((sum, item) => sum + item.regfee, 0),
-      totalAmount: paidToday.reduce((sum, item) => sum + (item.prescriptionAmount || 0), 0)
+      refundAmount: refundToday.reduce((sum, item) => sum + item.regfee, 0)
     }
     
-    prescriptionStats.yesterday = {
+    registrationStats.yesterday = {
       paidPrescriptions: paidYesterday.length,
       paidAmount: paidYesterday.reduce((sum, item) => sum + item.regfee, 0),
       refundPrescriptions: refundYesterday.length,
-      refundAmount: refundYesterday.reduce((sum, item) => sum + item.regfee, 0),
-      totalAmount: paidYesterday.reduce((sum, item) => sum + (item.prescriptionAmount || 0), 0)
+      refundAmount: refundYesterday.reduce((sum, item) => sum + item.regfee, 0)
     }
 
   } catch (error) {
@@ -208,7 +209,44 @@ const fetchRegistrationStats = async () => {
   }
 }
 
-// 获取趋势数据
+// 获取处方统计数据
+const fetchPrescriptionStats = async () => {
+  loading.value = true
+  try {
+    const today = dayjs(selectedDate.value)
+    const todayStart = today.startOf('day').format('YYYY-MM-DD HH:mm:ss')
+    const todayEnd = today.endOf('day').format('YYYY-MM-DD HH:mm:ss')
+    
+    const yesterday = today.subtract(1, 'day')
+    const yesterdayStart = yesterday.startOf('day').format('YYYY-MM-DD HH:mm:ss')
+    const yesterdayEnd = yesterday.endOf('day').format('YYYY-MM-DD HH:mm:ss')
+    
+    const [todayRes, yesterdayRes] = await Promise.all([
+      getPrescriptionStats({
+        startTime: todayStart,
+        endTime: todayEnd,
+        timeType: 'day',
+        groupBy: 'department'
+      }),
+      getPrescriptionStats({
+        startTime: yesterdayStart,
+        endTime: yesterdayEnd,
+        timeType: 'day',
+        groupBy: 'department'
+      })
+    ])
+    
+    prescriptionStats.today = todayRes.data
+    prescriptionStats.yesterday = yesterdayRes.data
+    
+  } catch (error) {
+    console.error('获取处方统计数据失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取趋势数据（挂号数据）
 const fetchTrendData = async () => {
   trendLoading.value = true
   try {
@@ -229,7 +267,7 @@ const fetchTrendData = async () => {
     
     const results = await Promise.all(promises)
     
-    prescriptionStats.trendData = results.map((res, index) => {
+    registrationStats.trendData = results.map((res, index) => {
       const data = res.data.data || []
       const paid = data.filter(item => item.regState !== 'CANCELLED')
       const refund = data.filter(item => item.regState === 'CANCELLED')
@@ -250,7 +288,7 @@ const fetchTrendData = async () => {
   }
 }
 
-// 获取支付方式数据
+// 获取支付方式数据（处方数据）
 const fetchPaymentTypeData = async () => {
   paymentTypeLoading.value = true
   try {
@@ -265,22 +303,7 @@ const fetchPaymentTypeData = async () => {
   }
 }
 
-// 获取性别统计数据
-// const fetchGenderStats = async () => {
-//   genderLoading.value = true
-//   try {
-//     const res = await getGenderStatsByDate(selectedDate.value)
-//     const genderData = res.data.data || { '男': 0, '女': 0 }
-//     updateGenderChart(genderData)
-//   } catch (error) {
-//     console.error('获取性别数据失败:', error)
-//     updateGenderChart({ '男': 0, '女': 0 })
-//   } finally {
-//     genderLoading.value = false
-//   }
-// }
-
-// 获取医生统计数据
+// 获取医生统计数据（挂号数据）
 const fetchDoctorStats = async () => {
   doctorLoading.value = true
   try {
@@ -297,7 +320,7 @@ const fetchDoctorStats = async () => {
     })
     
     // 转换为数组并排序
-    prescriptionStats.doctorStats = Array.from(doctorMap.entries())
+    registrationStats.doctorStats = Array.from(doctorMap.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
@@ -311,7 +334,7 @@ const fetchDoctorStats = async () => {
   }
 }
 
-// 获取科室统计数据
+// 获取科室统计数据（挂号数据）
 const fetchDepartmentStats = async () => {
   departmentLoading.value = true
   try {
@@ -328,7 +351,7 @@ const fetchDepartmentStats = async () => {
     })
     
     // 转换为数组并排序
-    prescriptionStats.departmentStats = Array.from(departmentMap.entries())
+    registrationStats.departmentStats = Array.from(departmentMap.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
@@ -342,9 +365,9 @@ const fetchDepartmentStats = async () => {
   }
 }
 
-// 更新趋势图表
+// 更新趋势图表（挂号数据）
 const updateTrendChart = () => {
-  if (!prescriptionStats.trendData.length || !trendChart.value) return
+  if (!registrationStats.trendData.length || !trendChart.value) return
   
   const chart = echarts.getInstanceByDom(trendChart.value) || echarts.init(trendChart.value)
   
@@ -362,7 +385,7 @@ const updateTrendChart = () => {
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: {
       type: 'category',
-      data: prescriptionStats.trendData.map(item => dayjs(item.date).format('M-DD'))
+      data: registrationStats.trendData.map(item => dayjs(item.date).format('M-DD'))
     },
     yAxis: {
       type: 'value',
@@ -372,7 +395,7 @@ const updateTrendChart = () => {
       {
         name: '挂号金额',
         type: 'line',
-        data: prescriptionStats.trendData.map(item => item.paidAmount),
+        data: registrationStats.trendData.map(item => item.paidAmount),
         smooth: true,
         lineStyle: { width: 3 },
         itemStyle: { color: '#409EFF' }
@@ -380,7 +403,7 @@ const updateTrendChart = () => {
       {
         name: '退号金额',
         type: 'line',
-        data: prescriptionStats.trendData.map(item => item.refundAmount),
+        data: registrationStats.trendData.map(item => item.refundAmount),
         smooth: true,
         lineStyle: { width: 3 },
         itemStyle: { color: '#F56C6C' }
@@ -391,7 +414,7 @@ const updateTrendChart = () => {
   chart.setOption(option)
 }
 
-// 更新支付方式图表
+// 更新支付方式图表（处方数据）
 const updatePaymentChart = () => {
   const paymentTypes = toRaw(prescriptionStats.paymentTypes) || []
   if (!paymentTypes.length || !paymentChart.value) return
@@ -433,60 +456,14 @@ const updatePaymentChart = () => {
   chart.setOption(option)
 }
 
-// // 更新性别比例图表
-// const updateGenderChart = (genderData) => {
-//   if (!paymentChart.value) return
-  
-//   const chart = echarts.getInstanceByDom(paymentChart.value) || echarts.init(paymentChart.value)
-  
-//   chart.setOption({
-//     tooltip: {
-//       trigger: 'item'
-//     },
-//     legend: {
-//       top: '5%',
-//       left: 'center'
-//     },
-//     series: [{
-//       name: '性别比例',
-//       type: 'pie',
-//       radius: ['40%', '70%'],
-//       avoidLabelOverlap: false,
-//       itemStyle: {
-//         borderRadius: 10,
-//         borderColor: '#fff',
-//         borderWidth: 2
-//       },
-//       label: {
-//         show: false,
-//         position: 'center'
-//       },
-//       emphasis: {
-//         label: {
-//           show: true,
-//           fontSize: '18',
-//           fontWeight: 'bold'
-//         }
-//       },
-//       labelLine: {
-//         show: false
-//       },
-//       data: [
-//         { value: genderData['男'] || 0, name: '男性' },
-//         { value: genderData['女'] || 0, name: '女性' }
-//       ]
-//     }]
-//   })
-// }
-
-// 更新医生排行图表
+// 更新医生排行图表（挂号数据）
 const updateDoctorChart = () => {
-  if (!prescriptionStats.doctorStats.length || !doctorChart.value) return
+  if (!registrationStats.doctorStats.length || !doctorChart.value) return
   
   const chart = echarts.getInstanceByDom(doctorChart.value) || echarts.init(doctorChart.value)
   
   // 反转数据顺序（高收入在上）
-  const reversedData = [...prescriptionStats.doctorStats].reverse()
+  const reversedData = [...registrationStats.doctorStats].reverse()
   
   const option = {
     tooltip: {
@@ -525,14 +502,14 @@ const updateDoctorChart = () => {
   chart.setOption(option)
 }
 
-// 更新科室排行图表
+// 更新科室排行图表（挂号数据）
 const updateDepartmentChart = () => {
-  if (!prescriptionStats.departmentStats.length || !departmentChart.value) return
+  if (!registrationStats.departmentStats.length || !departmentChart.value) return
   
   const chart = echarts.getInstanceByDom(departmentChart.value) || echarts.init(departmentChart.value)
   
   // 反转数据顺序（高收入在上）
-  const reversedData = [...prescriptionStats.departmentStats].reverse()
+  const reversedData = [...registrationStats.departmentStats].reverse()
   
   const option = {
     tooltip: {
@@ -604,9 +581,9 @@ const getCompareClass = (value) => {
 // 监听日期变化
 watch(selectedDate, () => {
   fetchRegistrationStats()
+  fetchPrescriptionStats()
   fetchTrendData()
   fetchPaymentTypeData()
-  // fetchGenderStats()
   fetchDoctorStats()
   fetchDepartmentStats()
 })
@@ -614,9 +591,9 @@ watch(selectedDate, () => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchRegistrationStats()
+  fetchPrescriptionStats()
   fetchTrendData()
   fetchPaymentTypeData()
-  // fetchGenderStats()
   fetchDoctorStats()
   fetchDepartmentStats()
 })
