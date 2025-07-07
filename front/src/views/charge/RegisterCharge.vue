@@ -112,49 +112,36 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+// 1. 首先导入所有依赖
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getAllRegisters } from '@/api/registration'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PaymentDialog from '@/components/RegPaymentDialog.vue'
-import { computed } from 'vue'
+
+// 2. 初始化路由和组件引用
 const router = useRouter()
+const route = useRoute()
 const paymentDialog = ref(null)
 
-// 搜索表单
+// 3. 定义所有响应式变量（按使用顺序）
 const searchForm = ref({
   cardNumber: '',
   patientName: ''
 })
 
-// 加载状态
 const loading = ref(false)
-
-// 表格数据
 const tableData = ref([])
-
-// 原始数据（用于筛选）
 const rawData = ref([])
-
-// 选中的项目
 const selectedItems = ref([])
 
-// 分页
 const pagination = ref({
   currentPage: 1,
   pageSize: 10,
   total: 0
 })
 
-// 重置选中状态
-const resetSelection = () => {
-  selectedItems.value = []
-  tableData.value.forEach(item => {
-    item.selected = false
-  })
-}
-
-// 获取状态标签类型
+// 4. 定义工具函数（不依赖其他业务函数的）
 const getStatusTagType = (status) => {
   const map = {
     PENDING: 'warning',
@@ -166,7 +153,6 @@ const getStatusTagType = (status) => {
   return map[status] || ''
 }
 
-// 获取状态文本
 const getStatusText = (status) => {
   const map = {
     PENDING: '待就诊',
@@ -178,7 +164,38 @@ const getStatusText = (status) => {
   return map[status] || status
 }
 
-// 获取挂号列表
+const getDealerId = () => {
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    return userInfo?.id
+  } catch (error) {
+    console.error('获取收费员ID失败:', error)
+    return null
+  }
+}
+
+// 5. 定义核心业务函数
+const filterAndPaginateData = () => {
+  let filteredData = [...rawData.value]
+  
+  filteredData = filteredData.filter(item => item.regState === 'PENDING_PAYMENT')
+  
+  if (searchForm.value.cardNumber) {
+    filteredData = filteredData.filter(item => 
+      String(item.regHcardId) === String(searchForm.value.cardNumber)
+    )
+  }
+  if (searchForm.value.patientName) {
+    filteredData = filteredData.filter(item => 
+      item.regPname?.includes(searchForm.value.patientName))
+  }
+  
+  pagination.value.total = filteredData.length
+  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  tableData.value = filteredData.slice(start, end)
+}
+
 const fetchRegisterList = async () => {
   loading.value = true
   try {
@@ -201,56 +218,46 @@ const fetchRegisterList = async () => {
   }
 }
 
-// 筛选和分页数据
-const filterAndPaginateData = () => {
-  let filteredData = [...rawData.value]
-  
-  // 只显示待支付的挂号记录
-  filteredData = filteredData.filter(item => item.regState === 'PENDING_PAYMENT')
-  
-  // 根据搜索条件过滤
-  if (searchForm.value.cardNumber) {
-    filteredData = filteredData.filter(item => 
-      String(item.regHcardId).includes(searchForm.value.cardNumber)
-    )
-  }
-  if (searchForm.value.patientName) {
-    filteredData = filteredData.filter(item => 
-      item.regPname?.includes(searchForm.value.patientName)
-    )
-  }
-  
-  // 更新分页总数
-  pagination.value.total = filteredData.length
-  
-  // 分页处理
-  const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
-  tableData.value = filteredData.slice(start, end)
+// 6. 定义操作函数
+const resetSelection = () => {
+  selectedItems.value = []
+  tableData.value.forEach(item => {
+    item.selected = false
+  })
 }
 
-// 处理选中行变化
-const handleSelectionChange = (selection) => {
-  selectedItems.value = selection
-}
-
-// 处理复选框变化
-const handleCheckboxChange = (row) => {
-  if (row.selected) {
-    if (!selectedItems.value.some(item => item.regId === row.regId)) {
-      selectedItems.value.push(row)
-    }
-  } else {
-    selectedItems.value = selectedItems.value.filter(item => item.regId !== row.regId)
-  }
-}
-
-// 计算总金额
 const calculateTotalAmount = () => {
   return selectedItems.value.reduce((sum, item) => sum + (item.regfee || 0), 0)
 }
 
-// 查看详情
+const handleExactSearch = () => {
+  pagination.value.currentPage = 1
+  filterAndPaginateData()
+}
+
+const handleReset = () => {
+  searchForm.value = {
+    cardNumber: '',
+    patientName: ''
+  }
+  filterAndPaginateData()
+}
+
+const handleSingleSearch = () => {
+  pagination.value.currentPage = 1
+  filterAndPaginateData()
+}
+
+const handleSizeChange = (val) => {
+  pagination.value.pageSize = val
+  filterAndPaginateData()
+}
+
+const handleCurrentChange = (val) => {
+  pagination.value.currentPage = val
+  filterAndPaginateData()
+}
+
 const handleDetail = (regId) => {
   router.push({ 
     name: 'RegisterFeeDetail', 
@@ -258,7 +265,6 @@ const handleDetail = (regId) => {
   })
 }
 
-// 单条缴费
 const handlePay = (row) => {
   paymentDialog.value.show({
     regIds: [row.regId],
@@ -267,7 +273,6 @@ const handlePay = (row) => {
   })
 }
 
-// 批量缴费
 const handleBatchPay = async () => {
   if (selectedItems.value.length === 0) {
     ElMessage.warning('请至少选择一条挂号记录')
@@ -290,51 +295,19 @@ const handleBatchPay = async () => {
   })
 }
 
-// 支付成功回调
 const handlePaymentSuccess = () => {
   fetchRegisterList()
   resetSelection()
 }
 
-// 获取收费员ID
-const getDealerId = () => {
-  try {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
-    return userInfo?.id
-  } catch (error) {
-    console.error('获取收费员ID失败:', error)
-    return null
+// 7. 设置监听器和生命周期
+watch(() => route.query.healthcardId, (newVal) => {
+  if (newVal) {
+    searchForm.value.cardNumber = newVal
+    handleExactSearch()
   }
-}
+}, { immediate: true })
 
-// 重置搜索条件
-const handleReset = () => {
-  searchForm.value = {
-    cardNumber: '',
-    patientName: ''
-  }
-  filterAndPaginateData()
-}
-
-// 单个搜索条件变化
-const handleSingleSearch = () => {
-  pagination.value.currentPage = 1
-  filterAndPaginateData()
-}
-
-// 分页大小变化
-const handleSizeChange = (val) => {
-  pagination.value.pageSize = val
-  filterAndPaginateData()
-}
-
-// 当前页变化
-const handleCurrentChange = (val) => {
-  pagination.value.currentPage = val
-  filterAndPaginateData()
-}
-
-// 页面加载时获取数据
 onMounted(() => {
   fetchRegisterList()
 })
