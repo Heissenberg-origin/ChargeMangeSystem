@@ -1,8 +1,8 @@
 <template>
   <div class="balance-container">
-    <!-- 搜索区域保持不变 -->
+    <!-- 搜索区域 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" label-width="100px">
+      <el-form :model="searchForm" label-width="100px" @submit.prevent="handleSearch">
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="就诊卡号" prop="healthcardId">
@@ -17,7 +17,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item>
-              <el-button type="primary" @click="handleSearch" :loading="loading">
+              <el-button type="primary" native-type="submit" :loading="loading">
                 <el-icon><Search /></el-icon>
                 查询
               </el-button>
@@ -31,7 +31,7 @@
       </el-form>
     </el-card>
 
-    <!-- 患者信息展示保持不变 -->
+    <!-- 患者信息展示 -->
     <el-card class="info-card" v-loading="loading">
       <el-descriptions :column="2" border v-if="patientData.healthcardId">
         <el-descriptions-item label="就诊卡号">{{ patientData.healthcardId }}</el-descriptions-item>
@@ -53,7 +53,7 @@
       </div>
     </el-card>
 
-    <!-- 简化后的结算操作区域 -->
+    <!-- 结算操作区域 -->
     <el-card class="action-card" v-if="patientData.healthcardId && patientData.balance > 0">
       <div class="refund-section">
         <h3>结算操作</h3>
@@ -214,7 +214,6 @@ const handleRefund = async () => {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
 .balance-container {
   padding: 20px;
 }

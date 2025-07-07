@@ -24,6 +24,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         }
 
         String token = authHeader.substring(7);
+        System.out.println(token);
         try {
             // 验证token
             if (jwtTokenUtil.isTokenExpired(token)) {

@@ -73,6 +73,7 @@ import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { login } from '@/api/auth'
+import http from '@/api/axios' // 确保这是您配置好的axios实例
 import VueParticles from 'vue-particles'
 
 const router = useRouter()
@@ -110,12 +111,6 @@ const handleInputBlur = () => {
   activeInput.value = null
 }
 
-// 提取账号中的数字部分
-const extractNumberFromAccount = (account) => {
-  const match = account.match(/\d+/)
-  return match ? parseInt(match[0]) : 0
-}
-
 const handleLogin = () => {
   loginFormRef.value.validate(async (valid) => {
     if (!valid) return
@@ -123,39 +118,56 @@ const handleLogin = () => {
     loading.value = true
     
     try {
-      const { data } = await login({
+      // 1. 执行登录请求
+      const response = await login({
         account: loginForm.value.account,
         password: loginForm.value.password,
       });
       
-      if (data) {
-        // 存储完整的用户信息，包括提取的数字ID
+      if (response.data) {
+        const { user, token } = response.data;
+        
+        // 2. 存储用户信息（不存储密码）
         const userData = {
-          id: extractNumberFromAccount(data.account), // 这里修改为提取的数字ID
-          account: data.account,
-          name: data.name || `用户${data.account}`,
-          rank: data.rank,
-          lastLoginTime: data.lastLoginTime || new Date().toLocaleString(),
-          encryptedPassword: data.encryptedPassword,
-          fullAccount: data.account // 保留完整账号
+          id: user.id,
+          account: user.account,
+          name: `用户${user.account}`,
+          rank: user.rank,
+          lastLoginTime: new Date().toLocaleString(),
+          fullAccount: user.account
         }
-        localStorage.setItem('userInfo', JSON.stringify(userData))
-        router.push('/home')
-        ElMessage.success('登录成功')
+        
+        localStorage.setItem('userInfo', JSON.stringify(userData));
+        localStorage.setItem('token', token);
+        
+        // 3. 设置axios全局默认头
+        http.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Token已设置:', token); // 调试用
+        
+        // // 4. 验证请求头是否设置成功
+        // const testResponse = await http.get('/auth/test');
+        // console.log('测试请求头:', testResponse.config.headers);
+        
+        // 5. 跳转首页
+        router.push('/home');
+        ElMessage.success('登录成功');
       }
     } catch (error) {
-      console.error('登录出错:', error)
-      let errorMessage = '登录失败'
+      console.error('登录出错:', error);
+      let errorMessage = '登录失败';
       if (error.response) {
-        errorMessage += `: ${error.response.data?.message || error.response.statusText}`
+        // 根据后端错误格式调整
+        errorMessage += `: ${error.response.data?.message || 
+                         error.response.data?.error || 
+                         error.response.statusText}`;
       } else {
-        errorMessage += `: ${error.message}`
+        errorMessage += `: ${error.message}`;
       }
-      ElMessage.error(errorMessage)
+      ElMessage.error(errorMessage);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  })
+  });
 }
 </script>
 

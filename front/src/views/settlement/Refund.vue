@@ -65,29 +65,18 @@
       </el-table>
     </div>
     
-    <!-- 操作员选择和退费按钮 -->
+    <!-- 退费按钮 -->
     <div class="refund-action">
-      <el-select
-        v-model="selectedDealerId"
-        placeholder="请选择操作员"
-        clearable
-        style="width: 200px; margin-right: 20px;"
-      >
-        <el-option
-          v-for="dealer in dealers"
-          :key="dealer.id"
-          :label="`${dealer.name} (${dealer.id})`"
-          :value="dealer.id"
-        />
-      </el-select>
-      
       <el-button 
         type="primary" 
         @click="showConfirmDialog"
-        :disabled="selectedItems.length === 0 || !selectedDealerId"
+        :disabled="selectedItems.length === 0 || !currentDealerId"
       >
         退费 ({{ selectedItems.length }})
       </el-button>
+      <div v-if="currentDealerId" class="dealer-info">
+        当前操作员: {{ currentDealerId }}
+      </div>
     </div>
     
     <!-- 退费确认对话框 -->
@@ -97,6 +86,9 @@
       width="30%"
     >
       <div>确定要退费选中的 {{ selectedItems.length }} 个项目吗？</div>
+      <div v-if="currentDealerId" style="margin-top: 10px;">
+        操作员ID: {{ currentDealerId }}
+      </div>
       <template #footer>
         <el-button @click="confirmDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="doRefund">确认</el-button>
@@ -106,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   getRegistrationById, 
@@ -139,17 +131,25 @@ const loading = ref(false)
 const selectedItems = ref([])
 const confirmDialogVisible = ref(false)
 
-// 操作员列表
-const dealers = ref([
-  { id: 1, name: '管理员' },
-  { id: 2, name: '收费员A' },
-  { id: 3, name: '收费员B' }
-])
-const selectedDealerId = ref(null)
+// 当前操作员ID（从个人中心获取）
+const currentDealerId = ref(null)
 
 // 只显示待执行的处方项目
 const filteredRefundableItems = computed(() => {
   return refundableItems.value.filter(item => item.status === '待执行')
+})
+
+// 在组件挂载时获取当前操作员ID
+onMounted(() => {
+  // 从localStorage获取用户信息
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+  if (userInfo && userInfo.id) {
+    currentDealerId.value = userInfo.id
+  }
+  
+  if (!currentDealerId.value) {
+    ElMessage.warning('未获取到操作员信息，请确保已登录')
+  }
 })
 
 // 格式化费用类型
@@ -168,12 +168,16 @@ const formatFeeType = (type) => {
 // 格式化支付方式
 const formatPaymentMethod = (method) => {
   const methodMap = {
+   'SCAN_PAY': '扫码支付',
     'INSURANCE_PAY': '医保支付',
     'CASH': '现金',
     'WECHAT': '微信支付',
     'ALIPAY': '支付宝',
     'BANK_CARD': '银行卡',
-    'MEDICAL_CARD': '医保卡'
+    'MEDICAL_CARD': '医保卡',
+    'CREDIT_CARD': '信用卡',
+    'DEBIT_CARD': '借记卡',
+    'UNION_PAY': '银联支付'
   }
   return methodMap[method] || method
 }
@@ -264,8 +268,8 @@ const showConfirmDialog = () => {
     return
   }
   
-  if (!selectedDealerId.value) {
-    ElMessage.warning('请选择操作员')
+  if (!currentDealerId.value) {
+    ElMessage.warning('未获取到操作员信息，无法执行退费')
     return
   }
   
@@ -278,12 +282,11 @@ const doRefund = async () => {
   
   try {
     loading.value = true
-    const dealerId = selectedDealerId.value
     
     // 执行批量退费
     const results = await Promise.all(
       selectedItems.value.map(item => 
-        refundPrescription(item.sequence, dealerId)
+        refundPrescription(item.sequence, currentDealerId.value)
           .then(() => ({ success: true, item }))
           .catch(error => ({ success: false, item, error }))
       )
@@ -350,6 +353,12 @@ h2 {
   margin-top: 20px;
   display: flex;
   align-items: center;
+  gap: 20px;
+}
+
+.dealer-info {
+  color: #666;
+  font-size: 14px;
 }
 
 .el-descriptions {

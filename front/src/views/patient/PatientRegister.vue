@@ -39,28 +39,36 @@
         </el-row>
 
         <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item label="证件号码" prop="identification_id">
-              <el-input v-model="form.identification_id" placeholder="请输入证件号码" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="出生日期">
-              <el-date-picker
-                v-model="form.birthdate"
-                type="date"
-                placeholder="选择日期"
-                style="width:100%"
-                value-format="YYYY-MM-DD"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="年龄" prop="age">
-              <el-input-number v-model="form.age" :min="0" :max="120" controls-position="right" style="width:100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+    <el-col :span="8">
+      <el-form-item label="证件号码" prop="identification_id">
+        <el-input v-model="form.identification_id" placeholder="请输入证件号码" clearable />
+      </el-form-item>
+    </el-col>
+    <el-col :span="8">
+      <el-form-item label="出生日期">
+        <el-date-picker
+          v-model="form.birthdate"
+          type="date"
+          placeholder="选择日期"
+          style="width:100%"
+          value-format="YYYY-MM-DD"
+          @change="calculateAge"
+        />
+      </el-form-item>
+    </el-col>
+    <el-col :span="8">
+      <el-form-item label="年龄">
+        <el-input-number 
+          v-model="form.age" 
+          :min="0" 
+          :max="120" 
+          controls-position="right" 
+          style="width:100%" 
+          :disabled="!!form.birthdate"
+        />
+      </el-form-item>
+    </el-col>
+  </el-row>
 
         <el-row :gutter="20">
           <el-col :span="8">
@@ -250,6 +258,7 @@ import { ElMessage } from 'element-plus'
 import { registerPatient } from '@/api/patient'
 
 import ChatBot from '@/components/ChatBot.vue'
+import router from '@/router'
 
 const messageCount = ref(0)
 
@@ -309,10 +318,10 @@ const form = reactive({
   identification_id: '',
   birthdate: '',
   age: 0,
-  nationality: '中国',
-  ethnicity: '汉族',
-  marital_status: '未婚',
-  occupation: '职工',
+  nationality: '中国',  // 设置默认值
+  ethnicity: '汉族',    // 设置默认值
+  marital_status: '未婚', // 设置默认值
+  occupation: '职工',   // 设置默认值
   phonenumber: '',
   email: '',
   address: '',
@@ -326,16 +335,61 @@ const form = reactive({
   micard_id: '',
   healthcard_balance: 0
 })
-
 const rules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
   identification_type: [{ required: true, message: '请选择证件类型', trigger: 'change' }],
   identification_id: [{ required: true, message: '请输入证件号码', trigger: 'blur' }],
-  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
   phonenumber: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
   address: [{ required: true, message: '请输入现住地址', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择患者性质', trigger: 'change' }]
+  type: [{ required: true, message: '请选择患者性质', trigger: 'change' }],
+  // 新增必填字段验证
+  nationality: [{ required: true, message: '请输入国籍', trigger: 'blur' }],
+  ethnicity: [{ required: true, message: '请输入民族', trigger: 'blur' }],
+  marital_status: [{ required: true, message: '请选择婚姻状况', trigger: 'change' }],
+  occupation: [{ required: true, message: '请选择职业', trigger: 'change' }],
+  // 年龄和出生日期至少填一个
+  age: [
+    {
+      validator: (rule, value, callback) => {
+        if (!value && !form.birthdate) {
+          callback(new Error('请填写年龄或出生日期'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  birthdate: [
+    {
+      validator: (rule, value, callback) => {
+        if (!value && !form.age) {
+          callback(new Error('请填写出生日期或年龄'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
+  ]
+}
+
+// 添加计算年龄的方法
+const calculateAge = (birthdate) => {
+  if (!birthdate) return;
+  
+  const birthDate = new Date(birthdate);
+  const today = new Date();
+  
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  form.age = age;
 }
 
 const addGuardian = () => {
@@ -352,14 +406,13 @@ const removeGuardian = (index) => {
 
 const submitForm = async () => {
   try {
+    // 强制表单验证，不通过则阻止提交
     await registerForm.value.validate()
     
     // 准备提交数据
     const requestData = {
       ...form,
-      // 转换日期格式为ISO格式
       birthdate: form.birthdate ? new Date(form.birthdate).toISOString() : null,
-      // 处理监护人信息
       guardian1_name: form.guardians[0]?.name || '',
       guardian1_relationship: form.guardians[0]?.relationship || '',
       guardian1_phonenum: form.guardians[0]?.phonenum || '',
@@ -369,23 +422,32 @@ const submitForm = async () => {
       guardian3_name: form.guardians[2]?.name || '',
       guardian3_relationship: form.guardians[2]?.relationship || '',
       guardian3_phonenum: form.guardians[2]?.phonenum || '',
-      // 确保健康卡ID为0（新患者）
       healthcard_id: 0
     }
     
-    // 移除前端使用的临时字段
     delete requestData.guardians
+     const response = await registerPatient(requestData)
+    const healthcardId = response.data
+   
+
+     ElMessage.success(`患者登记成功，就诊卡号: ${healthcardId}`)
     
-    // 提交数据
-    await registerPatient(requestData)
-    ElMessage.success('患者登记成功')
+    // 跳转页面
+    router.push({
+      name: 'RegisterForm',
+      query: { healthcardId }
+    })
+    
     resetForm()
+    
   } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error(error.response?.data?.message || '提交失败，请检查表单')
+    if (error.name !== 'Error') { // 非验证错误
+      console.error('提交失败:', error)
+      ElMessage.error(error.response?.data?.message || '提交失败，请检查表单')
+    }
+    // 验证错误会自动显示提示，不需要额外处理
   }
 }
-
 const resetForm = () => {
   registerForm.value.resetFields()
   form.guardians = [{ relationship: '', name: '', phonenum: '' }]

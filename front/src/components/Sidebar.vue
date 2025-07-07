@@ -19,6 +19,7 @@
         </template>
         <el-menu-item index="/patient-register">患者登记</el-menu-item>
         <el-menu-item index="/patient-list">患者列表</el-menu-item>
+        <el-menu-item index="/patient/register">患者挂号</el-menu-item>
       </el-sub-menu>
 
       <!-- 门诊收费管理 -->
@@ -49,6 +50,7 @@
           <span>门诊结算管理</span>
         </template>
         <el-menu-item index="/order-refund">门诊处方退费</el-menu-item>
+        <el-menu-item index="/reg-refund">门诊挂号退费</el-menu-item>
         <el-menu-item index="/card-balance">就诊卡余额结算</el-menu-item>
       </el-sub-menu>
     </template>
@@ -59,7 +61,7 @@
         <el-icon><User /></el-icon>
         <span>医生工作站</span>
       </el-menu-item>
-      <el-menu-item index="/order-charge">门诊处方收费</el-menu-item>
+      <el-menu-item index="/doctor/Order">门诊处方创建</el-menu-item>
     </template>
 
     <!-- 管理员菜单 -->

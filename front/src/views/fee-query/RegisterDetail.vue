@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>挂号详情</span>
-          <el-button type="primary" @click="handleBack">返回列表</el-button>
+          <div class="button-group">
+            <el-button type="primary" @click="handleBack">返回列表</el-button>
+            <el-button type="primary" @click="handleBackCharge">返回缴费</el-button>
+          </div>
         </div>
       </template>
 
@@ -108,6 +111,11 @@ const handleBack = () => {
   router.push({ name: 'RegisterFeeQuery' })
 }
 
+// 返回缴费
+const handleBackCharge = () => {
+  router.push({ name: 'RegisterCharge'} )
+}
+
 onMounted(() => {
   fetchDetail()
 })
@@ -118,9 +126,16 @@ onMounted(() => {
   padding: 20px;
 }
 
+
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px; /* 调整按钮之间的间距，可以设为更小的值如4px */
 }
 </style>

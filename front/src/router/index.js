@@ -50,7 +50,7 @@ const router = createRouter({
         {
           path: '/order-charge',
           name: 'OrderCharge',
-          component: () => import('@/views/charge/Order.vue')
+          component: () => import('@/views/charge/Prescrition.vue')
         },
         {
           path: '/card-recharge',
@@ -71,7 +71,7 @@ const router = createRouter({
           component: () => import('@/views/fee-query/RegisterDetail.vue')
         },
         {
-          path: '/prescription-detail',
+          path: '/prescription-detail/:id',
           name: 'PrescriptionDetail',
           component: () => import('@/views/fee-query/PrescriptionDetail.vue'),
           meta: { title: '处方详情' }
@@ -91,7 +91,7 @@ const router = createRouter({
           name: 'CardSettlementQuery',
           component: () => import('@/views/fee-query/Settlement.vue')
         },
-
+    
 
         //patient (操作员)
          {
@@ -116,7 +116,11 @@ const router = createRouter({
         component: () => import('@/views/patient/PatientEdit.vue'),
         meta: { title: '编辑患者' }
         },
-
+        {
+          path:'/patient/register',
+          name: 'RegisterForm',
+          component: () => import('@/views/patient/register.vue')
+        },
 
 
         //report (管理员)
@@ -163,7 +167,11 @@ const router = createRouter({
       
           component: () => import('@/views/settlement/Daily.vue')
         },
-
+      {
+          path: '/reg-refund',
+      
+          component: () => import('@/views/settlement/RegRefund.vue')
+        },
 
         //system(管理员)
         {
@@ -199,7 +207,11 @@ const router = createRouter({
         {
           path:'/doctor/Consultation',
           component: () => import('@/views/doctor/Consultation.vue'),
+        },{
+          path:'/doctor/Order',
+          component: () => import('@/views/doctor/Order.vue'),
         }
+
       ]},
     
     // 默认重定向

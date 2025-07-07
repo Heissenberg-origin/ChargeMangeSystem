@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @Tag(name = "登录管理", description = "登陆账号的创建、查询、更新和删除等操作")
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class LoginController {
 
     @Autowired
