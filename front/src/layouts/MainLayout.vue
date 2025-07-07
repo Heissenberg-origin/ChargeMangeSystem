@@ -1,7 +1,10 @@
 <template>
   <el-container class="layout-container">
     <el-aside width="220px" class="layout-aside">
-      <div class="logo">门诊收费系统</div>
+      <div class="logo">
+        <template v-if="userRank === 'doctor'">医生工作站</template>
+        <template v-else>门诊收费系统</template>
+      </div>
       <Sidebar />
     </el-aside>
     
@@ -27,18 +30,19 @@ import UserAvatar from '@/components/UserAvatar.vue'
 const userInfo = computed(() => {
   return JSON.parse(localStorage.getItem('userInfo')) || {}
 })
+const userRank = computed(() => userInfo.value.rank || '')
 </script>
 
 <style scoped>
 .layout-container {
   height: 100vh;
-  display: flex;
+  display: flex; /* 这是长版本的关键样式 */
 }
 
 .layout-aside {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* 这是长版本的关键样式 */
   overflow: hidden;
   background-color: #304156;
 }

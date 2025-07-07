@@ -7,7 +7,9 @@ const jsonConfig = {
 }
 
 export function registerPatient(patientData) {
-  return http.post('/patient/register', patientData, jsonConfig)
+  return http.post('/patient/register', patientData, jsonConfig).then(response => {
+    return response.data
+  })
 }
 
 
@@ -37,9 +39,10 @@ export function recharge(healthcardId, amount) {
 }
 
 // 新增获取所有患者的函数
-export function listAllPatients() {
-  return http.get('/patient/listall')
-}
+
 export function settlehcard(healthcardId) {
   return http.put(`/patient/settlement/${healthcardId}`, {}, jsonConfig)
+}
+export function listAllPatients() {
+  return http.get('/patient/listall', jsonConfig)
 }

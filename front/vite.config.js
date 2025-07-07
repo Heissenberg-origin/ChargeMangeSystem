@@ -23,11 +23,25 @@ export default defineConfig({
         // rewrite: (path) => path.replace(/^\/user/, '') // 如果需要重写路径
       },
       // 可以添加其他代理规则
+
       '/api': {
         target: 'http://127.0.0.1:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false // 如果是https可能需要这个
+      },
+
+      '/abc': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/abc/,''),
+        secure: false // 如果是https可能需要这个
       }
-    }
+    //   '^/': {
+    //   target: 'http://127.0.0.1:8080',
+    //   changeOrigin: true,
+    //   secure: false,
+    // }
+  }
   }
 })

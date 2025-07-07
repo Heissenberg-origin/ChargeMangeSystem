@@ -1,21 +1,24 @@
 import http from './axios'
-
 export const login = (data) => {
-  return http.post('/api/auth/login', null, {
-    params: {
-      account: data.account,
-      password: data.password
-    }
-  })
+    return http.post('/auth/login', 
+        {
+            account: data.account,
+            password: data.password
+        }, 
+        {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        }
+    )
 }
 
-
 export const changePassword = (data) => {
-  return http.put('/api/auth/password', null, {
-    params: {
-      account: data.account,
-      oldPassword: data.oldPassword,
-      newPassword: data.newPassword
-    }
-  })
+    return http.put('/auth/password', null, {
+        params: {
+            account: data.account,
+            oldPassword: data.oldPassword,
+            newPassword: data.newPassword
+        }
+    })
 }

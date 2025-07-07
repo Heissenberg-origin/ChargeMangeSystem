@@ -121,30 +121,31 @@
         </el-table-column>
         <el-table-column prop="preTime" label="开方时间" width="180" />
         <el-table-column prop="preDealType" label="支付方式" width="120" />
-         <el-table-column label="操作" width="120" fixed="right">
+           <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-select
-              v-model="row.selectedDealerId"
-              placeholder="选择操作员"
-              size="small"
-              style="width: 120px; margin-right: 10px"
-              v-if="row.preState === '待执行'"
-              @change="handleDealerSelect(row)"
-            >
-              <el-option
-                v-for="dealer in dealers"
-                :key="dealer.id"
-                :label="dealer.name"
-                :value="dealer.id"
-              />
-            </el-select>
-            <el-button 
+           <el-table-column label="操作" width="120" fixed="right">
+  <template #default="{ row }">
+    <el-button type="text" @click="handleDetail(row.preSequence)">详情</el-button>
+    <!-- <el-button 
+      type="text" 
+      @click="handleCancelRegister(row)"
+      :disabled="!canCancelRegister(row.regState)"
+    >
+      取消挂号
+    </el-button> -->
+   
+    
+  
+
+  </template>
+</el-table-column>
+            <!-- <el-button 
               type="text" 
               @click="handleRefund(row)"
               :disabled="row.preState !== '待执行' || !row.selectedDealerId"
             >
               退费
-            </el-button>
+            </el-button> -->
           </template>
         </el-table-column>
       </el-table>
@@ -172,7 +173,12 @@ import { getAllPrescriptions, refundPrescription } from '@/api/prescription'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
-
+const handleDetail = (preSequence) => {
+  router.push({ 
+    name: 'PrescriptionDetail', 
+    params: { id: preSequence }
+  })
+}
 // 搜索表单
 const searchForm = ref({
   prehcard: '',

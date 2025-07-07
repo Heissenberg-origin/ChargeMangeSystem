@@ -134,7 +134,7 @@ const handleConsult = (regId) => {
       ElMessage.success('接诊成功')
       // 修改跳转逻辑，传递regId作为visitNumber
       router.push({
-        path: '/order-charge',
+        path: '/doctor/Order',
         query: { 
           visitNumber: regId, // 传递门诊号
           fromConsultation: true // 标记来自接诊页面

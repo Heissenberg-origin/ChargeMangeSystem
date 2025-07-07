@@ -102,18 +102,18 @@
         <el-table-column prop="regTime" label="挂号时间" width="180" />
         <el-table-column prop="regType" label="挂号类型" width="120" />
         <el-table-column prop="regFeeType" label="费用类型" width="120" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-           <el-table-column label="操作" width="220" fixed="right">
+           <el-table-column label="操作" width="120" fixed="right">
   <template #default="{ row }">
     <el-button type="text" @click="handleDetail(row.regId)">详情</el-button>
-    <el-button 
+    <!-- <el-button 
       type="text" 
       @click="handleCancelRegister(row)"
       :disabled="!canCancelRegister(row.regState)"
     >
       取消挂号
-    </el-button>
+    </el-button> -->
    
     
   
@@ -147,9 +147,30 @@ import { useRouter } from 'vue-router'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { getAllRegisters, cancelRegistration } from '@/api/registration'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {  watch } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const router = useRouter()
-
+// 监听路由变化
+watch(() => route.query.healthcardId, (newVal) => {
+  if (newVal) {
+    searchForm.value.cardNumber = newVal
+    handleSingleSearch('cardNumber')
+  }
+})
+onMounted(() => {
+  fetchRegisterList()
+  
+  // 检查是否有路由参数传入
+  if (route.query.healthcardId) {
+    searchForm.value.cardNumber = route.query.healthcardId
+    // 延迟执行查询，确保数据已加载
+    setTimeout(() => {
+      handleSingleSearch('cardNumber')
+    }, 300)
+  }
+})
 // 搜索表单
 const searchForm = ref({
   cardNumber: '',

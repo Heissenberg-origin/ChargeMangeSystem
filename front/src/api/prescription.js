@@ -181,11 +181,28 @@ export function getPrescriptionsByRegistrationId(registrationId) {
     })
 }
 
+export function getPrescriptionById(sequence) {
+  return http.get(`/prescription/queryById/${sequence}`, jsonConfig)
+    .then(response => {
+      if (response.data && response.data.code === '200') {
+        return response.data
+      }
+      throw new Error(response.data?.message || '获取处方详情失败')
+    })
+    .catch(error => {
+      console.error('获取处方详情错误:', error)
+      throw error
+    })
+}
 
 export function getRegistrationTotal(data) {
-  return http.post('/api/stats/registration', data, {
+  return http.put('/api/stats/registration', data, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
+}
+
+export function payPrescription(sequence,dealerId,paymentType) {
+  return http.put(`/prescription/pay/${sequence}/${dealerId}/${paymentType}`, jsonConfig);
 }

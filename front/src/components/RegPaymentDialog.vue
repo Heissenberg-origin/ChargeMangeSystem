@@ -6,16 +6,22 @@
     :before-close="handleClose"
   >
     <el-form label-width="100px">
-      <el-form-item label="患者ID">
-        <el-input :model-value="hcardId" readonly />
+      <el-form-item label="挂号ID" v-if="showData.regIds.length === 1">
+        <el-input :model-value="showData.regIds[0]" readonly />
       </el-form-item>
       
-      <el-form-item label="挂号ID">
-        <el-input :model-value="regId" readonly />
+      <el-form-item label="挂号ID列表" v-if="showData.regIds.length > 1">
+        <el-tag 
+          v-for="id in showData.regIds" 
+          :key="id" 
+          style="margin-right: 5px; margin-bottom: 5px"
+        >
+          {{ id }}
+        </el-tag>
       </el-form-item>
       
       <el-form-item label="支付金额">
-        <el-input :model-value="amount" readonly>
+        <el-input :model-value="showData.amount" readonly>
           <template #append>元</template>
         </el-input>
       </el-form-item>
@@ -31,15 +37,8 @@
         </el-select>
       </el-form-item>
       
-      <el-form-item label="操作员" prop="dealerId">
-        <el-select v-model="dealerId" placeholder="请选择操作员">
-          <el-option
-            v-for="dealer in dealers"
-            :key="dealer.id"
-            :label="`操作员 ${dealer.id}`"
-            :value="dealer.id"
-          />
-        </el-select>
+      <el-form-item label="操作员" v-if="showData.dealerId">
+        <el-input :model-value="`操作员 ${showData.dealerId}`" readonly />
       </el-form-item>
     </el-form>
     
@@ -57,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { processRegistrationPayment } from '@/api/registration'
 
@@ -66,7 +65,13 @@ const emit = defineEmits(['success', 'close'])
 const visible = ref(false)
 const paying = ref(false)
 const paymentType = ref('')
-const dealerId = ref(null)
+
+// 使用 reactive 对象来存储显示数据
+const showData = reactive({
+  regIds: [],
+  amount: 0,
+  dealerId: null
+})
 
 const paymentOptions = [
   { value: 'CASH', label: '现金支付' },
@@ -75,32 +80,11 @@ const paymentOptions = [
   { value: 'INSURANCE_PAY', label: '医保支付' }
 ]
 
-const dealers = [
-  { id: 1, name: '操作员1' },
-  { id: 2, name: '操作员2' },
-  { id: 3, name: '操作员3' }
-]
-
-const props = defineProps({
-  amount: {
-    type: Number,
-    required: true
-  },
-  hcardId: {
-    type: Number,
-    required: true
-  },
-  regId: {
-    type: Number,
-    required: true,
-    validator: value => value > 0
-  }
-})
-
-const show = () => {
+const show = (params) => {
+  // 更新 showData 而不是直接修改 props
+  Object.assign(showData, params)
   visible.value = true
   paymentType.value = ''
-  dealerId.value = null
 }
 
 const handleClose = () => {
@@ -114,26 +98,25 @@ const handlePayment = async () => {
     return
   }
   
-  if (!dealerId.value) {
-    ElMessage.warning('请选择操作员')
-    return
-  }
-  
   paying.value = true
   try {
-    await processRegistrationPayment(
-      props.regId,
-      dealerId.value,
-      paymentType.value
-    )
-    ElMessage.success('支付成功')
+    // 批量处理支付
+    for (const regId of showData.regIds) {
+      await processRegistrationPayment(
+        regId,
+        showData.dealerId,
+        paymentType.value
+      )
+    }
+    
+    ElMessage.success(`成功支付 ${showData.regIds.length} 笔挂号费用，总金额 ¥${showData.amount.toFixed(2)}`)
     emit('success')
     visible.value = false
   } catch (error) {
     console.error('支付失败:', {
       error,
-      regId: props.regId,
-      dealerId: dealerId.value,
+      regIds: showData.regIds,
+      dealerId: showData.dealerId,
       paymentType: paymentType.value
     })
     ElMessage.error('支付失败: ' + (error.message || '请稍后重试'))
