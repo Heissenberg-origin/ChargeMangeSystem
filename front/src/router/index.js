@@ -50,7 +50,7 @@ const router = createRouter({
         {
           path: '/order-charge',
           name: 'OrderCharge',
-          component: () => import('@/views/charge/Prescrition.vue')
+          component: () => import('@/views/charge/Prescription.vue')
         },
         {
           path: '/card-recharge',
@@ -119,7 +119,7 @@ const router = createRouter({
         {
           path:'/patient/register',
           name: 'RegisterForm',
-          component: () => import('@/views/patient/register.vue')
+          component: () => import('@/views/patient/Register.vue')
         },
 
 

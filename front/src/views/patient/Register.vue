@@ -774,7 +774,7 @@ onMounted(() => {
       
       // 跳转到收费查询页面，并传递就诊卡号
       router.push({
-        name: 'RegisterFeeQuery',
+        name: 'RegisterCharge',
         query: {
           healthcardId: currentPatient.value.healthcardId
         }

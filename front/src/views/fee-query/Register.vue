@@ -46,7 +46,7 @@
         </el-form>
         
         <div class="action-buttons">
-          <el-button type="primary" @click="handleExport">导出</el-button>
+          <!-- <el-button type="primary" @click="handleExport">导出</el-button> -->
           <el-button @click="handleReset">重置</el-button>
         </div>
       </div>
