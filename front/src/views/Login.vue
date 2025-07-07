@@ -126,10 +126,17 @@ const handleLogin = () => {
       
       if (response.data) {
         const { user, token } = response.data;
-        
+       let newId = user.id; // 默认不变
+
+if (user.id === 2 || user.id === 3) {
+  newId = user.id - 1; // 2→1, 3→2
+} else if (user.id >= 4) {
+  newId = user.id - 3; // 4→1, 5→2, 6→3, ...
+}
         // 2. 存储用户信息（不存储密码）
         const userData = {
-          id: user.id,
+
+          id: newId,
           account: user.account,
           name: `用户${user.account}`,
           rank: user.rank,
