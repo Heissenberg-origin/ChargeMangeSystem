@@ -196,7 +196,7 @@ export function getPrescriptionById(sequence) {
 }
 
 export function getRegistrationTotal(data) {
-  return http.put('/api/stats/registration', data, {
+  return http.post('/api/stats/registration', data, {
     headers: {
       'Content-Type': 'application/json'
     }

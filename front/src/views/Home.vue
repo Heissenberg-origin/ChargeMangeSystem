@@ -567,8 +567,17 @@ const calcComparison = (todayValue, yesterdayValue) => {
 }
 
 const formatCompare = (value, unit) => {
-  if (value > 0) return `较昨日增加${Math.abs(value)}${unit}`
-  if (value < 0) return `较昨日减少${Math.abs(value)}${unit}`
+  let formattedValue
+  if (unit === '人') {
+    // 人数显示为整数
+    formattedValue = Math.abs(Math.round(value))
+  } else {
+    // 金额保持两位小数
+    formattedValue = Math.abs(value).toFixed(2)
+  }
+  
+  if (value > 0) return `较昨日增加${formattedValue}${unit}`
+  if (value < 0) return `较昨日减少${formattedValue}${unit}`
   return `与昨日持平`
 }
 

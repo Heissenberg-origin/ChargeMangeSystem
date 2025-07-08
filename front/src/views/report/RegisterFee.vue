@@ -239,6 +239,18 @@ const statusMap = {
   'PENDING_PAYMENT': '待缴费'
 }
 
+// 支付方式映射
+const paymentMethodMap = {
+  'CASH': '现金',
+  'ALIPAY': '支付宝',
+  'WECHAT': '微信',
+  'UNIONPAY': '银联',
+  'MEDICAL_INSURANCE': '医保',
+  'SCAN_PAY': '扫码支付',       // 新增
+  'MEDICAL_CARD': '就诊卡支付',  // 新增
+  'INSURANCE_PAY': '医保支付'    // 新增
+}
+
 /* 工具函数 */
 // 获取当月第一天
 function getFirstDayOfMonth() {
@@ -292,6 +304,11 @@ const getStatusText = (status) => {
   return statusMap[status] || status
 }
 
+// 获取支付方式中文显示
+const getPaymentMethodText = (method) => {
+  return paymentMethodMap[method] || method || '未知'
+}
+
 /* 数据获取与处理 */
 // 获取表格数据
 const fetchTableData = async () => {
@@ -308,7 +325,9 @@ const fetchTableData = async () => {
       startTime: `${queryParams.dateRange[0]} 00:00:00`,
       endTime: `${queryParams.dateRange[1]} 23:59:59`,
       timeType: queryParams.timeType,
-      groupBy: queryParams.statisticsType === 'department' ? 'department' : 'doctor'
+      groupBy: queryParams.statisticsType === 'department' ? 'department' 
+             : queryParams.statisticsType === 'doctor' ? 'doctor'
+             : 'payment' // 按支付方式分组
     }
     
     // 调用接口
@@ -362,9 +381,15 @@ const processRegistrationData = (apiData) => {
     }
     
     // 处理分组数据
-    const groupData = queryParams.statisticsType === 'department' 
-      ? apiData.data.byDepartment 
-      : apiData.data.byDoctor || []
+    let groupData = [];
+    if (queryParams.statisticsType === 'department') {
+      groupData = apiData.data.byDepartment || []
+    } else if (queryParams.statisticsType === 'doctor') {
+      groupData = apiData.data.byDoctor || []
+    } else {
+      // 按支付方式分组
+      groupData = apiData.data.byPayment || []
+    }
 
     console.log('处理后的分组数据:', groupData)
     
@@ -378,14 +403,26 @@ const processRegistrationData = (apiData) => {
         const total = item.totalRegistrations || 0
         const canceled = item.canceledRegistrations || 0
         
+        // 根据统计类型设置统计类型标签
+        let statisticsType = '';
+        if (queryParams.statisticsType === 'department') {
+          statisticsType = item.departmentName || item.groupName
+        } else if (queryParams.statisticsType === 'doctor') {
+          statisticsType = item.doctorName
+        } else {
+          // 按支付方式显示中文
+          statisticsType = getPaymentMethodText(item.paymentMethod)
+        }
+        
         return {
           ...item,
-          statisticsType: item.groupName || item.departmentName || item.doctorName,
+          statisticsType,
           regdepName: item.departmentName,
           regdocName: item.doctorName,
           regfee: item.fee,
           regState: item.status,
           regTime: item.registerTime,
+          regDealType: item.paymentMethod, // 支付方式
           totalCount: total,
           cancelCount: canceled,
           receivableAmount: item.totalFee || 0,
@@ -405,7 +442,7 @@ const getStatisticsTypeLabel = (item) => {
   switch(queryParams.statisticsType) {
     case 'department': return item.regdepName
     case 'doctor': return item.regdocName
-    case 'payment': return item.regDealType
+    case 'payment': return getPaymentMethodText(item.regDealType) // 支付方式显示中文
     default: return item.regdepName
   }
 }
@@ -518,6 +555,7 @@ const fetchRegistrationDetails = async (row) => {
         } else if (queryParams.statisticsType === 'doctor') {
           return item.regdocName === row.regdocName
         } else {
+          // 按支付方式筛选
           return item.regDealType === row.regDealType
         }
       })
@@ -528,6 +566,7 @@ const fetchRegistrationDetails = async (row) => {
         department: item.regdepName,
         doctor: item.regdocName,
         amount: item.regfee,
+        paymentMethod: getPaymentMethodText(item.regDealType), // 支付方式显示中文
         status: getStatusText(item.regState), // 使用中文状态
         statusCode: item.regState, // 保留原始状态码
         date: item.regTime

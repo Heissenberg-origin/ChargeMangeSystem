@@ -23,7 +23,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-main">
-            <span class="stat-value">{{ prescriptionStats.today?.paidPrescriptions || 0 }}</span>
+            <span class="stat-value">{{ Math.round(prescriptionStats.today?.paidPrescriptions) || 0 }}</span>
             <span class="stat-unit">人</span>
           </div>
           <div class="stat-compare" :class="getCompareClass(calcComparison(prescriptionStats.today?.paidPrescriptions, prescriptionStats.yesterday?.paidPrescriptions))">
@@ -421,7 +421,7 @@ const fetchRegistrationStats = async () => {
     // 更新图表
     updateDoctorChart()
     updateDepartmentChart()
-    updateGenderChart()
+    // updateGenderChart()
   } catch (error) {
     console.error('获取挂号数据失败:', error)
     prescriptionStats.value = {
@@ -525,76 +525,106 @@ const updateDoctorChart = () => {
 // 获取性别统计数据
 const fetchGenderStats = async () => {
   try {
-    // 直接传递字符串参数而不是对象
     const res = await getGenderStatsByDate(selectedDate.value)
+    console.log('API返回的原始数据:', res.data)
     const genderData = res.data.data || { '男': 0, '女': 0 }
+    console.log('处理后数据:', genderData)
     updateGenderChart(genderData)
   } catch (error) {
-    console.error('获取性别数据失败:', error)
+    console.error('API调用失败:', error)
     updateGenderChart({ '男': 0, '女': 0 })
   }
 }
 
 // 更新性别比例图表
+// 更新性别比例图表（带调试信息）
 const updateGenderChart = (genderData = { '男': 0, '女': 0 }) => {
-  if (!paymentChartInstance) return
-  
-  paymentChartInstance.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b}: {c}人 ({d}%)',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderColor: '#DCDFE6',
-      textStyle: {
-        color: '#606266'
-      }
-    },
-    legend: {
-      orient: 'vertical',
-      right: 10,
-      top: 'center',
-      textStyle: {
-        color: '#606266'
+  console.group('【调试】updateGenderChart');
+  try {
+    // 1. 检查图表实例是否存在
+    if (!paymentChartInstance) {
+      console.error('图表实例未初始化: paymentChartInstance 为 null/undefined');
+      return;
+    }
+    console.log('图表实例验证通过');
+
+    // 2. 检查输入数据
+    console.log('输入数据检查:', {
+      '原始数据': genderData,
+      '男性人数': genderData['男'] || 0,
+      '女性人数': genderData['女'] || 0,
+      '数据是否有效': typeof genderData === 'object' && '男' in genderData && '女' in genderData
+    });
+
+    // 3. 准备图表配置
+    const option = {
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c}人 ({d}%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderColor: '#DCDFE6',
+        textStyle: { color: '#606266' }
       },
-      data: ['男性', '女性']
-    },
-    series: [{
-      name: '性别比例',
-      type: 'pie',
-      radius: ['50%', '70%'],
-      center: ['40%', '50%'],
-      avoidLabelOverlap: false,
-      itemStyle: {
-        borderRadius: 10,
-        borderColor: '#fff',
-        borderWidth: 2,
-        color: params => params.dataIndex === 0 ? chartColors.blue : chartColors.red
+      legend: {
+        orient: 'vertical',
+        right: 10,
+        top: 'center',
+        textStyle: { color: '#606266' },
+        data: ['男性', '女性']
       },
-      label: { 
-        show: false,
-        color: '#606266'
-      },
-      emphasis: {
-        label: { 
-          show: true, 
-          fontSize: '14', 
-          fontWeight: 'bold',
-          color: '#303133'
-        },
+      series: [{
+        name: '性别比例',
+        type: 'pie',
+        radius: ['50%', '70%'],
+        center: ['40%', '50%'],
+        avoidLabelOverlap: false,
         itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
-      },
-      labelLine: { show: false },
-      data: [
-        { value: genderData['男'] || 0, name: '男性' },
-        { value: genderData['女'] || 0, name: '女性' }
-      ]
-    }]
-  })
-}
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2,
+          color: params => params.dataIndex === 0 ? chartColors.blue : chartColors.red
+        },
+        label: { show: false, color: '#606266' },
+        emphasis: {
+          label: { 
+            show: true, 
+            fontSize: '14', 
+            fontWeight: 'bold',
+            color: '#303133'
+          },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        labelLine: { show: false },
+        data: [
+          { value: genderData['男'] || 0, name: '男性' },
+          { value: genderData['女'] || 0, name: '女性' }
+        ]
+      }]
+    };
+    console.log('⚙️ 图表配置:', JSON.parse(JSON.stringify(option)));
+
+    // 4. 应用配置
+    paymentChartInstance.setOption(option);
+    console.log('图表配置应用成功');
+
+    // 5. 验证最终数据
+    const currentOption = paymentChartInstance.getOption();
+    console.log(' 当前图表实际数据:', {
+      '男性数据': currentOption.series[0].data[0],
+      '女性数据': currentOption.series[0].data[1],
+      '总数': currentOption.series[0].data.reduce((sum, item) => sum + item.value, 0)
+    });
+
+  } catch (e) {
+    console.error(' 图表更新失败:', e);
+  } finally {
+    console.groupEnd();
+  }
+};
 
 // 更新科室排行榜图表
 const updateDepartmentChart = () => {
@@ -692,7 +722,15 @@ const calcComparison = (todayVal, yesterdayVal) => {
 
 // 格式化比较显示
 const formatCompare = (value, unit) => {
-  const formattedValue = Math.abs(value).toFixed(2)
+  let formattedValue
+  if (unit === '人') {
+    // 人数显示为整数
+    formattedValue = Math.abs(Math.round(value))
+  } else {
+    // 金额保持两位小数
+    formattedValue = Math.abs(value).toFixed(2)
+  }
+  
   if (value > 0) return `较昨日增加${formattedValue}${unit}`
   if (value < 0) return `较昨日减少${formattedValue}${unit}`
   return `与昨日持平`
@@ -719,7 +757,7 @@ const initCharts = () => {
 
   // 2. 挂号人群性别比例
   paymentChartInstance = echarts.init(paymentChart.value)
-  updateGenderChart()
+  // updateGenderChart()
 
   // 3. 热门医生排行
   doctorChartInstance = echarts.init(doctorChart.value)

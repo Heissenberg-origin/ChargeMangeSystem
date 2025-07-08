@@ -32,6 +32,7 @@ export default defineConfig({
       },
 
       '/abc': {
+        // target: 'http://47.108.95.212:8080',
         target: 'http://127.0.0.1:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/abc/,''),
