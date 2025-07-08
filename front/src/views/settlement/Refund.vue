@@ -51,7 +51,7 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="itemCode" label="项目编码" width="120" />
-        <el-table-column prop="itemName" label="项目名称" width="150" />
+        <!-- <el-table-column prop="itemName" label="项目名称" width="150" /> -->
         <el-table-column prop="quantity" label="数量" width="80" />
         <el-table-column prop="unit" label="单位" width="80" />
         <el-table-column prop="unitPrice" label="单价" width="100" />

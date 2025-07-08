@@ -6,10 +6,10 @@
         <el-form :model="searchForm" label-width="100px">
           <el-row :gutter="20">
             <el-col :span="8">
-              <el-form-item label="处方ID">
+              <el-form-item label="门诊ID">
                 <el-input 
-                  v-model="searchForm.preId" 
-                  placeholder="请输入处方ID" 
+                  v-model="searchForm.preRegId" 
+                  placeholder="请输入门诊ID" 
                   clearable
                   @input="handleSearch"
                 />
@@ -58,6 +58,16 @@
                 />
               </el-form-item>
             </el-col>
+            <el-col :span="8">
+              <el-form-item label="处方ID">
+                <el-input 
+                  v-model="searchForm.preId" 
+                  placeholder="请输入处方ID" 
+                  clearable
+                  @input="handleSearch"
+                />
+              </el-form-item>
+            </el-col>
           </el-row>
         </el-form>
         
@@ -77,6 +87,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
+        <el-table-column prop="preRegId" label="门诊ID" width="100" />
         <el-table-column prop="preId" label="处方ID" width="100" />
         <el-table-column prop="preSequence" label="处方序号" width="100" />
         <el-table-column prop="prehcard" label="就诊卡号" width="120" />
@@ -162,7 +173,8 @@ const searchForm = ref({
   prehcard: '',
   prepname: '',
   predocname: '',
-  predepname: ''
+  predepname: '',
+  preRegId: ''
 })
 
 // 加载状态
@@ -242,7 +254,11 @@ const filterAndPaginateData = () => {
   filteredData = filteredData.filter(item => item.preState === '待缴费')
   
   // 根据搜索条件过滤
-  if (searchForm.value.preId) {
+  if (searchForm.value.preRegId) {
+    filteredData = filteredData.filter(item => 
+      String(item.preRegId).includes(searchForm.value.preRegId))
+  }
+   if (searchForm.value.preId) {
     filteredData = filteredData.filter(item => 
       String(item.preId).includes(searchForm.value.preId))
   }
@@ -357,7 +373,8 @@ const handleReset = () => {
     prehcard: '',
     prepname: '',
     predocname: '',
-    predepname: ''
+    predepname: '',
+    preRegId: ''
   }
   filterAndPaginateData()
 }
