@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.common.Result;
-import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 import org.example.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -57,8 +55,7 @@ public class RegistrationController {
     @Operation(summary = "根据门诊号查询挂号信息")
     public Result getRegistrationById(
             @PathVariable @Parameter(description = "门诊号") int regId) {
-        Result result = new Result("200","success",registrationService.getRegistrationById(regId));
-        return result.success(registrationService.getRegistrationById(regId));
+        return Result.success(registrationService.getRegistrationById(regId));
     }
 
     @GetMapping("/querybyneed/{docId}/{date}/{state}")
@@ -71,64 +68,55 @@ public class RegistrationController {
         // Convert LocalDate to java.sql.Date for MyBatis
         java.sql.Date sqlDate = java.sql.Date.valueOf(date);
 
-        Result result = new Result("200", "success",
-                registrationService.getRegistrationByneed(docId, sqlDate, state));
-        return result.success(registrationService.getRegistrationByneed(docId, sqlDate, state));
+        return Result.success(registrationService.getRegistrationByneed(docId, sqlDate, state));
     }
 
     @GetMapping("/findall")
     @Operation(summary = "获取所有挂号信息")
     public Result getall() {
-        Result result = new Result("200","success",registrationService.getall());
-        return result.success(registrationService.getall());
+        return Result.success(registrationService.getall());
     }
 
     @GetMapping("/querybyhcard/{regHcardId}")
     @Operation(summary = "根据就诊卡号查询挂号信息列表")
     public Result getRegistrationsByHealthCardId(
             @PathVariable @Parameter(description = "就诊卡号") int regHcardId) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByHealthCardId(regHcardId));
-        return result.success(registrationService.getRegistrationsByHealthCardId(regHcardId));
+        return Result.success(registrationService.getRegistrationsByHealthCardId(regHcardId));
     }
 
     @GetMapping("/querybypname")
     @Operation(summary = "根据患者姓名查询挂号信息列表")
     public Result getRegistrationsBypname(
             @Parameter(description = "患者姓名") String regpname) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByPatientname(regpname));
-        return result.success(registrationService.getRegistrationsByPatientname(regpname));
+        return Result.success(registrationService.getRegistrationsByPatientname(regpname));
     }
 
     @GetMapping("/querybypId")
     @Operation(summary = "根据患者证件号查询挂号信息列表")
     public Result getRegistrationsBypId(
             @Parameter(description = "患者证件号") String pId) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByPatientId(pId));
-        return result.success(registrationService.getRegistrationsByPatientId(pId));
+        return Result.success(registrationService.getRegistrationsByPatientId(pId));
     }
 
     @GetMapping("/querybydocname")
     @Operation(summary = "根据医生姓名查询挂号信息列表")
     public Result getRegistrationsBydocname(
             @RequestParam @Parameter(description = "医生姓名") String docname) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByDoctorName(docname));
-        return result.success(registrationService.getRegistrationsByDoctorName(docname));
+        return Result.success(registrationService.getRegistrationsByDoctorName(docname));
     }
 
     @GetMapping("/querybydepname")
     @Operation(summary = "根据部门名称查询挂号信息列表")
     public Result getRegistrationsBydepname(
             @RequestParam @Parameter(description = "部门名称") String depname) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByDepartmentName(depname));
-        return result.success(registrationService.getRegistrationsByDepartmentName(depname));
+        return Result.success(registrationService.getRegistrationsByDepartmentName(depname));
     }
 
     @GetMapping("/querybyarrange/{regArrangeId}")
     @Operation(summary = "根据排班号查询挂号信息列表")
     public Result getRegistrationsByArrangeId(
             @RequestParam @Parameter(description = "排班号") int regArrangeId) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByArrangeId(regArrangeId));
-        return result.success(registrationService.getRegistrationsByArrangeId(regArrangeId));
+        return Result.success(registrationService.getRegistrationsByArrangeId(regArrangeId));
     }
 
     @PutMapping("/update")
@@ -151,8 +139,7 @@ public class RegistrationController {
     @Operation(summary = "根据状态查询挂号信息列表")
     public Result getRegistrationsByState(
             @RequestParam @Parameter(description = "挂号状态") RegistrationInfo.RegistrationState state) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByState(state));
-        return result.success(registrationService.getRegistrationsByState(state));
+        return Result.success(registrationService.getRegistrationsByState(state));
     }
 
     @PutMapping("/updatestate/{regId}/{state}")
@@ -168,8 +155,7 @@ public class RegistrationController {
     public Result getRegistrationsByTimeRange(
             @RequestParam @Parameter(description = "开始时间") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
             @RequestParam @Parameter(description = "结束时间") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByTimeRange(startTime, endTime));
-        return result.success(registrationService.getRegistrationsByTimeRange(startTime, endTime));
+        return Result.success(registrationService.getRegistrationsByTimeRange(startTime, endTime));
     }
 
     @PutMapping("/handlepayment/{regId}/{dealerId}/{paymentType}")
@@ -185,8 +171,7 @@ public class RegistrationController {
     @Operation(summary = "根据挂号类型查询")
     public Result getRegistrationsByType(
             @RequestParam @Parameter(description = "挂号类型") RegistrationInfo.RegistrationType type) {
-        Result result = new Result("200","success",registrationService.getRegistrationsByType(type));
-        return result.success(registrationService.getRegistrationsByType(type));
+        return Result.success(registrationService.getRegistrationsByType(type));
     }
 
     @PutMapping("/handlecancel/{regId}")

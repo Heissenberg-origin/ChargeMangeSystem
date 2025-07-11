@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -47,8 +46,7 @@ public class PrescriptionController {
     @Operation(summary = "获取所有处方", description = "获取系统中所有处方列表")
     @GetMapping("/findall")
     public Result getAllPrescriptions() {
-        Result result=new Result("200","success",prescriptionService.getAllPrescriptions()) ;
-        return result.success(prescriptionService.getAllPrescriptions());
+        return Result.success(prescriptionService.getAllPrescriptions());
     }
 
     @Operation(summary = "根据sequence获取处方", description = "根据处方序号获取详细的处方信息")
@@ -56,8 +54,7 @@ public class PrescriptionController {
     public Result getPrescriptionBySequence(
             @Parameter(description = "处方序号", required = true)
             @PathVariable int sequence) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionBySequence(sequence)) ;
-        return result.success(prescriptionService.getPrescriptionBySequence(sequence));
+        return Result.success(prescriptionService.getPrescriptionBySequence(sequence));
     }
 
     @Operation(summary = "删除处方", description = "根据处方序号删除处方")
@@ -76,8 +73,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByPrescriptionId(
             @Parameter(description = "处方号", required = true)
             @PathVariable int prescriptionId) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPrescriptionId(prescriptionId)) ;
-        return result.success(prescriptionService.getPrescriptionsByPrescriptionId(prescriptionId));
+        return Result.success(prescriptionService.getPrescriptionsByPrescriptionId(prescriptionId));
     }
 
     @Operation(summary = "根据门诊号查询", description = "获取指定门诊号的所有处方")
@@ -85,8 +81,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByRegistrationId(
             @Parameter(description = "门诊号", required = true)
             @PathVariable int registrationId) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByRegistrationId(registrationId)) ;
-        return result.success(prescriptionService.getPrescriptionsByRegistrationId(registrationId));
+        return Result.success(prescriptionService.getPrescriptionsByRegistrationId(registrationId));
     }
 
     @Operation(summary = "根据就诊卡号查询", description = "获取指定就诊号的所有处方")
@@ -94,8 +89,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByhcardId(
             @Parameter(description = "就诊卡号", required = true)
             @PathVariable int hcardId) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByhcardId(hcardId)) ;
-        return result.success(prescriptionService.getPrescriptionsByhcardId(hcardId));
+        return Result.success(prescriptionService.getPrescriptionsByhcardId(hcardId));
     }
 
     @Operation(summary = "根据证件号查询", description = "获取指定证件号的所有处方")
@@ -105,8 +99,7 @@ public class PrescriptionController {
             @RequestParam String type,
             @Parameter(description = "证件号", required = true)
             @PathVariable String Id) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByID(type,Id)) ;
-        return result.success(prescriptionService.getPrescriptionsByID(type,Id));
+        return Result.success(prescriptionService.getPrescriptionsByID(type,Id));
     }
 
     @Operation(summary = "根据医生查询", description = "获取指定医生的所有处方")
@@ -114,8 +107,7 @@ public class PrescriptionController {
     public Result getPrescriptionsBydoc(
             @Parameter(description = "医生姓名", required = true)
             @RequestParam String docname) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsBydocname(docname)) ;
-        return result.success(prescriptionService.getPrescriptionsBydocname(docname));
+        return Result.success(prescriptionService.getPrescriptionsBydocname(docname));
     }
 
     @Operation(summary = "根据部门查询", description = "获取指定部门的所有处方")
@@ -123,8 +115,7 @@ public class PrescriptionController {
     public Result getPrescriptionsBydep(
             @Parameter(description = "部门名", required = true)
             @RequestParam String depname) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsBydepname(depname)) ;
-        return result.success(prescriptionService.getPrescriptionsBydepname(depname));
+        return Result.success(prescriptionService.getPrescriptionsBydepname(depname));
     }
 
     @Operation(summary = "根据状态查询", description = "获取指定状态的所有处方")
@@ -132,8 +123,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByState(
             @Parameter(description = "处方状态", required = true)
             @PathVariable PrescriptionInfo.PrescriptionState status) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByState(status)) ;
-        return result.success(prescriptionService.getPrescriptionsByState(status));
+        return Result.success(prescriptionService.getPrescriptionsByState(status));
     }
 
     @Operation(summary = "根据收费员查询", description = "获取指定收费员处理的所有处方")
@@ -141,8 +131,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByDealerId(
             @Parameter(description = "收费员ID", required = true)
             @PathVariable int dealerId) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByDealerId(dealerId)) ;
-        return result.success(prescriptionService.getPrescriptionsByDealerId(dealerId));
+        return Result.success(prescriptionService.getPrescriptionsByDealerId(dealerId));
     }
 
     @Operation(summary = "根据开方时间范围查询", description = "获取指定时间范围内开方的所有处方")
@@ -152,8 +141,7 @@ public class PrescriptionController {
             @RequestParam Timestamp startDate,
             @Parameter(description = "结束时间(yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam Timestamp endDate) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByCreateTimeRange(startDate, endDate)) ;
-        return result.success(prescriptionService.getPrescriptionsByCreateTimeRange(startDate, endDate));
+        return Result.success(prescriptionService.getPrescriptionsByCreateTimeRange(startDate, endDate));
     }
 
     @Operation(summary = "根据收费时间范围查询", description = "获取指定时间范围内收费的所有处方")
@@ -163,8 +151,7 @@ public class PrescriptionController {
             @RequestParam Timestamp startDate,
             @Parameter(description = "结束时间(yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam Timestamp endDate) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPaidTimeRange(startDate, endDate)) ;
-        return result.success(prescriptionService.getPrescriptionsByPaidTimeRange(startDate, endDate));
+        return Result.success(prescriptionService.getPrescriptionsByPaidTimeRange(startDate, endDate));
     }
 
     @Operation(summary = "根据支付类型查询", description = "获取指定支付类型的所有处方")
@@ -172,8 +159,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByPaymentType(
             @Parameter(description = "支付类型", required = true)
             @PathVariable PrescriptionInfo.PaymentType paymentType) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByPaymentType(paymentType)) ;
-        return result.success(prescriptionService.getPrescriptionsByPaymentType(paymentType));
+        return Result.success(prescriptionService.getPrescriptionsByPaymentType(paymentType));
     }
 
     @Operation(summary = "根据项目ID查询", description = "获取包含指定收费项目的所有处方")
@@ -181,8 +167,7 @@ public class PrescriptionController {
     public Result getPrescriptionsByChargeItemId(
             @Parameter(description = "收费项目ID", required = true)
             @PathVariable int chargeItemId) {
-        Result result=new Result("200","success",prescriptionService.getPrescriptionsByChargeItemId(chargeItemId)) ;
-        return result.success(prescriptionService.getPrescriptionsByChargeItemId(chargeItemId));
+        return Result.success(prescriptionService.getPrescriptionsByChargeItemId(chargeItemId));
     }
 
     // ==================== 业务操作接口 ====================
@@ -228,15 +213,13 @@ public class PrescriptionController {
     @Operation(summary = "获取处方统计", description = "获取处方数量、金额等统计信息")
     @GetMapping("/getStatistics")
     public Result getPrescriptionStatistics() {
-        Result result=new Result("200", "success",prescriptionService.getPrescriptionStatistics()) ;
-        return result.success(prescriptionService.getPrescriptionStatistics());
+        return Result.success(prescriptionService.getPrescriptionStatistics());
     }
 
     @Operation(summary = "按状态统计", description = "按状态分组统计处方数量")
     @GetMapping("/getStatisticsByState")
     public Result getStatisticsByState() {
-        Result result=new Result("200", "success",prescriptionService.getStatisticsByState()) ;
-        return result.success(prescriptionService.getStatisticsByState());
+        return Result.success(prescriptionService.getStatisticsByState());
     }
 
     @Operation(summary = "按支付类型统计", description = "按支付类型分组统计当日处方数量和金额")
@@ -244,8 +227,7 @@ public class PrescriptionController {
     public Result getStatisticsByPaymentType(
             @Parameter(description = "日期(yyyy-MM-dd)", required = true, example = "2025-06-30")
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
-        Result result = new Result("200", "success", prescriptionService.getStatisticsByPaymentType(date));
-        return result.success(prescriptionService.getStatisticsByPaymentType(date));
+        return Result.success(prescriptionService.getStatisticsByPaymentType(date));
     }
 
     @Operation(summary = "按时间段统计", description = "按时间段统计处方数量和金额")
@@ -255,7 +237,6 @@ public class PrescriptionController {
             @RequestParam Timestamp startDate,
             @Parameter(description = "结束时间(yyyy-MM-dd HH:mm:ss)", required = true)
             @RequestParam Timestamp endDate) {
-        Result result=new Result("200", "success",prescriptionService.getStatisticsByTimeRange(startDate, endDate)) ;
-        return result.success(prescriptionService.getStatisticsByTimeRange(startDate, endDate));
+        return Result.success(prescriptionService.getStatisticsByTimeRange(startDate, endDate));
     }
 }

@@ -69,7 +69,7 @@ public class JwtTokenUtil {
 
     // 检查token是否过期
     public boolean isTokenExpired(String token) {
-        final Date expiration = getClaimsFromToken(token).getExpiration();
-        return expiration.before(new Date());
+        final Date expirationDate = getClaimsFromToken(token).getExpiration();
+        return expirationDate.before(new Date());
     }
 }

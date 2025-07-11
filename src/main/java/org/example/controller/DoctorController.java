@@ -8,11 +8,8 @@ import org.example.entity.DoctorInfo;
 import org.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 @RestController
 @RequestMapping("/doctor")
 @Tag(name = "医生管理", description = "医生信息查询接口")
@@ -32,8 +29,7 @@ public class DoctorController {
     public Result getDoctorById(
             @Parameter(description = "医生ID", required = true, example = "1001")
             @RequestParam int docId) {
-        Result result= new Result("200","success",doctorService.getDoctorById(docId));
-        return result.success(doctorService.getDoctorById(docId));
+        return Result.success(doctorService.getDoctorById(docId));
     }
 
     @GetMapping("/getBydepid/{depId}")
@@ -41,15 +37,13 @@ public class DoctorController {
     public Result getDoctorBydep(
             @PathVariable @Parameter(description = "部门ID", required = true, example = "1001")
             int depId) {
-        Result result = new Result("200", "success", doctorService.getDoctorBydepId(depId));
-        return result.success(doctorService.getDoctorBydepId(depId));
+        return Result.success(doctorService.getDoctorBydepId(depId));
     }
 
     @GetMapping("/findall")
     @Operation(summary = "查询所有医生")
     public Result getallDoctor() {
-        Result result= new Result("200","success",doctorService.getalldoc());
-        return result.success(doctorService.getalldoc());
+        return Result.success(doctorService.getalldoc());
     }
 
 
@@ -58,8 +52,7 @@ public class DoctorController {
     public Result searchDoctorsByName(
             @Parameter(description = "医生姓名(支持模糊查询)", example = "张")
             @RequestParam String name) {
-        Result result= new Result("200","success",doctorService.searchDoctorsByName(name));
-        return result.success(doctorService.searchDoctorsByName(name));
+        return Result.success(doctorService.searchDoctorsByName(name));
     }
 
     @PostMapping("/add")

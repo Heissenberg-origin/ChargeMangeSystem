@@ -8,13 +8,8 @@ import org.example.entity.PatientInfo;
 import org.example.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 
 @RestController
 @Tag(name = "病人信息管理", description = "收费项目患者信息的创建、查询、更新和删除等操作")
@@ -34,8 +29,7 @@ public class PatientController {
     @PostMapping("/register")
     @Operation(summary = "创建病人信息", description = "注册新的病人")
     public Result registerPatient(@RequestBody PatientInfo patientInfo) {
-        Result result=new Result("200","success",patientService.mysave(patientInfo));
-        return result.success(patientService.mysave(patientInfo));
+        return Result.success(patientService.mysave(patientInfo));
     }
 
 
@@ -51,8 +45,7 @@ public class PatientController {
     @Operation(summary = "就诊卡查询病人信息", description = "查询病人")
     public Result queryPatients(
             @PathVariable int healthcardId) {  //  正确，使用 @PathVariable
-        Result result = new Result("200", "success", patientService.getById(healthcardId));
-        return result.success( patientService.getById(healthcardId));
+        return Result.success( patientService.getById(healthcardId));
     }
     @PutMapping("/updateByHealthcard/{healthcardId}")
     @Operation(summary = "更新病人信息", description = "更新信息")
@@ -64,8 +57,7 @@ public class PatientController {
     @GetMapping("/listall")
     @Operation(summary = "展示所有病人信息", description = "展示信息")
     public Result listallPatients() {
-        Result result =new Result("200","success",patientService.list());
-        return result.success(patientService.list());
+        return Result.success(patientService.list());
     }
     @PostMapping("/recharge/{healthcardId}/{amount}")
     @Operation(summary = "就诊卡充值", description = "为指定就诊卡充值金额")

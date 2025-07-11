@@ -1,6 +1,5 @@
 package org.example.controller;
 
-import io.github.briqt.spark4j.SparkClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,8 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.IOException;
 
 @Slf4j
 @Tag(name = "ai对话", description = "进行简单的ai对话用于帮助挂号与收费")
