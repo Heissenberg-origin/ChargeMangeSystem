@@ -26,7 +26,7 @@ public class aiController {
     @Operation(summary = "对话",description = "与ai对话咨询挂号科室")
     public Result aichat(@Parameter(description = "输入内容",required = true) @RequestBody String inputContent){
         Result result = new Result("200","success",aiService.sendHttpTOSpark(inputContent));
-        return result.success(result.getData());
+        return result.success(aiService.sendHttpTOSpark(inputContent));
     }
 
 

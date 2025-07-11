@@ -45,7 +45,7 @@ public class ArrangeController {
             @Parameter(description = "排班ID", required = true)
             @PathVariable int id) {
         Result result = new Result("200","success",arrangeService.getArrangeById(id));
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeById(id));
     }
 
     @PutMapping("/updatebyId/{id}")
@@ -70,7 +70,7 @@ public class ArrangeController {
     @Operation(summary = "获取所有排班信息", description = "获取所有排班信息列表")
     public Result getAllArrangeInfos() {
         Result result = new Result("200","success",arrangeService.listall());
-        return result.success(result.getData());
+        return result.success(arrangeService.listall());
     }
 
     // ==================== 业务查询接口 ====================
@@ -81,7 +81,7 @@ public class ArrangeController {
             @Parameter(description = "医生ID", required = true)
             @PathVariable int doctorId) {
         Result result = new Result("200","success",arrangeService.getArrangeInfosByDocId(doctorId));
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeInfosByDocId(doctorId));
     }
 
     @GetMapping("/QueryByDate")
@@ -90,7 +90,7 @@ public class ArrangeController {
             @Parameter(description = "排班日期，格式yyyy-MM-dd", required = true)
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         Result result = new Result("200","success",arrangeService.getArrangeInfosByDate(date));
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeInfosByDate(date));
     }
 
     @GetMapping("/QueryBydaterange")
@@ -101,7 +101,7 @@ public class ArrangeController {
             @Parameter(description = "结束日期，格式yyyy-MM-dd", required = true)
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
         Result result = new Result("200","success",arrangeService.getArrangeInfosByDateRange(startDate, endDate));
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeInfosByDateRange(startDate, endDate));
     }
 
     @GetMapping("/Queryavailableslots")
@@ -112,7 +112,7 @@ public class ArrangeController {
             @Parameter(description = "医生ID", required = true)
             @RequestParam int doctorId) {
         Result result = new Result("200","success",arrangeService.getAvailableSlotsAsEnum(doctorId,date));
-        return result.success(result.getData());
+        return result.success(arrangeService.getAvailableSlotsAsEnum(doctorId,date));
     }
 
     @GetMapping("/QueryBydoctoranddate/{doctorId}/{date}")
@@ -123,14 +123,14 @@ public class ArrangeController {
             @Parameter(description = "排班日期，格式yyyy-MM-dd", required = true)
             @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
         Result result = new Result("200","success",arrangeService.getArrangeInfosByDoctorAndDate(doctorId, date));
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeInfosByDoctorAndDate(doctorId, date));
     }
 
     @GetMapping("/Queryremaining")
     @Operation(summary = "查询有余量的排班", description = "获取有余量(可预约)的排班信息")
     public Result getArrangeInfosWithRemaining() {
         Result result = new Result("200","success",arrangeService.getArrangeInfosWithRemaining());
-        return result.success(result.getData());
+        return result.success(arrangeService.getArrangeInfosWithRemaining());
     }
 
     // ==================== 业务操作接口 ====================
@@ -179,7 +179,7 @@ public class ArrangeController {
             @Parameter(description = "医生ID", required = true)
             @PathVariable int doctorId) {
         Result result = new Result("200","success",arrangeService.countArrangeInfosByDoctorId(doctorId));
-        return result.success(result.getData());
+        return result.success(arrangeService.countArrangeInfosByDoctorId(doctorId));
     }
 
     @GetMapping("/countremainingBydoctor/{doctorId}")
@@ -188,6 +188,6 @@ public class ArrangeController {
             @Parameter(description = "医生ID", required = true)
             @PathVariable int doctorId) {
         Result result = new Result("200","success",arrangeService.countRemainingArrangeInfosByDoctorId(doctorId));
-        return result.success(result.getData());
+        return result.success(arrangeService.countRemainingArrangeInfosByDoctorId(doctorId));
     }
 }
