@@ -33,7 +33,7 @@ public class DoctorController {
             @Parameter(description = "医生ID", required = true, example = "1001")
             @RequestParam int docId) {
         Result result= new Result("200","success",doctorService.getDoctorById(docId));
-        return result.success(result.getData());
+        return result.success(doctorService.getDoctorById(docId));
     }
 
     @GetMapping("/getBydepid/{depId}")
@@ -42,14 +42,14 @@ public class DoctorController {
             @PathVariable @Parameter(description = "部门ID", required = true, example = "1001")
             int depId) {
         Result result = new Result("200", "success", doctorService.getDoctorBydepId(depId));
-        return result.success(result.getData());
+        return result.success(doctorService.getDoctorBydepId(depId));
     }
 
     @GetMapping("/findall")
     @Operation(summary = "查询所有医生")
     public Result getallDoctor() {
         Result result= new Result("200","success",doctorService.getalldoc());
-        return result.success(result.getData());
+        return result.success(doctorService.getalldoc());
     }
 
 
@@ -59,7 +59,7 @@ public class DoctorController {
             @Parameter(description = "医生姓名(支持模糊查询)", example = "张")
             @RequestParam String name) {
         Result result= new Result("200","success",doctorService.searchDoctorsByName(name));
-        return result.success(result.getData());
+        return result.success(doctorService.searchDoctorsByName(name));
     }
 
     @PostMapping("/add")

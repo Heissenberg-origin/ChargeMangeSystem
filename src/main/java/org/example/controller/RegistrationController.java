@@ -58,7 +58,7 @@ public class RegistrationController {
     public Result getRegistrationById(
             @PathVariable @Parameter(description = "门诊号") int regId) {
         Result result = new Result("200","success",registrationService.getRegistrationById(regId));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationById(regId));
     }
 
     @GetMapping("/querybyneed/{docId}/{date}/{state}")
@@ -73,14 +73,14 @@ public class RegistrationController {
 
         Result result = new Result("200", "success",
                 registrationService.getRegistrationByneed(docId, sqlDate, state));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationByneed(docId, sqlDate, state));
     }
 
     @GetMapping("/findall")
     @Operation(summary = "获取所有挂号信息")
     public Result getall() {
         Result result = new Result("200","success",registrationService.getall());
-        return result.success(result.getData());
+        return result.success(registrationService.getall());
     }
 
     @GetMapping("/querybyhcard/{regHcardId}")
@@ -88,7 +88,7 @@ public class RegistrationController {
     public Result getRegistrationsByHealthCardId(
             @PathVariable @Parameter(description = "就诊卡号") int regHcardId) {
         Result result = new Result("200","success",registrationService.getRegistrationsByHealthCardId(regHcardId));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByHealthCardId(regHcardId));
     }
 
     @GetMapping("/querybypname")
@@ -96,7 +96,7 @@ public class RegistrationController {
     public Result getRegistrationsBypname(
             @Parameter(description = "患者姓名") String regpname) {
         Result result = new Result("200","success",registrationService.getRegistrationsByPatientname(regpname));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByPatientname(regpname));
     }
 
     @GetMapping("/querybypId")
@@ -104,7 +104,7 @@ public class RegistrationController {
     public Result getRegistrationsBypId(
             @Parameter(description = "患者证件号") String pId) {
         Result result = new Result("200","success",registrationService.getRegistrationsByPatientId(pId));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByPatientId(pId));
     }
 
     @GetMapping("/querybydocname")
@@ -112,7 +112,7 @@ public class RegistrationController {
     public Result getRegistrationsBydocname(
             @RequestParam @Parameter(description = "医生姓名") String docname) {
         Result result = new Result("200","success",registrationService.getRegistrationsByDoctorName(docname));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByDoctorName(docname));
     }
 
     @GetMapping("/querybydepname")
@@ -120,7 +120,7 @@ public class RegistrationController {
     public Result getRegistrationsBydepname(
             @RequestParam @Parameter(description = "部门名称") String depname) {
         Result result = new Result("200","success",registrationService.getRegistrationsByDepartmentName(depname));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByDepartmentName(depname));
     }
 
     @GetMapping("/querybyarrange/{regArrangeId}")
@@ -128,7 +128,7 @@ public class RegistrationController {
     public Result getRegistrationsByArrangeId(
             @RequestParam @Parameter(description = "排班号") int regArrangeId) {
         Result result = new Result("200","success",registrationService.getRegistrationsByArrangeId(regArrangeId));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByArrangeId(regArrangeId));
     }
 
     @PutMapping("/update")
@@ -152,7 +152,7 @@ public class RegistrationController {
     public Result getRegistrationsByState(
             @RequestParam @Parameter(description = "挂号状态") RegistrationInfo.RegistrationState state) {
         Result result = new Result("200","success",registrationService.getRegistrationsByState(state));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByState(state));
     }
 
     @PutMapping("/updatestate/{regId}/{state}")
@@ -169,7 +169,7 @@ public class RegistrationController {
             @RequestParam @Parameter(description = "开始时间") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
             @RequestParam @Parameter(description = "结束时间") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
         Result result = new Result("200","success",registrationService.getRegistrationsByTimeRange(startTime, endTime));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByTimeRange(startTime, endTime));
     }
 
     @PutMapping("/handlepayment/{regId}/{dealerId}/{paymentType}")
@@ -186,7 +186,7 @@ public class RegistrationController {
     public Result getRegistrationsByType(
             @RequestParam @Parameter(description = "挂号类型") RegistrationInfo.RegistrationType type) {
         Result result = new Result("200","success",registrationService.getRegistrationsByType(type));
-        return result.success(result.getData());
+        return result.success(registrationService.getRegistrationsByType(type));
     }
 
     @PutMapping("/handlecancel/{regId}")

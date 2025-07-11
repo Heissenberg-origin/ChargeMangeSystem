@@ -33,7 +33,7 @@ public class DepartmentController {
             @Parameter(description = "部门ID", required = true, example = "101")
             @PathVariable int departmentId){
         Result result=new Result("200","success",departmentService.getalldocById(departmentId));
-        return result.success(result.getData());
+        return result.success(departmentService.getalldocById(departmentId));
 
     }
 
@@ -41,7 +41,7 @@ public class DepartmentController {
     @Operation(summary = "获取所有部门信息")
     public Result getall(){
         Result result=new Result("200","success",departmentService.list());
-        return result.success(result.getData());
+        return result.success(departmentService.list());
     }
 
 
@@ -52,7 +52,7 @@ public class DepartmentController {
             @Parameter(description = "部门ID", required = true, example = "101")
             @PathVariable int departmentId) {
         Result result=new Result("200","success",departmentService.getDepartmentById(departmentId));
-        return result.success(result.getData());
+        return result.success(departmentService.getDepartmentById(departmentId));
     }
 
     @GetMapping("/querybyname")
@@ -61,7 +61,7 @@ public class DepartmentController {
             @Parameter(description = "部门名称(支持模糊查询)", example = "心血管")
             @RequestParam String departmentName) {
         Result result=new Result("200","success", departmentService.getDepartmentsByName(departmentName));
-        return result.success(result.getData());
+        return result.success( departmentService.getDepartmentsByName(departmentName));
     }
 
     @PostMapping("/add")
