@@ -6,12 +6,17 @@ import org.example.dto.PrescriptionStatsSummary;
 import org.example.service.PrescriptionStatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/stats/prescription")
 @Tag(name = "处方统计", description = "处方数据统计分析接口")
 public class PrescriptionStatsController {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private final PrescriptionStatsService statsService;
 

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Mapper
 public interface DailyReportMapper {
-    List<DailyReportDTO> getDailyReport(
+    List<DailyReportDTO> getDailyReport(//获取日结报表数据
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate);
 }

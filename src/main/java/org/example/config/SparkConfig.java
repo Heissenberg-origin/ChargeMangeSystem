@@ -17,6 +17,7 @@ public class SparkConfig {
     @Bean
     public SparkClient sparkClient() {
         SparkClient sparkClient = new SparkClient();
+        //Spark Lite参数设置
         sparkClient.appid = this.appid;
         sparkClient.apiSecret = this.apiSecret;
         sparkClient.apiKey = this.apiKey;

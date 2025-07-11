@@ -1,7 +1,6 @@
 package org.example.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.common.Constants;
 import org.example.entity.LoginInfo;
 import org.example.service.LoginService;
 import org.example.util.JwtTokenUtil;

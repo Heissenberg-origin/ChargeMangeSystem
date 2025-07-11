@@ -8,6 +8,7 @@ import org.example.entity.PatientInfo;
 import org.example.entity.RegistrationInfo;
 import org.example.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,10 @@ import java.util.Map;
 public class RegistrationController {
     @Autowired
     private RegistrationService registrationService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     public RegistrationController(RegistrationService registrationService) {this.registrationService = registrationService;}
     @PostMapping
     @Operation(summary = "创建挂号信息")
@@ -175,15 +180,6 @@ public class RegistrationController {
             @PathVariable @Parameter(description = "支付方式") RegistrationInfo.PaymentType paymentType) {
         registrationService.processRegistrationPayment(regId, dealerId, paymentType);
     }
-
-//    @GetMapping("/statistics")
-//    @Operation(summary = "挂号信息统计")
-//    public Result getRegistrationStatistics(
-//            @RequestParam(required = false) @Parameter(description = "开始日期") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-//            @RequestParam(required = false) @Parameter(description = "结束日期") @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
-//        Result result = new Result("200","success",registrationService.getRegistrationStatistics(startDate, endDate));
-//        return result.success(result.getData());
-//    }
 
     @GetMapping("/querytype")
     @Operation(summary = "根据挂号类型查询")

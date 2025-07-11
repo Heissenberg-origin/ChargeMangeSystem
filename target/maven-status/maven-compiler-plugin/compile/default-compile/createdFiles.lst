@@ -20,6 +20,7 @@ org\example\dto\RegistrationStatsDTO.class
 org\example\exception\GlobalExceptionHandler.class
 org\example\controller\PrescriptionController.class
 org\example\service\RegistrationService.class
+org\example\config\RedisConfig.class
 org\example\service\impl\LogServiceImpl.class
 org\example\entity\LoginInfo$UserRank.class
 org\example\controller\RegistrationStatsController.class
@@ -83,7 +84,6 @@ org\example\controller\aiController.class
 org\example\entity\LogInfo$OperationType.class
 org\example\entity\DepartmentInfo.class
 org\example\dto\DailyReportSummary.class
-org\example\common\Constants.class
 org\example\config\MybatisPlusConfig.class
 org\example\mapper\DailyReportMapper.class
 org\example\entity\ChargeItemsInfo$ItemState.class

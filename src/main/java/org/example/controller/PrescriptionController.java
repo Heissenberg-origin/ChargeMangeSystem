@@ -8,6 +8,7 @@ import org.example.common.Result;
 import org.example.entity.PrescriptionInfo;
 import org.example.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,9 @@ public class PrescriptionController {
 
     @Autowired
     private PrescriptionService prescriptionService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     public PrescriptionController(PrescriptionService prescriptionService) {
         this.prescriptionService = prescriptionService;

@@ -16,6 +16,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ArrangeInfo {
+
     // ==================== 枚举定义 ====================
     @Schema(description = "排班时间段枚举")
     public enum TimeSlot {
@@ -28,7 +29,7 @@ public class ArrangeInfo {
         @Schema(description = "16:00-17:00") SLOT_16_17("16:00-17:00"),
         @Schema(description = "17:00-18:00") SLOT_17_18("17:00-18:00");
 
-        public  String displayValue;
+        public String displayValue;
 
         TimeSlot(String displayValue) {
             this.displayValue = displayValue;
@@ -55,69 +56,36 @@ public class ArrangeInfo {
         }
     }
 
-
     // ==================== 字段声明 ====================
     @Schema(description = "排班ID", example = "1")
     @TableField("arrange_id")
-    private int arrangeid;
+    private int arrangeid;  // 排班的唯一标识
 
-    public int getArrangeid() {
-        return arrangeid;
-    }
-
-    public void setArrangeid(int arrangeid) {
-        this.arrangeid = arrangeid;
-    }
-
-    public Date getArrangedate() {
-        return arrangedate;
-    }
-
-    public void setArrangedate(Date arrangedate) {
-        this.arrangedate = arrangedate;
-    }
-
-    public int getArrangebalance() {
-        return arrangebalance;
-    }
-
-    public void setArrangebalance(int arrangebalance) {
-        this.arrangebalance = arrangebalance;
-    }
-
-    public int getArrangedocid() {
-        return arrangedocid;
-    }
-
-    public void setArrangedocid(int arrangedocid) {
-        this.arrangedocid = arrangedocid;
-    }
-
-    @JsonFormat(pattern = "yyyy-MM-dd",timezone = "Asia/Shanghai")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
     @Schema(description = "排班日期", example = "2023-10-01")
     @TableField("arrange_date")
-    private Date arrangedate;
+    private Date arrangedate;  // 排班的日期
 
     @Schema(description = "排班时间段",
             allowableValues = {"8:00-9:00", "9:00-10:00", "10:00-11:00",
                     "11:00-12:00",  "14:00-15:00",
                     "15:00-16:00", "16:00-17:00", "17:00-18:00"})
     @TableField(value = "arrange_timezone", typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
-    public TimeSlot arrangetimezone;
+    public TimeSlot arrangetimezone;  // 排班的时间段
 
     @Schema(description = "号余量", example = "10")
     @TableField("arrange_balance")
-    private int arrangebalance;
+    private int arrangebalance;  // 剩余号数
 
     @Schema(description = "医生ID", example = "1001")
     @TableField("arrange_doc_id")
-    private int arrangedocid;
+    private int arrangedocid;  // 负责排班的医生ID
 
     @TableField(exist = false)
-    private String docname;
+    private String docname;  // 医生姓名（非数据库字段）
 
     @TableField(exist = false)
-    private String depname;
+    private String depname;  // 科室名称（非数据库字段）
 
     // 添加支持String输入的setter方法
     public void setArrangetimezone(String timezone) {

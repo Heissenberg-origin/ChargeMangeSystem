@@ -5,18 +5,22 @@ import lombok.Data;
 
 import java.util.Date;
 
+/**
+ * RegistrationStatsRequest 类用于封装挂号统计请求的参数。
+ */
 @Data
 @Schema(description = "挂号统计请求参数")
 public class RegistrationStatsRequest {
+
     @Schema(description = "开始时间", required = true, example = "2023-01-01")
-    private Date startTime;
+    private Date startTime;  // 统计的开始时间，必须提供，格式为 YYYY-MM-DD
 
     @Schema(description = "结束时间", required = true, example = "2023-12-31")
-    private Date endTime;
+    private Date endTime;    // 统计的结束时间，必须提供，格式为 YYYY-MM-DD
 
     @Schema(description = "时间类型(day/week/month)", required = true, example = "day")
-    private String timeType;
+    private String timeType;  // 统计的时间类型，可以是 day、week 或 month
 
     @Schema(description = "统计方式(department/doctor)", required = true, example = "department")
-    private String groupBy;
+    private String groupBy;    // 统计的分组方式，可以是 department（科室）或 doctor（医生）
 }

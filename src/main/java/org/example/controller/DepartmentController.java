@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.common.Result;
 import org.example.entity.DepartmentInfo;
 import org.example.service.DepartmentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,9 @@ import java.util.List;
 @RequestMapping("/departments")
 @Tag(name = "部门管理", description = "部门信息管理接口")
 public class DepartmentController {
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
 
     private final DepartmentService departmentService;
 

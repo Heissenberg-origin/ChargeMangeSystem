@@ -7,27 +7,27 @@
     <!-- 按科室统计（按挂号数降序） -->
     <select id="statsByDepartment" resultType="org.example.dto.RegistrationStatsDTO">
         SELECT
-        dep.department_name AS groupName,
+        dep.department_name AS groupName,  <!-- 科室名称 -->
         <choose>
             <when test="timeType == 'day'">
-                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,  <!-- 按天显示时间段 -->
             </when>
             <when test="timeType == 'week'">
-                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,  <!-- 按周显示时间段 -->
             </when>
             <otherwise>
-                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,
+                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,  <!-- 按月显示时间段 -->
             </otherwise>
         </choose>
-        COUNT(*) AS totalRegistrations,
-        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,
-        SUM(doc.doc_fee) AS totalAmount,
-        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount
+        COUNT(*) AS totalRegistrations,  <!-- 总挂号数量 -->
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,  <!-- 退号数量 -->
+        SUM(doc.doc_fee) AS totalAmount,  <!-- 总金额 -->
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount  <!-- 退款金额 -->
         FROM registration_info ri
-        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id
-        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id
-        JOIN department_info dep ON doc.doc_dp_id = dep.department_id
-        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}
+        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id  <!-- 连接挂号和排班表 -->
+        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id  <!-- 连接医生信息 -->
+        JOIN department_info dep ON doc.doc_dp_id = dep.department_id  <!-- 连接科室信息 -->
+        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}  <!-- 时间范围 -->
         GROUP BY dep.department_id,
         <choose>
             <when test="timeType == 'day'">
@@ -40,33 +40,33 @@
                 DATE_FORMAT(ri.reg_time, '%Y-%m')
             </otherwise>
         </choose>
-        ORDER BY timePeriod, totalRegistrations DESC  <!-- 关键修改：添加DESC降序 -->
+        ORDER BY timePeriod, totalRegistrations DESC  <!-- 按时间段和挂号数量降序排列 -->
     </select>
 
     <!-- 按医生统计（按挂号数降序） -->
     <select id="statsByDoctor" resultType="org.example.dto.RegistrationStatsDTO">
         SELECT
-        CONCAT(doc.doc_name, '(', dep.department_name, ')') AS groupName,
+        CONCAT(doc.doc_name, '(', dep.department_name, ')') AS groupName,  <!-- 医生姓名和科室名称 -->
         <choose>
             <when test="timeType == 'day'">
-                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,
+                DATE_FORMAT(ri.reg_time, '%Y-%m-%d') AS timePeriod,  <!-- 按天显示时间段 -->
             </when>
             <when test="timeType == 'week'">
-                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,
+                CONCAT(YEAR(ri.reg_time), '-', WEEK(ri.reg_time)) AS timePeriod,  <!-- 按周显示时间段 -->
             </when>
             <otherwise>
-                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,
+                DATE_FORMAT(ri.reg_time, '%Y-%m') AS timePeriod,  <!-- 按月显示时间段 -->
             </otherwise>
         </choose>
-        COUNT(*) AS totalRegistrations,
-        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,
-        SUM(doc.doc_fee) AS totalAmount,
-        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount
+        COUNT(*) AS totalRegistrations,  <!-- 总挂号数量 -->
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN 1 ELSE 0 END) AS canceledCount,  <!-- 退号数量 -->
+        SUM(doc.doc_fee) AS totalAmount,  <!-- 总金额 -->
+        SUM(CASE WHEN ri.reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS refundAmount  <!-- 退款金额 -->
         FROM registration_info ri
-        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id
-        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id
-        JOIN department_info dep ON doc.doc_dp_id = dep.department_id
-        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}
+        JOIN arrange_info ai ON ri.reg_arrange_id = ai.arrange_id  <!-- 连接挂号和排班表 -->
+        JOIN doctor_info doc ON ai.arrange_doc_id = doc.doc_id  <!-- 连接医生信息 -->
+        JOIN department_info dep ON doc.doc_dp_id = dep.department_id  <!-- 连接科室信息 -->
+        WHERE ri.reg_time BETWEEN #{startTime} AND #{endTime}  <!-- 时间范围 -->
         GROUP BY doc.doc_id, dep.department_id,
         <choose>
             <when test="timeType == 'day'">
@@ -79,6 +79,6 @@
                 DATE_FORMAT(ri.reg_time, '%Y-%m')
             </otherwise>
         </choose>
-        ORDER BY timePeriod, totalRegistrations DESC  <!-- 关键修改：添加DESC降序 -->
+        ORDER BY timePeriod, totalRegistrations DESC  <!-- 按时间段和挂号数量降序排列 -->
     </select>
 </mapper>

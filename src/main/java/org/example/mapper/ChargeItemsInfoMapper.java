@@ -14,6 +14,12 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
 
     // ==================== 基础CRUD操作 ====================
 
+    /**
+     * 插入收费项目
+     *
+     * @param chargeItemsInfo 收费项目信息
+     * @param creator         创建者
+     */
     @Insert("INSERT INTO chargeitems_info (" +
             "chargeitem_type, chargeitem_name, chargeitem_code, chargeitem_ex_dep_id, " +
             "chargeitem_method, chargeitem_unit, chargeitem_balance, chargeitem_price, " +
@@ -21,14 +27,19 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             ") VALUES (" +
             "#{chargeItemsInfo.chargeItemType.displayValue}, #{chargeItemsInfo.chargeItemName}, #{chargeItemsInfo.chargeItemCode}, #{chargeItemsInfo.chargeItemExDepId}, " +
             "#{chargeItemsInfo.chargeItemMethod}, #{chargeItemsInfo.chargeItemUnit}, #{chargeItemsInfo.chargeItemBalance}, #{chargeItemsInfo.chargeItemPrice}, " +
-            "#{chargeItemsInfo.chargeItemState.displayValue},#{creator}, NOW(), #{creator}" +
+            "#{chargeItemsInfo.chargeItemState.displayValue}, #{creator}, NOW(), #{creator}" +
             ")")
     @Options(useGeneratedKeys = true, keyProperty = "chargeItemsInfo.chargeItemId")
-    void insertInfo(ChargeItemsInfo chargeItemsInfo,String creator);
+    void insertInfo(ChargeItemsInfo chargeItemsInfo, String creator);
 
+    /**
+     * 查询所有收费项目
+     *
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -46,15 +57,14 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             chargeitems_info ci
         JOIN
             department_info di ON ci.chargeitem_ex_dep_id = di.department_id
-
-          """)
+        """)
     @Results(id = "chargeItemResultMap", value = {
             @Result(property = "chargeItemId", column = "chargeitem_id"),
             @Result(property = "chargeItemType", column = "chargeitem_type"),
             @Result(property = "chargeItemName", column = "chargeitem_name"),
             @Result(property = "chargeItemCode", column = "chargeitem_code"),
-            @Result(property = "chargeItemExDepId", column = "chargeitem_ex_dep_id"),//多表查询出departmen_name
-            @Result(property = "depname",column = "depName"),
+            @Result(property = "chargeItemExDepId", column = "chargeitem_ex_dep_id"),
+            @Result(property = "depname", column = "depName"),
             @Result(property = "chargeItemMethod", column = "chargeitem_method"),
             @Result(property = "chargeItemUnit", column = "chargeitem_unit"),
             @Result(property = "chargeItemBalance", column = "chargeitem_balance"),
@@ -66,9 +76,15 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     })
     List<ChargeItemsInfo> selectAll();
 
+    /**
+     * 根据ID查询收费项目
+     *
+     * @param id 收费项目ID
+     * @return 收费项目信息
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -88,12 +104,18 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             department_info di ON ci.chargeitem_ex_dep_id = di.department_id
         WHERE
             ci.chargeitem_id = #{id}
-          """)
+        """)
     @ResultMap("chargeItemResultMap")
     ChargeItemsInfo selectById(int id);
 
+    /**
+     * 更新收费项目信息
+     *
+     * @param id               收费项目ID
+     * @param chargeItemsInfo  更新后的收费项目信息
+     * @param fixer            修订者
+     */
     @Update("UPDATE chargeitems_info SET " +
-
             "chargeitem_name = #{chargeItemsInfo.chargeItemName}, " +
             "chargeitem_type = #{chargeItemsInfo.chargeItemType.displayValue}, " +
             "chargeitem_code = #{chargeItemsInfo.chargeItemCode}, " +
@@ -105,16 +127,27 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
             "chargeitem_state = #{chargeItemsInfo.chargeItemState.displayValue}, " +
             "chargeitem_lattest_fixer = #{fixer} " +
             "WHERE chargeitem_id = #{id}")
-    void updateInfo(int id, ChargeItemsInfo chargeItemsInfo,String fixer);
+    void updateInfo(int id, ChargeItemsInfo chargeItemsInfo, String fixer);
 
+    /**
+     * 根据ID删除收费项目
+     *
+     * @param id 收费项目ID
+     */
     @Delete("DELETE FROM chargeitems_info WHERE chargeitem_id = #{id}")
     void delete(int id);
 
     // ==================== 业务查询操作 ====================
 
+    /**
+     * 根据类型查询收费项目
+     *
+     * @param type 收费项目类型
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -137,9 +170,15 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByType(ChargeItemsInfo.ChargeItemType type);
 
+    /**
+     * 根据部门ID查询收费项目
+     *
+     * @param departmentId 部门ID
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -163,9 +202,15 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByDepartment(int departmentId);
 
+    /**
+     * 根据状态查询收费项目
+     *
+     * @param status 收费项目状态
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -189,9 +234,15 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByStatus(ChargeItemsInfo.ItemState status);
 
+    /**
+     * 根据关键字模糊查询收费项目
+     *
+     * @param keyword 查询关键字
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -215,9 +266,15 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> searchByKeyword(String keyword);
 
+    /**
+     * 查询低余额的收费项目
+     *
+     * @param threshold 余额阈值
+     * @return 余额低于阈值的收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -241,9 +298,16 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectWithLowBalance(int threshold);
 
+    /**
+     * 根据价格范围查询收费项目
+     *
+     * @param minPrice 最小价格
+     * @param maxPrice 最大价格
+     * @return 指定价格范围内的收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -270,6 +334,13 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
 
     // ==================== 业务操作 ====================
 
+    /**
+     * 更新收费项目状态
+     *
+     * @param id       收费项目ID
+     * @param status   更新后的状态
+     * @param modifier 修订者
+     */
     @Update("UPDATE chargeitems_info SET " +
             "chargeitem_state = #{status.displayValue}, " +
             "chargeitem_lattest_fixer = #{modifier} " +
@@ -278,6 +349,14 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
                       @Param("status") ChargeItemsInfo.ItemState status,
                       @Param("modifier") String modifier);
 
+    /**
+     * 修改收费项目的余额
+     *
+     * @param id       收费项目ID
+     * @param change   变更的金额
+     * @param modifier 修订者
+     * @return 影响的行数
+     */
     @Update("UPDATE chargeitems_info SET " +
             "chargeitem_balance = #{change}, " +
             "chargeitem_lattest_fixer = #{modifier} " +
@@ -288,12 +367,23 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
 
     // ==================== 统计查询操作 ====================
 
+    /**
+     * 查询所有收费项目的类型
+     *
+     * @return 收费项目类型列表
+     */
     @Select("SELECT DISTINCT chargeitem_type FROM chargeitems_info")
     List<String> selectAllTypes();
 
+    /**
+     * 根据创建者查询收费项目
+     *
+     * @param creator 创建者
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -312,14 +402,20 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
         JOIN
             department_info di ON ci.chargeitem_ex_dep_id = di.department_id
         WHERE
-            chargeitem_creator  LIKE CONCAT('%',  #{creator}, '%')
+            chargeitem_creator LIKE CONCAT('%', #{creator}, '%')
         """)
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByCreator(String creator);
 
+    /**
+     * 根据最后修订者查询收费项目
+     *
+     * @param modifier 修订者
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -343,9 +439,16 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     @ResultMap("chargeItemResultMap")
     List<ChargeItemsInfo> selectByModifier(String modifier);
 
+    /**
+     * 查询在指定时间范围内创建的收费项目
+     *
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     * @return 收费项目列表
+     */
     @Select("""
         SELECT
-            ci.chargeitem_id ,
+            ci.chargeitem_id,
             ci.chargeitem_type,
             ci.chargeitem_name,
             ci.chargeitem_code,
@@ -370,6 +473,11 @@ public interface ChargeItemsInfoMapper extends BaseMapper<ChargeItemsInfo> {
     List<ChargeItemsInfo> selectCreatedBetween(@Param("startDate") Timestamp startDate,
                                                @Param("endDate") Timestamp endDate);
 
+    /**
+     * 查询收费项目的统计信息
+     *
+     * @return 统计信息
+     */
     @Select("SELECT " +
             "COUNT(*) AS totalCount, " +
             "SUM(chargeitem_balance) AS totalBalance, " +

@@ -8,6 +8,7 @@ import org.example.common.Result;
 import org.example.entity.ArrangeInfo;
 import org.example.service.ArrangeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,9 @@ import java.util.List;
 public class ArrangeController {
     @Autowired
     private  ArrangeService arrangeService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     public ArrangeController(ArrangeService arrangeService) {
         this.arrangeService = arrangeService;
     }

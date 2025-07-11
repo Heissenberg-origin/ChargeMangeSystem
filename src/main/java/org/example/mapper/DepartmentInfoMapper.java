@@ -12,9 +12,9 @@ import java.util.List;
 public interface DepartmentInfoMapper extends BaseMapper<DepartmentInfo> {
 
     @Select("SELECT  doc_id from doctor_info WHERE doc_dp_id IN (SELECT department_id FROM department_info WHERE department_id=#{depid})")
-    List<Integer>getalldoc(int depid);
+    List<Integer>getalldoc(int depid);//获取部门所有医生数据
     // 默认继承selectById等方法
 
     @Update("UPDATE  department_info SET department_name=#{departmentInfo.departmentName},location=#{departmentInfo.location}, dp_phone=#{departmentInfo.dpPhone} WHERE department_id=#{depid}")
-    void updatebyid(int depid,DepartmentInfo departmentInfo);
+    void updatebyid(int depid,DepartmentInfo departmentInfo);//根据部门号更新数据
 }

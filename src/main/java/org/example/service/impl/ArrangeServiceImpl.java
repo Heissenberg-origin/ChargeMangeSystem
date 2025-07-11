@@ -1,7 +1,6 @@
 package org.example.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.apache.ibatis.annotations.Select;
 import org.example.entity.ArrangeInfo;
 import org.example.mapper.ArrangeInfoMapper;
 import org.example.service.ArrangeService;
@@ -15,77 +14,161 @@ import java.util.stream.Collectors;
 
 @Service
 public class ArrangeServiceImpl extends ServiceImpl<ArrangeInfoMapper, ArrangeInfo> implements ArrangeService {
+
     @Autowired
     private ArrangeInfoMapper arrangeInfoMapper;
-    public ArrangeInfo getArrangeById(int id){
+
+    /**
+     * 根据ID获取排班信息
+     *
+     * @param id 排班ID
+     * @return 排班信息对象
+     */
+    public ArrangeInfo getArrangeById(int id) {
         return arrangeInfoMapper.selectArrangeById(id);
     }
 
-    public void setArrangeByid(ArrangeInfo arrangeInfo,int id ){
-        String timezone=arrangeInfo.arrangetimezone.displayValue;
-        arrangeInfoMapper.updateArrangeInfo(arrangeInfo,timezone,id);
+    /**
+     * 更新排班信息
+     *
+     * @param arrangeInfo 排班信息对象
+     * @param id          排班ID
+     */
+    public void setArrangeByid(ArrangeInfo arrangeInfo, int id) {
+        String timezone = arrangeInfo.arrangetimezone.displayValue;
+        arrangeInfoMapper.updateArrangeInfo(arrangeInfo, timezone, id);
     }
-    public List<ArrangeInfo> listall(){
-        List<ArrangeInfo>list=arrangeInfoMapper.listallInfo();
-        return list;
+
+    /**
+     * 获取所有排班信息
+     *
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> listall() {
+        return arrangeInfoMapper.listallInfo();
     }
-    public void deleteById(int id){
+
+    /**
+     * 根据ID删除排班信息
+     *
+     * @param id 排班ID
+     */
+    public void deleteById(int id) {
         arrangeInfoMapper.deleteArrangeById(id);
     }
-    public List<ArrangeInfo> getArrangeInfosByDocId(int docid){
-        List<ArrangeInfo>list=arrangeInfoMapper.selectBydocId(docid);
-        System.out.println(list);
-        return list;
+
+    /**
+     * 根据医生ID获取排班信息
+     *
+     * @param docid 医生ID
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> getArrangeInfosByDocId(int docid) {
+        return arrangeInfoMapper.selectBydocId(docid);
     }
-    public List<ArrangeInfo> getArrangeInfosByDate(Date date1){
-        List<ArrangeInfo>list=arrangeInfoMapper.selectBydate(date1);
-        System.out.println(list);
-        return list;
+
+    /**
+     * 根据日期获取排班信息
+     *
+     * @param date1 查询日期
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> getArrangeInfosByDate(Date date1) {
+        return arrangeInfoMapper.selectBydate(date1);
     }
-    public List<ArrangeInfo> getArrangeInfosByDateRange(Date startDate, Date endDate){
-        System.out.println(startDate);
-        System.out.println(endDate);
-        List<ArrangeInfo>list=arrangeInfoMapper.selectByDaterange(startDate, endDate);
-        System.out.println(list);
-        return list;
+
+    /**
+     * 根据日期范围获取排班信息
+     *
+     * @param startDate 开始日期
+     * @param endDate   结束日期
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> getArrangeInfosByDateRange(Date startDate, Date endDate) {
+        return arrangeInfoMapper.selectByDaterange(startDate, endDate);
     }
+
+    /**
+     * 获取医生在指定日期的可用时间段
+     *
+     * @param docid 医生ID
+     * @param date  查询日期
+     * @return 可用时间段列表
+     */
     public List<ArrangeInfo.TimeSlot> getAvailableSlotsAsEnum(int docid, Date date) {
         List<String> slots = arrangeInfoMapper.getAvailableSlots(docid, date);
         return slots.stream()
                 .map(ArrangeInfo.TimeSlot::fromDisplayValue)
                 .collect(Collectors.toList());
     }
-    public List<ArrangeInfo> getArrangeInfosByDoctorAndDate(int doctorId,Date date){
-        List<ArrangeInfo>list =arrangeInfoMapper.getdetailinfo(doctorId,date);
-        System.out.println(list);
-        return list;
-    }
-    public List<ArrangeInfo>getArrangeInfosWithRemaining(){
-        List<ArrangeInfo>list=arrangeInfoMapper.getremainingInfo();
-        System.out.println(list);
-        return list;
-    }
-    public void updateArrangeBalance(int id,int balance){
-        arrangeInfoMapper.updateBalance(id,balance);
-        System.out.println(id+"对应号余量已更新为"+balance);
-    }
-    public void decreaseArrangeBalance(int id,int amount){
-        arrangeInfoMapper.decreaseBalance(id,amount);
-        System.out.println(id+"对应号余量已减"+amount);
-    }
-    public void increaseArrangeBalance(int id,int amount){
-        arrangeInfoMapper.increaseBalance(id,amount);
-        System.out.println(id+"对应号余量已加"+amount);
-    }
-    public long countArrangeInfosByDoctorId(int doctorId){
-        long count=arrangeInfoMapper.countbydocid(doctorId);
-        System.out.println(doctorId+"对应医生目前排班数量为"+count);
-        return count;
-    }
-    public long countRemainingArrangeInfosByDoctorId(int doctorId){
-        long count=arrangeInfoMapper.countremainingbydocid(doctorId);
-        System.out.println(doctorId+"对应医生目前有余量的排班量为"+count);
-        return count;
+
+    /**
+     * 根据医生ID和日期获取详细排班信息
+     *
+     * @param doctorId 医生ID
+     * @param date     查询日期
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> getArrangeInfosByDoctorAndDate(int doctorId, Date date) {
+        return arrangeInfoMapper.getdetailinfo(doctorId, date);
     }
 
+    /**
+     * 获取有剩余的排班信息
+     *
+     * @return 排班信息列表
+     */
+    public List<ArrangeInfo> getArrangeInfosWithRemaining() {
+        return arrangeInfoMapper.getremainingInfo();
+    }
+
+    /**
+     * 更新排班余额
+     *
+     * @param id      排班ID
+     * @param balance 新余额
+     */
+    public void updateArrangeBalance(int id, int balance) {
+        arrangeInfoMapper.updateBalance(id, balance);
+    }
+
+    /**
+     * 减少排班余额
+     *
+     * @param id     排班ID
+     * @param amount 减少的金额
+     */
+    public void decreaseArrangeBalance(int id, int amount) {
+        arrangeInfoMapper.decreaseBalance(id, amount);
+    }
+
+    /**
+     * 增加排班余额
+     *
+     * @param id     排班ID
+     * @param amount 增加的金额
+     */
+    public void increaseArrangeBalance(int id, int amount) {
+        arrangeInfoMapper.increaseBalance(id, amount);
+    }
+
+    /**
+     * 根据医生ID统计排班数量
+     *
+     * @param doctorId 医生ID
+     * @return 排班数量
+     */
+    public long countArrangeInfosByDoctorId(int doctorId) {
+        return arrangeInfoMapper.countbydocid(doctorId);
+    }
+
+    /**
+     * 根据医生ID统计可用排班数量
+     *
+     * @param doctorId 医生ID
+     * @return 可用排班数量
+     */
+    public long countRemainingArrangeInfosByDoctorId(int doctorId) {
+        return arrangeInfoMapper.countremainingbydocid(doctorId);
+    }
 }

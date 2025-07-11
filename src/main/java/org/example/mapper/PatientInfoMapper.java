@@ -16,9 +16,11 @@ import org.example.entity.PatientInfo;
 public interface PatientInfoMapper extends BaseMapper<PatientInfo> {
     // void save(User user);
 
+    //就诊卡余额结算
     @Update("UPDATE patient_info SET healthcard_balance=0 WHERE healthcard_id=#{healthcardId}")
     void settle(int healthcardId);
 
+    //获取最新挂号记录
     @Select("select MAX(healthcard_id) FROM patient_info ")
     int getMaxHealthcardId();
 }

@@ -13,74 +13,185 @@ import java.util.Map;
 
 @Service
 public class ChargeItemServiceImpl extends ServiceImpl<ChargeItemsInfoMapper, ChargeItemsInfo> implements ChargeItemService {
+
     @Autowired
     private ChargeItemsInfoMapper chargeItemsInfoMapper;
 
-    public void createChargeItem(ChargeItemsInfo chargeItemsInfo){
-        chargeItemsInfoMapper.insertInfo(chargeItemsInfo,"系统管理员");
+
+    /**
+     * 创建新的收费项目
+     *
+     * @param chargeItemsInfo 收费项目对象
+     */
+    public void createChargeItem(ChargeItemsInfo chargeItemsInfo) {
+        chargeItemsInfoMapper.insertInfo(chargeItemsInfo, "系统管理员");
     }
-    public List<ChargeItemsInfo> getAllChargeItems(){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectAll();
-        return list;
+
+    /**
+     * 获取所有收费项目
+     *
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getAllChargeItems() {
+        return chargeItemsInfoMapper.selectAll();
     }
-    public ChargeItemsInfo getChargeItemById(int id){
-        ChargeItemsInfo info=chargeItemsInfoMapper.selectById(id);
-        return info;
+
+    /**
+     * 根据ID获取收费项目
+     *
+     * @param id 收费项目ID
+     * @return 收费项目对象
+     */
+    public ChargeItemsInfo getChargeItemById(int id) {
+        return chargeItemsInfoMapper.selectById(id);
     }
-    public void updateChargeItem(int id, ChargeItemsInfo chargeItemsInfo){
-        chargeItemsInfoMapper.updateInfo(id,chargeItemsInfo,"系统管理员");
+
+    /**
+     * 更新收费项目
+     *
+     * @param id              收费项目ID
+     * @param chargeItemsInfo 更新后的收费项目对象
+     */
+    public void updateChargeItem(int id, ChargeItemsInfo chargeItemsInfo) {
+        chargeItemsInfoMapper.updateInfo(id, chargeItemsInfo, "系统管理员");
     }
-    public void deleteChargeItem(int id){
+
+    /**
+     * 根据ID删除收费项目
+     *
+     * @param id 收费项目ID
+     */
+    public void deleteChargeItem(int id) {
         chargeItemsInfoMapper.delete(id);
     }
-    public List<ChargeItemsInfo> getChargeItemsByType(ChargeItemsInfo.ChargeItemType type){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByType(type);
-        return list;
+
+    /**
+     * 根据类型获取收费项目
+     *
+     * @param type 收费项目类型
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsByType(ChargeItemsInfo.ChargeItemType type) {
+        return chargeItemsInfoMapper.selectByType(type);
     }
-    public List<ChargeItemsInfo> getChargeItemsByDepartment(int departmentId){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByDepartment(departmentId);
-        return list;
+
+    /**
+     * 根据部门ID获取收费项目
+     *
+     * @param departmentId 部门ID
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsByDepartment(int departmentId) {
+        return chargeItemsInfoMapper.selectByDepartment(departmentId);
     }
+
+    /**
+     * 根据状态获取收费项目
+     *
+     * @param status 收费项目状态
+     * @return 收费项目列表
+     */
     public List<ChargeItemsInfo> getChargeItemsByStatus(ChargeItemsInfo.ItemState status) {
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByStatus(status);
-        return list;
+        return chargeItemsInfoMapper.selectByStatus(status);
     }
-    public List<ChargeItemsInfo> searchChargeItems(String keyword){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.searchByKeyword(keyword);
-        return list;
+
+    /**
+     * 根据关键字搜索收费项目
+     *
+     * @param keyword 查询关键字
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> searchChargeItems(String keyword) {
+        return chargeItemsInfoMapper.searchByKeyword(keyword);
     }
-    public List<ChargeItemsInfo> getChargeItemsWithLowBalance(int threshold){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectWithLowBalance(threshold);
-        return list;
+
+    /**
+     * 获取余额低于指定阈值的收费项目
+     *
+     * @param threshold 余额阈值
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsWithLowBalance(int threshold) {
+        return chargeItemsInfoMapper.selectWithLowBalance(threshold);
     }
-    public void updateChargeItemStatus(int id, ChargeItemsInfo.ItemState status){
-        chargeItemsInfoMapper.updateStatus(id,status,"系统管理员");
+
+    /**
+     * 更新收费项目状态
+     *
+     * @param id     收费项目ID
+     * @param status 新的状态
+     */
+    public void updateChargeItemStatus(int id, ChargeItemsInfo.ItemState status) {
+        chargeItemsInfoMapper.updateStatus(id, status, "系统管理员");
     }
-    public void updateChargeItemBalance(int id, int change){
-        chargeItemsInfoMapper.updateBalance(id,change,"系统管理员");
+
+    /**
+     * 更新收费项目的余额
+     *
+     * @param id    收费项目ID
+     * @param change 变化的金额
+     */
+    public void updateChargeItemBalance(int id, int change) {
+        chargeItemsInfoMapper.updateBalance(id, change, "系统管理员");
     }
-    public List<ChargeItemsInfo> getChargeItemsByPriceRange(double minPrice, double maxPrice){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByPriceRange(minPrice,maxPrice);
-        return list;
+
+    /**
+     * 根据价格范围获取收费项目
+     *
+     * @param minPrice 最小价格
+     * @param maxPrice 最大价格
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsByPriceRange(double minPrice, double maxPrice) {
+        return chargeItemsInfoMapper.selectByPriceRange(minPrice, maxPrice);
     }
-    public List<String> getAllChargeItemTypes(){
-        List<String> list=chargeItemsInfoMapper.selectAllTypes();
-        return list;
+
+    /**
+     * 获取所有收费项目类型
+     *
+     * @return 收费项目类型列表
+     */
+    public List<String> getAllChargeItemTypes() {
+        return chargeItemsInfoMapper.selectAllTypes();
     }
-    public List<ChargeItemsInfo> getChargeItemsByCreator(String creator){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByCreator(creator);
-        return list;
+
+    /**
+     * 根据创建人获取收费项目
+     *
+     * @param creator 创建人
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsByCreator(String creator) {
+        return chargeItemsInfoMapper.selectByCreator(creator);
     }
-    public List<ChargeItemsInfo> getChargeItemsByModifier(String modifier){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectByModifier(modifier);
-        return list;
+
+    /**
+     * 根据最后修订者获取收费项目
+     *
+     * @param modifier 最后修订者
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsByModifier(String modifier) {
+        return chargeItemsInfoMapper.selectByModifier(modifier);
     }
-    public List<ChargeItemsInfo> getChargeItemsCreatedBetween(Timestamp startDate, Timestamp endDate){
-        List<ChargeItemsInfo> list=chargeItemsInfoMapper.selectCreatedBetween(startDate,endDate);
-        return list;
+
+    /**
+     * 获取在指定时间范围内创建的收费项目
+     *
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     * @return 收费项目列表
+     */
+    public List<ChargeItemsInfo> getChargeItemsCreatedBetween(Timestamp startDate, Timestamp endDate) {
+        return chargeItemsInfoMapper.selectCreatedBetween(startDate, endDate);
     }
-    public Map<String, Object> getChargeItemsStatistics(){
-        Map<String, Object> map=chargeItemsInfoMapper.selectStatistics();
-        return map;
+
+    /**
+     * 获取收费项目统计信息
+     *
+     * @return 统计信息映射
+     */
+    public Map<String, Object> getChargeItemsStatistics() {
+        return chargeItemsInfoMapper.selectStatistics();
     }
 }

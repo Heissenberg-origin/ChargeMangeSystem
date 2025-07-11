@@ -5,12 +5,17 @@ import org.example.dto.DailyReportSummary;
 import org.example.service.DailyReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/report/daily")
 @Tag(name = "日报表统计", description = "日报表统计分析接口")
 public class DailyReportController {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private final DailyReportService dailyReportService;
 

@@ -4,38 +4,38 @@
 
     <select id="statsByDepartment" resultType="org.example.dto.PrescriptionStatsDTO">
         SELECT
-        d.department_name AS groupName,
+        d.department_name AS groupName,  <!-- 部门名称 -->
         <choose>
             <when test="timeType == 'day'">
-                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,  <!-- 按天显示时间段 -->
             </when>
             <when test="timeType == 'week'">
-                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,  <!-- 按周显示时间段 -->
             </when>
             <when test="timeType == 'month'">
-                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
+                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,  <!-- 按月显示时间段 -->
             </when>
         </choose>
-        COUNT(*) AS totalPrescriptions,
-        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,
-        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,
-        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,
-        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,
-        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,
-        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,
-        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
+        COUNT(*) AS totalPrescriptions,  <!-- 总处方数量 -->
+        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,  <!-- 已完成处方数量 -->
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,  <!-- 待缴费处方数量 -->
+        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,  <!-- 退款处方数量 -->
+        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,  <!-- 总金额 -->
+        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,  <!-- 已完成金额 -->
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,  <!-- 待缴费金额 -->
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount  <!-- 退款金额 -->
         FROM
         prescription_info p
-        JOIN registration_info r ON p.pre_reg_id=r.reg_id
-        JOIN arrange_info a ON r.reg_arrange_id=a.arrange_id
-        JOIN doctor_info doc ON doc.doc_id=a.arrange_doc_id
+        JOIN registration_info r ON p.pre_reg_id = r.reg_id
+        JOIN arrange_info a ON r.reg_arrange_id = a.arrange_id
+        JOIN doctor_info doc ON doc.doc_id = a.arrange_doc_id
         JOIN department_info d ON doc.doc_dp_id = d.department_id
-        JOIN chargeitems_info ci ON p.pre_ci_id=ci.chargeitem_id
+        JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id
         WHERE
-        p.pre_time BETWEEN #{startTime} AND #{endTime}
-        AND p.pre_state IN ('待缴费','待执行','已完成','已失效','已退费')
+        p.pre_time BETWEEN #{startTime} AND #{endTime}  <!-- 时间范围 -->
+        AND p.pre_state IN ('待缴费', '待执行', '已完成', '已失效', '已退费')  <!-- 状态过滤 -->
         GROUP BY
-        d.department_name,
+        d.department_name,  <!-- 按部门分组 -->
         <choose>
             <when test="timeType == 'day'">
                 DATE_FORMAT(p.pre_time, '%Y-%m-%d')
@@ -47,43 +47,43 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m')
             </when>
         </choose>
-        ORDER BY totalAmount DESC
+        ORDER BY totalAmount DESC  <!-- 按总金额降序排序 -->
     </select>
 
     <select id="statsByDoctor" resultType="org.example.dto.PrescriptionStatsDTO">
         SELECT
-        doc.doc_name AS groupName,
+        doc.doc_name AS groupName,  <!-- 医生姓名 -->
         <choose>
             <when test="timeType == 'day'">
-                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,
+                DATE_FORMAT(p.pre_time, '%Y-%m-%d') AS timePeriod,  <!-- 按天显示时间段 -->
             </when>
             <when test="timeType == 'week'">
-                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,
+                CONCAT(YEAR(p.pre_time), '-', WEEK(p.pre_time)) AS timePeriod,  <!-- 按周显示时间段 -->
             </when>
             <when test="timeType == 'month'">
-                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,
+                DATE_FORMAT(p.pre_time, '%Y-%m') AS timePeriod,  <!-- 按月显示时间段 -->
             </when>
         </choose>
-        COUNT(*) AS totalPrescriptions,
-        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,
-        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,
-        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,
-        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,
-        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,
-        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,
-        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount
+        COUNT(*) AS totalPrescriptions,  <!-- 总处方数量 -->
+        SUM(CASE WHEN p.pre_state = '已完成' THEN 1 ELSE 0 END) AS paidPrescriptions,  <!-- 已完成处方数量 -->
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN 1 ELSE 0 END) AS unpaidPrescriptions,  <!-- 待缴费处方数量 -->
+        SUM(CASE WHEN p.pre_state = '已退费' THEN 1 ELSE 0 END) AS refundPrescriptions,  <!-- 退款处方数量 -->
+        SUM(ci.chargeitem_price * p.pre_ci_num) AS totalAmount,  <!-- 总金额 -->
+        SUM(CASE WHEN p.pre_state = '已完成' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS paidAmount,  <!-- 已完成金额 -->
+        SUM(CASE WHEN p.pre_state = '待缴费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS unpaidAmount,  <!-- 待缴费金额 -->
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS refundAmount  <!-- 退款金额 -->
         FROM
         prescription_info p
-        JOIN registration_info r ON p.pre_reg_id=r.reg_id
-        JOIN arrange_info a ON r.reg_arrange_id=a.arrange_id
-        JOIN doctor_info doc ON doc.doc_id=a.arrange_doc_id
+        JOIN registration_info r ON p.pre_reg_id = r.reg_id
+        JOIN arrange_info a ON r.reg_arrange_id = a.arrange_id
+        JOIN doctor_info doc ON doc.doc_id = a.arrange_doc_id
         JOIN department_info d ON doc.doc_dp_id = d.department_id
-        JOIN chargeitems_info ci ON p.pre_ci_id=ci.chargeitem_id
+        JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id
         WHERE
-        p.pre_time BETWEEN #{startTime} AND #{endTime}
-        AND p.pre_state IN ('待缴费','待执行','已完成','已失效','已退费')
+        p.pre_time BETWEEN #{startTime} AND #{endTime}  <!-- 时间范围 -->
+        AND p.pre_state IN ('待缴费', '待执行', '已完成', '已失效', '已退费')  <!-- 状态过滤 -->
         GROUP BY
-        doc.doc_name,
+        doc.doc_name,  <!-- 按医生分组 -->
         <choose>
             <when test="timeType == 'day'">
                 DATE_FORMAT(p.pre_time, '%Y-%m-%d')
@@ -95,6 +95,6 @@
                 DATE_FORMAT(p.pre_time, '%Y-%m')
             </when>
         </choose>
-        ORDER BY totalAmount DESC
+        ORDER BY totalAmount DESC  <!-- 按总金额降序排序 -->
     </select>
 </mapper>

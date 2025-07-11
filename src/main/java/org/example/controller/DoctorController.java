@@ -7,6 +7,7 @@ import org.example.common.Result;
 import org.example.entity.DoctorInfo;
 import org.example.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,9 @@ import java.util.List;
 public class DoctorController {
     @Autowired
     private final DoctorService doctorService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     public DoctorController(DoctorService doctorService) {
         this.doctorService = doctorService;

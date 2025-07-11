@@ -10,13 +10,13 @@ import java.util.List;
 
 @Mapper
 public interface PrescriptionStatsMapper {
-    List<PrescriptionStatsDTO> statsByDepartment(
+    List<PrescriptionStatsDTO> statsByDepartment(//按部门统计
             @Param("startTime") Date startTime,
             @Param("endTime") Date endTime,
             @Param("timeType") String timeType
     );
 
-    List<PrescriptionStatsDTO> statsByDoctor(
+    List<PrescriptionStatsDTO> statsByDoctor(//按医生统计
             @Param("startTime") Date startTime,
             @Param("endTime") Date endTime,
             @Param("timeType") String timeType
@@ -35,7 +35,7 @@ public interface PrescriptionStatsMapper {
             "FROM prescription_info p " +
             "JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id " +
             "WHERE p.pre_time BETWEEN #{startTime} AND #{endTime}")
-    PrescriptionStatsDTO getTotalStats(
+    PrescriptionStatsDTO getTotalStats(//获取统计数据
             @Param("startTime") Date startTime,
             @Param("endTime") Date endTime
     );

@@ -5,12 +5,17 @@ import org.example.dto.BusinessReportSummary;
 import org.example.service.BusinessReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/report/business")
 @Tag(name = "业务报表统计", description = "业务报表统计分析接口")
 public class BusinessReportController {
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private final BusinessReportService businessReportService;
 

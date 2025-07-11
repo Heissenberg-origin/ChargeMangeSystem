@@ -7,6 +7,7 @@ import org.example.common.Result;
 import org.example.entity.PatientInfo;
 import org.example.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,8 @@ public class PatientController {
 
     @Autowired
     private PatientService patientService;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 接收前端提交的病人信息并保存到数据库

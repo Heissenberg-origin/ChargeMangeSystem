@@ -4,57 +4,57 @@
 
     <select id="getDailyReport" resultType="org.example.dto.DailyReportDTO">
         SELECT
-            DATE_FORMAT(daily.date, '%Y-%m-%d') AS reportDate,
-            COALESCE(reg.reg_receivable, 0) + COALESCE(pre.pre_receivable, 0) AS totalReceivable,
-            COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0) AS actualReceived,
-            (COALESCE(reg.reg_receivable, 0) + COALESCE(pre.pre_receivable, 0)) -
-            (COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0)) AS difference,
-            COALESCE(reg.reg_refund, 0) + COALESCE(pre.pre_refund, 0) AS refundAmount,
-            (COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0)) -
-            (COALESCE(reg.reg_refund, 0) + COALESCE(pre.pre_refund, 0)) AS settlementAmount
+        DATE_FORMAT(daily.date, '%Y-%m-%d') AS reportDate,  <!-- 报告日期 -->
+        COALESCE(reg.reg_receivable, 0) + COALESCE(pre.pre_receivable, 0) AS totalReceivable,  <!-- 总应收款 -->
+        COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0) AS actualReceived,  <!-- 实际收到款项 -->
+        (COALESCE(reg.reg_receivable, 0) + COALESCE(pre.pre_receivable, 0)) -
+        (COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0)) AS difference,  <!-- 差异 -->
+        COALESCE(reg.reg_refund, 0) + COALESCE(pre.pre_refund, 0) AS refundAmount,  <!-- 退款金额 -->
+        (COALESCE(reg.reg_actual, 0) + COALESCE(pre.pre_actual, 0)) -
+        (COALESCE(reg.reg_refund, 0) + COALESCE(pre.pre_refund, 0)) AS settlementAmount  <!-- 结算金额 -->
         FROM
-                (SELECT DATE(#{startDate}) + INTERVAL seq DAY AS date
+        (SELECT DATE(#{startDate}) + INTERVAL seq DAY AS date
         FROM (
-            SELECT 0 AS seq UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
-            UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
-            UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14
-            UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18 UNION SELECT 19
-            UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23 UNION SELECT 24
-            UNION SELECT 25 UNION SELECT 26 UNION SELECT 27 UNION SELECT 28 UNION SELECT 29
-            UNION SELECT 30
-            ) AS seq
+        SELECT 0 AS seq UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+        UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+        UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14
+        UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION SELECT 18 UNION SELECT 19
+        UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23 UNION SELECT 24
+        UNION SELECT 25 UNION SELECT 26 UNION SELECT 27 UNION SELECT 28 UNION SELECT 29
+        UNION SELECT 30
+        ) AS seq
         WHERE DATE(#{startDate}) + INTERVAL seq DAY BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
-            ) AS daily
-            LEFT JOIN (
+        ) AS daily
+        LEFT JOIN (
         SELECT
-            DATE(reg_deal_time) AS reg_date,
-            SUM(CASE WHEN reg_fee_type != '自费' THEN doc.doc_fee ELSE 0 END) AS reg_receivable,
-            SUM(CASE WHEN reg_state NOT IN ('待缴费', '已退号') THEN doc.doc_fee ELSE 0 END) AS reg_actual,
-            SUM(CASE WHEN reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS reg_refund
+        DATE(reg_deal_time) AS reg_date,
+        SUM(CASE WHEN reg_fee_type != '自费' THEN doc.doc_fee ELSE 0 END) AS reg_receivable,  <!-- 应收款 -->
+        SUM(CASE WHEN reg_state NOT IN ('待缴费', '已退号') THEN doc.doc_fee ELSE 0 END) AS reg_actual,  <!-- 实际收到款项 -->
+        SUM(CASE WHEN reg_state = '已退号' THEN doc.doc_fee ELSE 0 END) AS reg_refund  <!-- 退款金额 -->
         FROM
-            registration_info r
-            JOIN arrange_info a ON r.reg_arrange_id = a.arrange_id
-            JOIN doctor_info doc ON a.arrange_doc_id = doc.doc_id
+        registration_info r
+        JOIN arrange_info a ON r.reg_arrange_id = a.arrange_id
+        JOIN doctor_info doc ON a.arrange_doc_id = doc.doc_id
         WHERE
-            reg_deal_time BETWEEN #{startDate} AND #{endDate}
+        reg_deal_time BETWEEN #{startDate} AND #{endDate}
         GROUP BY
-            DATE(reg_deal_time)
-            ) AS reg ON daily.date = reg.reg_date
-            LEFT JOIN (
-            SELECT
-            DATE(pre_dealtime) AS pre_date,
-            SUM(ci.chargeitem_price * p.pre_ci_num) AS pre_receivable,
-            SUM(CASE WHEN p.pre_state NOT IN ('待缴费', '已退费') THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS pre_actual,
-            SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS pre_refund
-            FROM
-            prescription_info p
-            JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id
-            WHERE
-            pre_dealtime BETWEEN #{startDate} AND #{endDate}
-            GROUP BY
-            DATE(pre_dealtime)
-            ) AS pre ON daily.date = pre.pre_date
+        DATE(reg_deal_time)
+        ) AS reg ON daily.date = reg.reg_date
+        LEFT JOIN (
+        SELECT
+        DATE(pre_dealtime) AS pre_date,
+        SUM(ci.chargeitem_price * p.pre_ci_num) AS pre_receivable,  <!-- 应收款 -->
+        SUM(CASE WHEN p.pre_state NOT IN ('待缴费', '已退费') THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS pre_actual,  <!-- 实际收到款项 -->
+        SUM(CASE WHEN p.pre_state = '已退费' THEN ci.chargeitem_price * p.pre_ci_num ELSE 0 END) AS pre_refund  <!-- 退款金额 -->
+        FROM
+        prescription_info p
+        JOIN chargeitems_info ci ON p.pre_ci_id = ci.chargeitem_id
+        WHERE
+        pre_dealtime BETWEEN #{startDate} AND #{endDate}
+        GROUP BY
+        DATE(pre_dealtime)
+        ) AS pre ON daily.date = pre.pre_date
         ORDER BY
-            daily.date
+        daily.date  <!-- 按日期排序 -->
     </select>
 </mapper>

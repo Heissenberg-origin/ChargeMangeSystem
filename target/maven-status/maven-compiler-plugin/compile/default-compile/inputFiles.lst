@@ -24,6 +24,7 @@ D:\hospiital\ChargeMangeSystem\src\main\java\org\example\service\impl\PatientSer
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\dto\PrescriptionStatsRequest.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\controller\PrescriptionStatsController.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\service\RegistrationStatsService.java
+D:\hospiital\ChargeMangeSystem\src\main\java\org\example\config\RedisConfig.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\controller\LogController.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\mapper\DoctorInfoMapper.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\entity\DoctorInfo.java
@@ -59,7 +60,6 @@ D:\hospiital\ChargeMangeSystem\src\main\java\org\example\service\impl\Department
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\mapper\RegistrationInfoMapper.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\mapper\PrescriptionInfoMapper.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\service\LogService.java
-D:\hospiital\ChargeMangeSystem\src\main\java\org\example\common\Constants.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\controller\RegistrationStatsController.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\entity\LogInfo.java
 D:\hospiital\ChargeMangeSystem\src\main\java\org\example\dto\BusinessReportDTO.java

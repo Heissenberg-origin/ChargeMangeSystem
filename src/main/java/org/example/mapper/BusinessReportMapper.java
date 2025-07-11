@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Mapper
 public interface BusinessReportMapper {
-    BusinessReportSummary getBusinessReportSummary(
+    BusinessReportSummary getBusinessReportSummary(//获取业务报表数据
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate);
 }
